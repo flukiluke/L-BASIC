@@ -1,0 +1,116 @@
+function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentry as hentry_t, literal$)
+    static ts_mappings&(TS_MAX)
+    if not ts_mappings&(0) then
+        '$include: '../build/ts_mappings.bm'
+    end if
+    static in$
+    if not t_state.has_data then
+        if eof(1) then
+            tok_type& = TOK_EOF
+            exit function
+        end if
+        t_state.index = 1
+        line input #1, in$
+        t_state.has_data = TRUE
+    end if
+
+    if t_state.tok_override <> -1 then
+        tok_next_token& = t_state.tok_override
+        t_state.tok_override = -1
+        exit function
+    end if
+
+    ts_content$ = tok_next_ts$(in$ + chr$(10), t_state, ts_type&)
+    print "("; ltrim$(str$(ts_type&)); ")";
+
+    select case ts_type&
+        case 0 'Out of data (an error)
+            fatalerror "Unexpected end of line"
+        case TS_ID
+            tokeng_ts_id:
+            if htable_get_hentry(mainht, ucase$(ts_content$), hentry) then
+                tok_next_token& = hentry.typ
+            else
+                hentry.typ = TOK_GENERIC
+                htable_add_hentry mainht, ucase$(ts_content$), hentry
+                tok_next_token& = TOK_GENERIC
+            end if
+            t_state.linestart = FALSE
+        case TS_NEWLINE
+            t_state.has_data = FALSE
+            t_state.linestart = TRUE
+            tok_next_token& = TOK_NEWLINE
+        case TS_LINELABEL
+            'Line labels only occur at start of line, otherwise it is a TS_ID followed
+            'by a : for a joined line
+            if not t_state.linestart then 'this can't be a line label
+                t_state.tok_override = TOK_COLON
+                goto tokeng_ts_id
+            end if
+            'It could still be a TS_ID (consider DO:LOOP) even at the start of a line
+            :
+            ts_content$ = left$(ts_content$, len(ts_content$) - 1)
+            tok_next_token& = TOK_LINELABEL
+        case TS_LINENUM
+            if right$(ts_content$, 1) = ":" then ts_content$ = left$(ts_content$, len(ts_content$) - 1)
+            tok_next_token& = TOK_LINELABEL
+        case else
+            tok_next_token& = ts_mappings&(ts_type&)
+            literal$ = ts_content$
+            t_state.linestart = FALSE
+    end select
+end function
+
+sub tok_init (state as tokeniser_state_t)
+    'read in arrays and set default values for some control variables
+    for s& = 1 to ubound(t_states~%, 2)
+        read t_statenames$(s&)
+        for b& = 1 to 127
+            read cmd&
+            t_states~%(b&, s&) = cmd&
+        next b&
+    next s&
+    state.index = 1
+    state.curstate = 1
+    state.has_data = FALSE
+    state.linestart = TRUE
+    state.tok_override = -1
+end sub
+
+function tok_next_ts$(text$, state as tokeniser_state_t, ts_type&)
+    if state.index > len(text$) then
+        'Out of data
+        ts_type& = 0
+        exit function
+    end if
+    for i& = state.index to len(text$)
+        c& = asc(text$, i&)
+        'No utf-8 support for now
+        if c& > 127 then fatalerror "Character outside character set (" + ltrim$(str$(c&)) + ")"
+        command& = t_states~%(c&, state.curstate)
+        'Rules of the form "A: B ~ Error" encode to 0
+        if command& = 0 then fatalerror chr$(34) + chr$(c&) + chr$(34) + " from " + t_statenames$(state.curstate) + " illegal"
+        'High byte is next state, low byte is token, high bit of low byte is pushback flag
+        ts_type_internal& = command& and 127
+        pushback& = command& and 128
+        'print t_statenames$(state.curstate); ":"; c&; "~ ";
+        state.curstate = command& \ 2^8
+        'print t_statenames$(state.curstate)
+        if ts_type_internal& > 0 then
+            ts_type& = ts_type_internal&
+            if pushback& then
+                'This doesn't include the current character, and uses it next time...
+                if ts_type& <> 1 then tok_next_ts$ = mid$(text$, state.index, i& - state.index)
+                state.index = i&
+            else
+                '...but this does include it, and starts from the next character next time.
+                if ts_type& <> 1 then tok_next_ts$ = mid$(text$, state.index, i& - state.index + 1)
+                state.index = i& + 1
+            end if
+            if ts_type& <> TS_SKIP then exit function
+        end if
+    next i&
+    ts_type& = 0
+end function 
+
+'$include: '../build/ts_data.bm'

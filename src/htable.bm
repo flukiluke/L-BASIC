@@ -1,0 +1,116 @@
+$CHECKING:OFF
+SUB htable_add_hentry (ht AS htable_t, key$, hentry as hentry_t)
+    DIM m AS _MEM, m2 AS _MEM
+    m = _MEM(hentry)
+    m2 = _MEMNEW(LEN(hentry))
+    _MEMCOPY m, m.OFFSET, m.SIZE TO m2, m2.OFFSET
+    htable_add ht, key$, m2.OFFSET
+    'descriptors m & m2 are freed when they go out of scope
+    'memory of m is owned by caller, memory of m2 is owned by htable
+END SUB
+
+FUNCTION htable_get_hentry& (ht as htable_t, key$, hentry as hentry_t)
+    doff%& = htable_get(ht, key$)
+    if doff%& = 0 then
+        htable_get_hentry& = FALSE
+        exit function
+    end if
+    dim m as _MEM, m2 as _MEM
+    m = _MEM(hentry)
+    m2 = _MEM(doff%&, LEN(hentry))
+    _MEMCOPY m, m.OFFSET, m.SIZE TO m2, m2.OFFSET
+    htable_get_hentry& = TRUE
+END FUNCTION
+
+SUB htable_create (ht AS htable_t, expected_elements)
+    ht.table = _MEMNEW(HTABLE_ENTRY_SIZE * expected_elements)
+    ht.buckets = expected_elements
+    _MEMFILL ht.table, ht.table.OFFSET, HTABLE_ENTRY_SIZE * expected_elements, 0 AS LONG
+END SUB
+
+SUB htable_expand_if_needed (ht AS htable_t)
+    CONST HTABLE_MAX_LOADING = 0.75
+    CONST HTABLE_GROWTH_FACTOR = 2
+    IF ht.elements / ht.buckets <= HTABLE_MAX_LOADING THEN EXIT FUNCTION
+    DIM newht AS htable_t, h~&, klen&, ckey$
+    htable_create newht, ht.buckets * HTABLE_GROWTH_FACTOR + 1
+    FOR h~& = 0 TO ht.buckets - 1
+        klen& = _MEMGET(ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_KEYLEN_OFFSET, LONG)
+        IF klen& > 0 THEN
+            htable_add_memkey newht, _
+                              _MEMGET(ht.table, ht.table.offset + h~& * HTABLE_ENTRY_SIZE + HTABLE_KEY_OFFSET, _OFFSET), _
+                              klen&, _
+                              _MEMGET(ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_DATA_OFFSET, _OFFSET)
+        END IF
+    NEXT h~&
+    _MEMFREE ht.table
+    ht = newht
+END SUB
+
+SUB htable_add (ht AS htable_t, ckey$, value%&)
+    DIM m AS _MEM, h~&, coff%&
+    m = _MEMNEW(LEN(ckey$))
+    _MEMPUT m, m.OFFSET, ckey$
+    htable_add_memkey ht, m.OFFSET, LEN(ckey$), value%&
+    htable_expand_if_needed ht
+END SUB
+
+SUB htable_add_memkey (ht AS htable_t, ckey%&, keylen&, value%&)
+    DIM h~&, coff%&
+    h~& = htable_hash_memkey~&(ckey%&, keylen&, ht.buckets)
+    DO
+        coff%& = _MEMGET(ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE, _OFFSET)
+        IF coff%& = 0 THEN EXIT DO
+        h~& = (h~& + 1) MOD ht.buckets
+    LOOP
+    _MEMPUT ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_KEY_OFFSET, ckey%&
+    _MEMPUT ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_KEYLEN_OFFSET, keylen& AS LONG
+    _MEMPUT ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_DATA_OFFSET, value%&
+    ht.elements = ht.elements + 1
+END SUB
+
+FUNCTION htable_get%& (ht AS htable_t, key$)
+    DIM h~&, klen&, kaddr%&, ckey$
+    h~& = htable_hash~&(key$, ht.buckets)
+    DO
+        klen& = _MEMGET(ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_KEYLEN_OFFSET, LONG)
+        IF klen& = 0 THEN
+            htable_get%& = 0
+            EXIT FUNCTION
+        END IF
+        IF klen& = LEN(key$) THEN 'this could be it
+            kaddr%& = _MEMGET(ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_KEY_OFFSET, _OFFSET)
+            ckey$ = SPACE$(klen&)
+            '$CHECKING:OFF
+            _MEMGET ht.table, kaddr%&, ckey$ 'ht.table has no meaning here; we are dereferencing kaddr%&
+            '$CHECKING:ON
+            IF ckey$ = key$ THEN 'got it!
+                htable_get%& = _MEMGET(ht.table, ht.table.OFFSET + h~& * HTABLE_ENTRY_SIZE + HTABLE_DATA_OFFSET, _OFFSET)
+                EXIT FUNCTION
+            END IF
+        END IF
+        h~& = (h~& + 1) MOD ht.buckets
+    LOOP
+END FUNCTION
+
+'http://www.cse.yorku.ca/~oz/hash.html
+FUNCTION htable_hash~& (s$, mod_size&)
+    DIM hash~&, i&
+    hash~& = 5381
+    FOR i& = 1 TO LEN(s$)
+        hash~& = ((hash~& * 33) XOR ASC(s$, i&)) MOD mod_size&
+    NEXT i&
+    htable_hash~& = hash~&
+END FUNCTION
+
+FUNCTION htable_hash_memkey~& (s AS _OFFSET, slen&, mod_size&)
+    DIM hash~&, i&, dummy AS _MEM
+    hash~& = 5381
+    FOR i& = 0 TO slen& - 1
+        '$CHECKING:OFF
+        hash~& = ((hash~& * 33) XOR _MEMGET(dummy, s + i&, _UNSIGNED _BYTE)) MOD mod_size&
+        '$CHECKING:ON
+    NEXT i&
+    htable_hash_memkey~& = hash~&
+END SUB
+$CHECKING:ON

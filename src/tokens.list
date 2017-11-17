@@ -1,0 +1,136 @@
+# Marks end of file - no more data will come.
+eof
+# We distinguish between newline and : to allow for IF x THEN y:z
+newline
+colon colon
+
+# Type markers
+bit bit_sfx
+ubit ubit_sfx
+byte byte_sfx
+ubyte ubyte_sfx
+integer integer_sfx
+uinteger uinteger_sfx
+long long_sfx
+ulong ulong_sfx
+offset offset_sfx
+uoffset uoffset_sfx
+integer64 integer64_sfx
+uinteger64 uinteger64_sfx
+single single_sfx
+double double_sfx
+float float_sfx
+string string_sfx
+
+# Assorted symbols and operators
+plus plus
+equals equals
+comma comma
+dot dot
+# dash is -
+dash dash
+star star
+slash slash
+backslash backslash
+#power is ^
+power power
+# Open and close parentheses ( and )
+oparen oparen
+cparen cparen
+# relational operators <>, <, >, <=, >=
+ne cmp_ne
+lt cmp_lt
+gt cmp_gt
+lteq cmp_lteq
+gteq cmp_gteq
+
+# Numbers
+# numint: 1234, numdec: 12.34, numexp: 12.3E4, numbase: &H1234
+numint numint
+numdec numdec
+numexp numexp
+numbase numbase
+
+# String literal
+strlit string
+
+###############################################################
+
+# Metacommands
+metainclude
+metachecking 
+# The second part of a metacommand
+metaparam
+
+# Both numeric and textual labels (without the :)
+linelabel
+
+###############################################################
+
+# A generic placeholder to allow us to create an object entry before we've
+# determined what it is we're looking at (expect the type of these objects
+# to change later)
+generic
+
+# Variables. We always return the bare name (ie no type sigils). Really, a
+# variable is just something that looks like a name and isn't a keyword.
+variable
+
+# Note: keywords that are both functions and statements (eg _DEST) are not an
+# issue, because they appear in distinct lexical contexts.
+
+# A regular statement is one that has no special syntax associated with it.
+# Specifically, it takes 0 or more parameters separated by commas. Parameters
+# may be elided (FOO x, , y) and the number of parameters need not be constant.
+stmtreg
+
+# Like above, regular functions have no special syntax, and take any number
+# of parameters.
+funcreg
+
+# Here begins the list of non-regular non-function keywords. Those ending in $
+# such as DATE$ have had the $ replaced by D.
+access
+alias
+and
+any
+asc
+as
+
+binary
+byval
+
+case
+circle
+close
+common
+const
+
+data
+dateD
+# These kind of hacks (returning DECLARE LIBRARY as one token) is only strictly 
+# necessary for when the following parts are not keywords. They have
+# custom-written portions in the tokeniser, too. I call this "token smooshing".
+declibrary
+decdynamic
+deccustomtype
+decstatic
+dynamic
+defdbl
+# DEF FN makes a comeback.
+def
+_define
+defint
+deflng
+defsng
+defstr
+dim
+do
+_dontwait
+
+# Token smooshing not necessary here, but convenient to do so.
+else
+elseif
+end
+enddec
+endif

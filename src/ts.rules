@@ -1,0 +1,145 @@
+%class letter = abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_
+%class number = 0123456789
+# The comment character (') is not in this list
+%class punc = ~!#$%^&*()-+=\5c:;"<>,./?
+%class hexchar = 0123456789ABCDEFabcdef
+%class sp = \09\0b\0c\20
+%class nl = \0a
+%class tilde = ~
+%class bang = !
+%class amp = &
+
+# Basename of output files
+%name ts_data
+
+Begin: $letter ~ Id
+Begin: $number ~ Linenum
+Begin: "' ~ Comment
+Begin: "$ ~ Metacmd1
+Begin: "? ~ General ! ID
+Begin: $sp ~ Begin ! SKIP
+Begin: $nl ~ Begin ! NEWLINE
+
+Linenum: $number ~ Linenum
+Linenum: ": ~ General ! LINENUM
+Linenum: $sp ~ General & LINENUM
+Linenum: "' ~ Comment & LINENUM
+Linenum: $nl ~ Begin & LINENUM
+
+Metacmd1: * ~ Error
+Metacmd1: $letter ~ Metacmd1
+Metacmd1: ": ~ Metacmd2 ! METACMD
+Metacmd1: $sp ~ Metacmd1 ! SKIP
+Metacmd1: $nl ~ Begin & METACMD
+
+Metacmd2: * ~ Metacmd2
+Metacmd2: $nl ~ Begin & METAPARAM
+
+Id: $letter ~ Id
+Id: $number ~ Id
+Id: $punc ~ General & ID
+Id: ": ~ General ! LINELABEL
+Id: $sp ~ General & ID
+Id: "' ~ Comment
+Id: $nl ~ Begin & ID
+
+Comment: * ~ Comment
+Comment: $nl ~ Begin ! NEWLINE
+
+String: * ~ String
+String: "" ~ General ! STRING
+
+General: $letter ~ Id
+General: $number ~ Number
+General: "? ~ General ! ID
+General: $tilde ~ TildePfx
+General: $bang ~ General ! SINGLE_SFX
+General: "` ~ General ! BIT_SFX
+General: "# ~ HashPfx
+General: "$ ~ General ! STRING_SFX
+General: "% ~ PercentPfx
+General: "^ ~ General ! POWER
+General: $amp ~ AmpersandPfx
+General: "* ~ General ! STAR
+General: "( ~ General ! OPAREN
+General: ") ~ General ! CPAREN
+General: "- ~ General ! DASH
+General: "+ ~ General ! PLUS
+General: "= ~ General ! EQUALS
+General: "\ ~ General ! BACKSLASH
+General: ": ~ General ! COLON
+General: "; ~ General ! SEMICOLON
+General: "" ~ String
+General: "' ~ Comment ! NEWLINE
+General: "< ~ LtPfx
+General: "> ~ GtPfx
+General: ", ~ General ! COMMA
+General: ". ~ Dot
+General: "/ ~ General ! SLASH
+General: $sp ~ General ! SKIP
+General: $nl ~ Begin ! NEWLINE
+
+Number: * ~ General & NUMINT
+Number: $number ~ Number
+Number: ". ~ NumDec
+Number: "E ~ NumExpSgn
+Number: "e ~ NumExpSgn
+Number: "D ~ NumExpSgn
+Number: "d ~ NumExpSgn
+
+NumDec: * ~ General & NUMDEC
+NumDec: $number ~ NumDec
+NumDec: "E ~ NumExpSgn
+NumDec: "e ~ NumExpSgn
+NumDec: "D ~ NumExpSgn
+NumDec: "d ~ NumExpSgn
+
+NumExpSgn: * ~ General & NUMEXP
+NumExpSgn: $number ~ NumExp
+NumExpSgn: "+ ~ NumExp
+NumExpSgn: "- ~ NumExp
+
+NumExp: * ~ General & NUMEXP
+NumExp: $number ~ NumExp
+
+TildePfx: "% ~ TildePercentPfx
+TildePfx: "` ~ General ! UBIT_SFX
+TildePfx: $amp ~ TildeAmpersandPfx
+
+HashPfx: * ~ General & DOUBLE_SFX
+HashPfx: "# ~ General ! FLOAT_SFX
+
+PercentPfx: * ~ General & INTEGER_SFX
+PercentPfx: "% ~ General ! BYTE_SFX
+PercentPfx: $amp ~ General ! OFFSET_SFX
+
+AmpersandPfx: * ~ General & LONG_SFX
+AmpersandPfx: $amp ~ General ! INTEGER64_SFX
+AmpersandPfx: "h ~ NumBase
+AmpersandPfx: "o ~ NumBase
+AmpersandPfx: "b ~ NumBase
+AmpersandPfx: "H ~ NumBase
+AmpersandPfx: "O ~ NumBase
+AmpersandPfx: "B ~ NumBase
+
+NumBase: * ~ General & NUMBASE
+NumBase: $hexchar ~ NumBase
+
+TildePercentPfx: * ~ General & UINTEGER_SFX
+TildePercentPfx: "% ~ General ! UBYTE_SFX
+TildePercentPfx: $amp ~ General ! UOFFSET_SFX
+
+TildeAmpersandPfx: * ~ General & ULONG_SFX
+TildeAmpersandPfx: $amp ~ General ! UINTEGER64_SFX
+
+LtPfx: * ~ General & CMP_LT
+LtPfx: "= ~ General ! CMP_LTEQ
+LtPfx: "> ~ General ! CMP_NE
+
+GtPfx: * ~ General & CMP_GT
+GtPfx: "= ~ General ! CMP_GTEQ
+
+# We do not get here if digits have proceeded the dot.
+# Thus we don't have to worry about something like "10."
+Dot: $letter ~ General & DOT
+Dot: $number ~ NumDec

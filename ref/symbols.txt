@@ -1,0 +1,38 @@
+= Equal to condition
+<> Not equal condition
+> Greater than condition
+< Less than condition
+>= Greater than or equal to condition
+<= Less than or equal to condition
+; Semicolon after a PRINT stops invisible cursor at end of printed value. Can prevent screen rolling! A Semicolon after the INPUT prompt text will display a question mark after the text.
+, Comma after a PRINT tabs invisible cursor past end of printed value. After the INPUT prompt text a comma displays no Question mark.
+" Quotation mark delimits the ends of a literal STRING value in a PRINT, INPUT or LINE INPUT statement.
+? Question mark is a shortcut substitute for the PRINT keyword. Will change to PRINT when cursor leaves the code line. 
+' Apostrophe ignores a line of code or program comment and MUST be used before a Metacommand. Same as using REM.
+, Comma is used to separate DATA, SUB or FUNCTION parameter variables.
+: Colons can be used to separate two procedure statements on one code line.
+$ Dollar sign prefix denotes a Qbasic Metacommand. QB64's event $CHECKING is NOT commented.
+( ) Parenthesis enclose a math or conditional procedure order, SUB or FUNCTION parameters or to pass by value.
++ Plus concatenation operator MUST be used to combine literal string values in a variable definition.
+" Quotation mark designates the ends of a literal STRING value. Use CHR$(34) to insert quotes in a text STRING.
+_ Underscore can be used to continue a line of code to the next program line in QB64 only.
+$ STRING text character type: 1 byte
+! SINGLE floating decimal point numerical type (4 bytes)
+# DOUBLE floating decimal point numerical type (8 bytes)
+## _FLOAT QB64 decimal point numerical type (32 bytes)
+~ _UNSIGNED QB64 whole positive numerical type when it precedes the 6 numerical suffixes below:
+% INTEGER whole numerical type (2 bytes)
+& LONG whole numerical type (4 bytes}
+&& _INTEGER64 QB64 whole numerical type (8 bytes)
+` _BIT QB64 whole numerical type (1 bit)(Key below tilde(~) or CHR$(96))
+%% _BYTE QB64 whole numerical type (1 byte)
+%& _OFFSET QB64 whole numerical pointer address type (any byte size required) 
+&B Binary Base 2: Digits 0 or 1 [QB64]
+&O Octal Base 8: Digits 0 to 7
+&H Hexadecimal Base 16: Digits 0 to F 
++ Addition operator or sign
+- Subtraction operator or sign
+* Multiplication operator
+/ Division (floating decimal point) operator
+\ Integer division operator
+^ Exponential operator
