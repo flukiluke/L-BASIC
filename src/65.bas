@@ -1,7 +1,7 @@
 const FALSE = 0, TRUE = NOT FALSE
 $console:only
 _dest _console
-'on error goto generic_error
+on error goto generic_error
 
 '$include: 'htable.bi'
 '$include: 'tokeng.bi'
@@ -28,7 +28,7 @@ end if
 
 on error goto file_error
 open inputfile$ for input as #1
-'on error goto generic_error
+on error goto generic_error
 
 dim t_state as tokeniser_state_t
 tok_init t_state

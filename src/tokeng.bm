@@ -1,8 +1,10 @@
 function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentry as hentry_t, literal$)
-    static ts_mappings&(TS_MAX)
-    if not ts_mappings&(0) then
+    'ts_mappsings& should be static and only initialised once, but this triggers a bug in QB64
+    'static ts_mappings&(TS_MAX)
+    dim ts_mappings&(TS_MAX)
+    'if not ts_mappings&(0) then
         '$include: '../build/ts_mappings.bm'
-    end if
+    'end if
     static in$
     if not t_state.has_data then
         if eof(1) then
