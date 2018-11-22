@@ -8,7 +8,8 @@ function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentr
     static in$
     if not t_state.has_data then
         if eof(1) then
-            tok_type& = TOK_EOF
+            hentry.typ = TOK_EOF
+            tok_next_token& = TOKENG_LITERAL
             exit function
         end if
         t_state.index = 1
@@ -17,50 +18,59 @@ function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentr
     end if
 
     if t_state.tok_override <> -1 then
-        tok_next_token& = t_state.tok_override
+        'Hack! See handling of TS_LINELABEL
+        hentry.typ = t_state.tok_override
+        tok_next_token& = TOKENG_LITERAL
         t_state.tok_override = -1
         exit function
     end if
 
     ts_content$ = tok_next_ts$(in$ + chr$(10), t_state, ts_type&)
-    print "("; ltrim$(str$(ts_type&)); ")";
+    'print "("; ltrim$(str$(ts_type&)); ")";
 
     select case ts_type&
         case 0 'Out of data (an error)
             fatalerror "Unexpected end of line"
+
         case TS_ID
             tokeng_ts_id:
             if htable_get_hentry(mainht, ucase$(ts_content$), hentry) then
-                tok_next_token& = hentry.typ
+                tok_next_token& = TOKENG_FOUND
             else
                 hentry.typ = TOK_GENERIC
-                htable_add_hentry mainht, ucase$(ts_content$), hentry
-                tok_next_token& = TOK_GENERIC
+                tok_next_token& = TOKENG_NOT_FOUND
             end if
             t_state.linestart = FALSE
+
         case TS_NEWLINE
             t_state.has_data = FALSE
             t_state.linestart = TRUE
-            tok_next_token& = TOK_NEWLINE
-        case TS_LINELABEL
-            'Line labels only occur at start of line, otherwise it is a TS_ID followed
-            'by a : for a joined line
-            if not t_state.linestart then 'this can't be a line label
-                t_state.tok_override = TOK_COLON
-                goto tokeng_ts_id
-            end if
-            'It could still be a TS_ID (consider DO:LOOP) even at the start of a line
-            :
-            ts_content$ = left$(ts_content$, len(ts_content$) - 1)
-            tok_next_token& = TOK_LINELABEL
-        case TS_LINENUM
-            if right$(ts_content$, 1) = ":" then ts_content$ = left$(ts_content$, len(ts_content$) - 1)
-            tok_next_token& = TOK_LINELABEL
+            hentry.typ = TOK_NEWLINE
+            tok_next_token& = TOKENG_LITERAL
+
+        'case TS_LINELABEL
+        '    'Line labels only occur at start of line, otherwise it is a TS_ID followed
+        '    'by a : for a joined line
+        '    if not t_state.linestart then 'this can't be a line label
+        '        'This hack lets us process this as an ID then return a colon on the next call
+        '        t_state.tok_override = TOK_COLON
+        '        goto tokeng_ts_id
+        '    end if
+        '    'It could still be a TS_ID (consider DO:LOOP) even at the start of a line. This is currently buggy as we just assume it is a line label.
+        '    hentry.typ = TOK_LINELABEL
+        '    hentry.value = left$(ts_content$, len(ts_content$) - 1)
+        '    tok_next_token& = TOK_NOT_FOUND
+
+        'case TS_LINENUM
+        '    if right$(ts_content$, 1) = ":" then ts_content$ = left$(ts_content$, len(ts_content$) - 1)
+        '    tok_next_token& = TOK_LINELABEL
+
         case else
-            tok_next_token& = ts_mappings&(ts_type&)
-            literal$ = ts_content$
+            he.typ = ts_mappings&(ts_type&)
             t_state.linestart = FALSE
     end select
+    ' literal$ is a little badly named; it's just the text that was taken from the input
+    literal$ = ucase$(ts_content$)
 end function
 
 sub tok_init (state as tokeniser_state_t)
