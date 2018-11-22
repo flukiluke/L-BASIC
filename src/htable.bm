@@ -1,7 +1,8 @@
 $CHECKING:OFF
 SUB htable_add_hentry (ht AS htable_t, key$, hentry as hentry_t)
-    print "Adding "; key$; " as"; hentry.typ
     DIM m AS _MEM, m2 AS _MEM
+    ht.last_id = ht.last_id + 1
+    hentry.id = ht.last_id
     m = _MEM(hentry)
     m2 = _MEMNEW(LEN(hentry))
     _MEMCOPY m, m.OFFSET, m.SIZE TO m2, m2.OFFSET

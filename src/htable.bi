@@ -15,6 +15,12 @@ TYPE htable_t
     table AS _MEM
     buckets AS LONG
     elements AS LONG
+    last_id AS LONG
 END TYPE
 
+TYPE hentry_t
+    id AS LONG
+    typ AS LONG
+END TYPE
+    
 

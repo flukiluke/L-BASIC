@@ -1,4 +1,8 @@
 deflng a-z
+function tok_human_readable$(token)
+    tok_human_readable$ = ltrim$(str$(token))
+end function
+
 function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry as hentry_t, literal$)
     'ts_mappsings should be static and only initialised once, but this triggers a bug in QB64
     'static ts_mappings(TS_MAX)
@@ -27,7 +31,6 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
     end if
 
     ts_content$ = tok_next_ts$(in$ + chr$(10), t_state, ts_type)
-    'print "("; ltrim$(str$(ts_type)); ")";
 
     select case ts_type
         case 0 'Out of data (an error)
@@ -37,6 +40,7 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
             tokeng_ts_id:
             if htable_get_hentry(mainht, ucase$(ts_content$), hentry) then
                 tok_next_token = TOKENG_FOUND
+                print "("; hentry.typ; ")"
             else
                 hentry.typ = TOK_GENERIC
                 tok_next_token = TOKENG_NOT_FOUND
@@ -67,11 +71,12 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
         '    tok_next_token = TOK_LINELABEL
 
         case else
-            he.typ = ts_mappings(ts_type)
+            hentry.typ = ts_mappings(ts_type)
             t_state.linestart = FALSE
     end select
     ' literal$ is a little badly named; it's just the text that was taken from the input
     literal$ = ucase$(ts_content$)
+    print "Read: " + tok_human_readable$(hentry.typ) " from " + str$(ts_type)
 end function
 
 sub tok_init (state as tokeniser_state_t)

@@ -3,6 +3,7 @@
 'The node definition
 type ast_node_t
     typ as long
+    id as long
     num_children as long
 end type
 
