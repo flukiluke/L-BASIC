@@ -1,0 +1,19 @@
+deflng a-z
+
+function ast_add_node(typ)
+    if ast_last = ubound(ast_nodes) then ast_expand
+    ast_last = ast_last + 1
+    ast_nodes(ast_last).typ = typ
+    ast_add_node = ast_last
+end function
+
+sub ast_attach(parent, child)
+    ast_nodes(parent).num_children = ast_nodes(parent).num_children + 1
+    ast_children(parent) = ast_children(parent) + mkl$(child)
+end sub
+
+sub ast_expand()
+    new_size = ubound(ast_nodes) * 2
+    redim _preserve ast_nodes(new_size) as ast_node_t
+    redim _preserve ast_children(new_size) as string
+end sub

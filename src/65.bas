@@ -6,6 +6,7 @@ on error goto generic_error
 
 '$include: 'htable.bi'
 '$include: 'tokeng.bi'
+'$include: 'ast.bi'
 
 dim mainht as htable_t
 htable_create mainht, 49
@@ -58,12 +59,12 @@ end sub
 
 sub ps_stmt_group (t_state as tokeniser_state_t, ht as htable_t)
     dim he as hentry_t
-    result = tok_next_token(t_state, ht, he, id$)
+    result = tok_next_token(t_state, ht, he, literal$)
     select case he.typ
         case TOK_GENERIC
             ' Assume implicit variable declaration
             he.typ = TOK_VARIABLE
-            htable_add_hentry ht, id$, he
+            htable_add_hentry ht, literal$, he
             ps_assignment t_state, ht, literal$
         case TOK_VARIABLE
             ps_assignment t_state, ht, literal$
@@ -90,3 +91,4 @@ end sub
 
 '$include: 'htable.bm'
 '$include: 'tokeng.bm'
+'$include: 'ast.bm'
