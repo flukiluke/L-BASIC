@@ -1,15 +1,16 @@
-function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentry as hentry_t, literal$)
-    'ts_mappsings& should be static and only initialised once, but this triggers a bug in QB64
-    'static ts_mappings&(TS_MAX)
-    dim ts_mappings&(TS_MAX)
-    'if not ts_mappings&(0) then
+deflng a-z
+function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry as hentry_t, literal$)
+    'ts_mappsings should be static and only initialised once, but this triggers a bug in QB64
+    'static ts_mappings(TS_MAX)
+    dim ts_mappings(TS_MAX)
+    'if not ts_mappings(0) then
         '$include: '../build/ts_mappings.bm'
     'end if
     static in$
     if not t_state.has_data then
         if eof(1) then
             hentry.typ = TOK_EOF
-            tok_next_token& = TOKENG_LITERAL
+            tok_next_token = TOKENG_LITERAL
             exit function
         end if
         t_state.index = 1
@@ -20,25 +21,25 @@ function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentr
     if t_state.tok_override <> -1 then
         'Hack! See handling of TS_LINELABEL
         hentry.typ = t_state.tok_override
-        tok_next_token& = TOKENG_LITERAL
+        tok_next_token = TOKENG_LITERAL
         t_state.tok_override = -1
         exit function
     end if
 
-    ts_content$ = tok_next_ts$(in$ + chr$(10), t_state, ts_type&)
-    'print "("; ltrim$(str$(ts_type&)); ")";
+    ts_content$ = tok_next_ts$(in$ + chr$(10), t_state, ts_type)
+    'print "("; ltrim$(str$(ts_type)); ")";
 
-    select case ts_type&
+    select case ts_type
         case 0 'Out of data (an error)
             fatalerror "Unexpected end of line"
 
         case TS_ID
             tokeng_ts_id:
             if htable_get_hentry(mainht, ucase$(ts_content$), hentry) then
-                tok_next_token& = TOKENG_FOUND
+                tok_next_token = TOKENG_FOUND
             else
                 hentry.typ = TOK_GENERIC
-                tok_next_token& = TOKENG_NOT_FOUND
+                tok_next_token = TOKENG_NOT_FOUND
             end if
             t_state.linestart = FALSE
 
@@ -46,7 +47,7 @@ function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentr
             t_state.has_data = FALSE
             t_state.linestart = TRUE
             hentry.typ = TOK_NEWLINE
-            tok_next_token& = TOKENG_LITERAL
+            tok_next_token = TOKENG_LITERAL
 
         'case TS_LINELABEL
         '    'Line labels only occur at start of line, otherwise it is a TS_ID followed
@@ -59,14 +60,14 @@ function tok_next_token&(t_state as tokeniser_state_t, mainht as htable_t, hentr
         '    'It could still be a TS_ID (consider DO:LOOP) even at the start of a line. This is currently buggy as we just assume it is a line label.
         '    hentry.typ = TOK_LINELABEL
         '    hentry.value = left$(ts_content$, len(ts_content$) - 1)
-        '    tok_next_token& = TOK_NOT_FOUND
+        '    tok_next_token = TOK_NOT_FOUND
 
         'case TS_LINENUM
         '    if right$(ts_content$, 1) = ":" then ts_content$ = left$(ts_content$, len(ts_content$) - 1)
-        '    tok_next_token& = TOK_LINELABEL
+        '    tok_next_token = TOK_LINELABEL
 
         case else
-            he.typ = ts_mappings&(ts_type&)
+            he.typ = ts_mappings(ts_type)
             t_state.linestart = FALSE
     end select
     ' literal$ is a little badly named; it's just the text that was taken from the input
@@ -75,13 +76,13 @@ end function
 
 sub tok_init (state as tokeniser_state_t)
     'read in arrays and set default values for some control variables
-    for s& = 1 to ubound(t_states~%, 2)
-        read t_statenames$(s&)
-        for b& = 1 to 127
-            read cmd&
-            t_states~%(b&, s&) = cmd&
-        next b&
-    next s&
+    for s = 1 to ubound(t_states~%, 2)
+        read t_statenames$(s)
+        for b = 1 to 127
+            read cmd
+            t_states~%(b, s) = cmd
+        next b
+    next s
     state.index = 1
     state.curstate = 1
     state.has_data = FALSE
@@ -89,40 +90,40 @@ sub tok_init (state as tokeniser_state_t)
     state.tok_override = -1
 end sub
 
-function tok_next_ts$(text$, state as tokeniser_state_t, ts_type&)
+function tok_next_ts$(text$, state as tokeniser_state_t, ts_type)
     if state.index > len(text$) then
         'Out of data
-        ts_type& = 0
+        ts_type = 0
         exit function
     end if
-    for i& = state.index to len(text$)
-        c& = asc(text$, i&)
+    for i = state.index to len(text$)
+        c = asc(text$, i)
         'No utf-8 support for now
-        if c& > 127 then fatalerror "Character outside character set (" + ltrim$(str$(c&)) + ")"
-        command& = t_states~%(c&, state.curstate)
+        if c > 127 then fatalerror "Character outside character set (" + ltrim$(str$(c)) + ")"
+        command = t_states~%(c, state.curstate)
         'Rules of the form "A: B ~ Error" encode to 0
-        if command& = 0 then fatalerror chr$(34) + chr$(c&) + chr$(34) + " from " + t_statenames$(state.curstate) + " illegal"
+        if command = 0 then fatalerror chr$(34) + chr$(c) + chr$(34) + " from " + t_statenames$(state.curstate) + " illegal"
         'High byte is next state, low byte is token, high bit of low byte is pushback flag
-        ts_type_internal& = command& and 127
-        pushback& = command& and 128
-        'print t_statenames$(state.curstate); ":"; c&; "~ ";
-        state.curstate = command& \ 2^8
+        ts_type_internal = command and 127
+        pushback = command and 128
+        'print t_statenames$(state.curstate); ":"; c; "~ ";
+        state.curstate = command \ 2^8
         'print t_statenames$(state.curstate)
-        if ts_type_internal& > 0 then
-            ts_type& = ts_type_internal&
-            if pushback& then
+        if ts_type_internal > 0 then
+            ts_type = ts_type_internal
+            if pushback then
                 'This doesn't include the current character, and uses it next time...
-                if ts_type& <> 1 then tok_next_ts$ = mid$(text$, state.index, i& - state.index)
-                state.index = i&
+                if ts_type <> 1 then tok_next_ts$ = mid$(text$, state.index, i - state.index)
+                state.index = i
             else
                 '...but this does include it, and starts from the next character next time.
-                if ts_type& <> 1 then tok_next_ts$ = mid$(text$, state.index, i& - state.index + 1)
-                state.index = i& + 1
+                if ts_type <> 1 then tok_next_ts$ = mid$(text$, state.index, i - state.index + 1)
+                state.index = i + 1
             end if
-            if ts_type& <> TS_SKIP then exit function
+            if ts_type <> TS_SKIP then exit function
         end if
-    next i&
-    ts_type& = 0
+    next i
+    ts_type = 0
 end function 
 
 '$include: '../build/ts_data.bm'
