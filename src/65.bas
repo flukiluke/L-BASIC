@@ -66,8 +66,7 @@ function ps_stmt (t_state as tokeniser_state_t)
             end if
             ps_stmt = ps_assignment(t_state, sref)
         case TOK_STMTREG
-            print literal$
-            
+            ps_stmt = ps_stmtreg(t_state, he)
         case TOK_EOF
             ps_stmt = 0
         case else
@@ -91,6 +90,17 @@ function ps_assignment (t_state as tokeniser_state_t, sref)
 
     ps_assert_token tok_next_token(t_state, he, literal$), TOK_NEWLINE
     print "Completed assignment"
+end function
+
+function ps_stmtreg(t_state as tokeniser_state_t, he as hentry_t)
+    print "Start stmtreg"
+    root = ast_add_node(AST_CALL)
+    target = ast_add_node(AST_SREF)
+    target.ref = he.id
+    ast_attach root, target
+    ps_assert_token tok_next_token(t_state, he, literal$), TOK_NEWLINE
+    ps_stmtreg = root
+    print "Completed stmtreg"
 end function
 
 function ps_expr(t_state as tokeniser_state_t)
