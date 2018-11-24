@@ -3,7 +3,7 @@ function tok_human_readable$(token)
     tok_human_readable$ = ltrim$(str$(token))
 end function
 
-function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry as hentry_t, literal$)
+function tok_next_token(t_state as tokeniser_state_t, hentry as hentry_t, literal$)
     'ts_mappsings should be static and only initialised once, but this triggers a bug in QB64
     'static ts_mappings(TS_MAX)
     dim ts_mappings(TS_MAX)
@@ -13,8 +13,7 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
     static in$
     if not t_state.has_data then
         if eof(1) then
-            hentry.typ = TOK_EOF
-            tok_next_token = TOKENG_LITERAL
+            tok_next_token = TOK_EOF
             exit function
         end if
         t_state.index = 1
@@ -24,8 +23,7 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
 
     if t_state.tok_override <> -1 then
         'Hack! See handling of TS_LINELABEL
-        hentry.typ = t_state.tok_override
-        tok_next_token = TOKENG_LITERAL
+        tok_next_token = t_state.tok_override
         t_state.tok_override = -1
         exit function
     end if
@@ -38,20 +36,19 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
 
         case TS_ID
             tokeng_ts_id:
-            if htable_get_hentry(mainht, ucase$(ts_content$), hentry) then
-                tok_next_token = TOKENG_FOUND
-                print "("; hentry.typ; ")"
+            id = htable_get_id(ucase$(ts_content$))
+            if id = 0 then
+                tok_next_token = TOK_GENERIC
             else
-                hentry.typ = TOK_GENERIC
-                tok_next_token = TOKENG_NOT_FOUND
+                hentry = htable_entries(id)
+                tok_next_token = hentry.typ
             end if
             t_state.linestart = FALSE
 
         case TS_NEWLINE
             t_state.has_data = FALSE
             t_state.linestart = TRUE
-            hentry.typ = TOK_NEWLINE
-            tok_next_token = TOKENG_LITERAL
+            tok_next_token = TOK_NEWLINE
 
         'case TS_LINELABEL
         '    'Line labels only occur at start of line, otherwise it is a TS_ID followed
@@ -71,12 +68,12 @@ function tok_next_token(t_state as tokeniser_state_t, mainht as htable_t, hentry
         '    tok_next_token = TOK_LINELABEL
 
         case else
-            hentry.typ = ts_mappings(ts_type)
+            tok_next_token = ts_mappings(ts_type)
             t_state.linestart = FALSE
     end select
     ' literal$ is a little badly named; it's just the text that was taken from the input
     literal$ = ucase$(ts_content$)
-    print "Read: " + tok_human_readable$(hentry.typ) " from " + str$(ts_type)
+    print "Read '" + literal$ + "' ("; tok_next_token; ")"
 end function
 
 sub tok_init (state as tokeniser_state_t)
