@@ -14,6 +14,10 @@ he.typ = TOK_STMTREG
 ignore = htable_add_hentry("_AUTODISPLAY", he)
 ignore = htable_add_hentry("BEEP", he)
 ignore = htable_add_hentry("CLS", he)
+he.typ = TOK_IF
+ignore = htable_add_hentry("IF", he)
+he.typ = TOK_THEN
+ignore = htable_add_hentry("THEN", he)
 
 if _commandcount < 1 then
     inputfile$ = "/dev/stdin"
@@ -27,10 +31,7 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
-dim t_state as tokeniser_state_t
-tok_init t_state
-
-ps_file t_state
+ps_file
 system
 
 file_error:
@@ -43,20 +44,20 @@ generic_error:
         fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
     end if
 
-sub ps_file (t_state as tokeniser_state_t)
+sub ps_file
     root = 0 'Treat node 0 as the root of the AST
     ast_nodes(root).typ = AST_BLOCK
     do
-        stmt = ps_stmt(t_state)
+        stmt = ps_stmt
         if stmt = 0 then exit do 'use 0 to signal the end
         ast_attach root, stmt
     loop
 end sub
 
-function ps_stmt (t_state as tokeniser_state_t)
+function ps_stmt
     print "Start statement"
     dim he as hentry_t
-    token = tok_next_token(t_state, he, literal$)
+    token = tok_next_token(he, literal$)
     select case token
         case TOK_GENERIC, TOK_VARIABLE
             ' Assume implicit variable declaration
@@ -64,9 +65,11 @@ function ps_stmt (t_state as tokeniser_state_t)
                 he.typ = TOK_VARIABLE
                 sref = htable_add_hentry(ucase$(literal$), he)
             end if
-            ps_stmt = ps_assignment(t_state, sref)
+            ps_stmt = ps_assignment(sref)
         case TOK_STMTREG
-            ps_stmt = ps_stmtreg(t_state, he)
+            ps_stmt = ps_stmtreg(he)
+        case TOK_IF
+            ps_stmt = ps_if
         case TOK_EOF
             ps_stmt = 0
         case else
@@ -75,7 +78,20 @@ function ps_stmt (t_state as tokeniser_state_t)
     print "Completed statement"
 end function
 
-function ps_assignment (t_state as tokeniser_state_t, sref)
+function ps_if
+    print "Start conditional"
+    dim he as hentry_t
+    root = ast_add_node(AST_IF)
+    
+    'Condition
+    ast_attach root, ps_expr
+
+    ps_assert_token tok_next_token(he, literal$), TOK_THEN
+    ps_if = root
+    print "Completed conditional"
+end function
+    
+function ps_assignment (sref)
     print "Start assignment"
     dim he as hentry_t
     root = ast_add_node(AST_ASSIGN)
@@ -83,30 +99,30 @@ function ps_assignment (t_state as tokeniser_state_t, sref)
     ast_nodes(dest).ref = sref
     ast_attach root, dest
 
-    ps_assert_token tok_next_token(t_state, he, literal$), TOK_EQUALS
+    ps_assert_token tok_next_token(he, literal$), TOK_EQUALS
 
-    ast_attach root, ps_expr(t_state)
+    ast_attach root, ps_expr
     ps_assignment = root
 
-    ps_assert_token tok_next_token(t_state, he, literal$), TOK_NEWLINE
+    ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
     print "Completed assignment"
 end function
 
-function ps_stmtreg(t_state as tokeniser_state_t, he as hentry_t)
+function ps_stmtreg(he as hentry_t)
     print "Start stmtreg"
     root = ast_add_node(AST_CALL)
     target = ast_add_node(AST_SREF)
     target.ref = he.id
     ast_attach root, target
-    ps_assert_token tok_next_token(t_state, he, literal$), TOK_NEWLINE
+    ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
     ps_stmtreg = root
     print "Completed stmtreg"
 end function
 
-function ps_expr(t_state as tokeniser_state_t)
+function ps_expr
     print "Start expr"
     dim he as hentry_t
-    ignore = tok_next_token(t_state, he, literal$)
+    ignore = tok_next_token(he, literal$)
     root = ast_add_node(AST_EXPR)
     ps_expr = root
     print "Completed expr"
