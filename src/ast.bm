@@ -1,10 +1,17 @@
 deflng a-z
 
+function ast_add_constant(c$)
+    if ast_last_constant = ubound(ast_constants) then ast_expand_constants_array
+    ast_last_constant = ast_last_constant + 1
+    ast_constants(ast_last_constant) = c$
+    ast_add_constant = ast_last_constant
+end function
+    
 function ast_add_node(typ)
-    if ast_last = ubound(ast_nodes) then ast_expand
-    ast_last = ast_last + 1
-    ast_nodes(ast_last).typ = typ
-    ast_add_node = ast_last
+    if ast_last_node = ubound(ast_nodes) then ast_expand_nodes_arrays
+    ast_last_node = ast_last_node + 1
+    ast_nodes(ast_last_node).typ = typ
+    ast_add_node = ast_last_node
 end function
 
 sub ast_attach(parent, child)
@@ -12,8 +19,21 @@ sub ast_attach(parent, child)
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
 
-sub ast_expand()
+sub ast_expand_nodes_arrays()
     new_size = ubound(ast_nodes) * 2
     redim _preserve ast_nodes(new_size) as ast_node_t
     redim _preserve ast_children(new_size) as string
+end sub
+
+sub ast_expand_constants_array()
+    new_size = ubound(ast_constants) * 2
+    redim _preserve ast_constants(new_size) as string
+end sub
+
+sub ast_dump(root)
+    print "("; ast_nodes(root).typ; ast_nodes(root).ref;
+    for i = 1 to len(ast_children(root)) step 4
+        ast_dump cvl(mid$(ast_children(root), i, 4))
+    next i
+    print ")";
 end sub

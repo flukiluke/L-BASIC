@@ -1,0 +1,45 @@
+deflng a-z
+
+function pt_expr(rbp)
+    static token as long
+    static next_he as hentry_t
+    static next_literal$
+    dim he as hentry_t
+    if token = 0 then
+        t = tok_next_token(he, literal$)
+    else
+        t = token
+        he = next_he
+        literal$ = next_literal$
+    end if
+    token = tok_next_token(next_he, next_literal$)
+    left_node = nud(t, he, literal$)
+    while rbp < lbp(token)
+        t = token
+        he = next_he
+        literal$ = next_literal$
+        token = tok_next_token(next_he, next_literal$)
+        left_node = led(t, he, literal$, left_node)
+    wend
+    pt_expr = left_node
+end function
+
+function nud(token, he as hentry_t, literal$)
+    select case token
+    case TOK_NUMINT
+        node = ast_add_node(AST_CONSTANT)
+        ast_nodes(node).ref = ast_add_constant(literal$)
+    end select
+    nud = node
+end function
+
+function led(token, he as hentry_t, literal$, left_node)
+    select case token
+    case TOK_PLUS
+        node = ast_add_node(AST_CALL)
+        ast_nodes(node).ref = he.id
+        ast_attach node, left_node
+        ast_attach node, pt_expr(10)
+    end select
+    led = node
+end function

@@ -6,6 +6,7 @@ on error goto generic_error
 
 '$include: 'htable.bi'
 '$include: 'tokeng.bi'
+'$include: 'pratt.bi'
 '$include: 'ast.bi'
 
 dim he as hentry_t
@@ -18,6 +19,8 @@ he.typ = TOK_IF
 ignore = htable_add_hentry("IF", he)
 he.typ = TOK_THEN
 ignore = htable_add_hentry("THEN", he)
+he.typ = TOK_PLUS
+ignore = htable_add_hentry("+", he)
 
 if _commandcount < 1 then
     inputfile$ = "/dev/stdin"
@@ -31,7 +34,11 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
-ps_file
+'ps_file
+ignore = tok_next_token(he, literal$)
+ast_attach 0, pt_expr(0)
+ast_dump 0
+print
 system
 
 file_error:
@@ -87,6 +94,7 @@ function ps_if
     ast_attach root, ps_expr
 
     ps_assert_token tok_next_token(he, literal$), TOK_THEN
+
     ps_if = root
     print "Completed conditional"
 end function
@@ -141,6 +149,7 @@ sub fatalerror(msg$)
     system
 end sub
 
+'$include: 'pratt.bm'
 '$include: 'htable.bm'
 '$include: 'tokeng.bm'
 '$include: 'ast.bm'
