@@ -3,7 +3,7 @@ function tok_human_readable$(token)
     tok_human_readable$ = ltrim$(str$(token))
 end function
 
-sub tok_please_repeat()
+sub tok_please_repeat
     tokeng_state.prefill = TRUE
 end sub
 
@@ -26,6 +26,7 @@ function tok_next_token(hentry as hentry_t, literal$)
 
     if not tokeng_state.has_data then
         if eof(1) then
+            tokeng_repeat_token = TOK_EOF
             tok_next_token = TOK_EOF
             exit function
         end if
@@ -71,7 +72,7 @@ function tok_next_token(hentry as hentry_t, literal$)
     tokeng_repeat_hentry_id = id
     tokeng_repeat_literal$ = literal$
     tok_next_token = token
-    print "Read '" + literal$ + "' ("; tok_next_token; ")"
+    'print "Read '" + literal$ + "' ("; tok_next_token; ")"
 end function
 
 sub tok_init ()

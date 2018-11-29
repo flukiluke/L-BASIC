@@ -1,24 +1,22 @@
 deflng a-z
 
 function pt_expr(rbp)
-    static token as long
-    static next_he as hentry_t
-    static next_literal$
     dim he as hentry_t
-    if token = 0 then
+    if pt_token = 0 then
         t = tok_next_token(he, literal$)
     else
-        t = token
-        he = next_he
-        literal$ = next_literal$
+        t = pt_token
+        he = pt_next_he
+        literal$ = pt_next_literal$
     end if
-    token = tok_next_token(next_he, next_literal$)
+    pt_token = tok_next_token(pt_next_he, pt_next_literal$)
     left_node = nud(t, he, literal$)
-    while rbp < lbp(token)
-        t = token
-        he = next_he
-        literal$ = next_literal$
-        token = tok_next_token(next_he, next_literal$)
+    print "rbp:"; rbp; "lbp:"; lbp(pt_token)
+    while rbp < lbp(pt_token)
+        t = pt_token
+        he = pt_next_he
+        literal$ = pt_next_literal$
+        pt_token = tok_next_token(pt_next_he, pt_next_literal$)
         left_node = led(t, he, literal$, left_node)
     wend
     pt_expr = left_node

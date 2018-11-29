@@ -19,6 +19,8 @@ he.typ = TOK_IF
 ignore = htable_add_hentry("IF", he)
 he.typ = TOK_THEN
 ignore = htable_add_hentry("THEN", he)
+he.typ = TOK_ENDIF
+ignore = htable_add_hentry("ENDIF", he)
 he.typ = TOK_PLUS
 ignore = htable_add_hentry("+", he)
 
@@ -34,12 +36,7 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
-ps_file
-'ignore = tok_next_token(he, literal$)
-'ast_nodes(0).typ = AST_BLOCK
-'ast_attach 0, pt_expr(0)
-ast_dump 0
-print
+ast_dump_pretty ps_block
 system
 
 file_error:
@@ -52,15 +49,28 @@ generic_error:
         fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
     end if
 
-sub ps_file
-    root = 0 'Treat node 0 as the root of the AST
-    ast_nodes(root).typ = AST_BLOCK
+sub ps_gobble(token)
+    dim he as hentry_t
     do
+        t = tok_next_token(he, literal$)
+    loop until t <> token or t = TOK_EOF
+    tok_please_repeat
+end sub
+    
+
+function ps_block
+    print "Start block"
+    dim he as hentry_t
+    root = ast_add_node(AST_BLOCK)
+    do
+        ps_gobble(TOK_NEWLINE)
         stmt = ps_stmt
-        if stmt = 0 then exit do 'use 0 to signal the end
+        if stmt = 0 then exit do 'use 0 to signal the end of a block
         ast_attach root, stmt
     loop
-end sub
+    ps_block = root
+    print "End block"
+end function
 
 function ps_stmt
     print "Start statement"
@@ -78,10 +88,11 @@ function ps_stmt
             ps_stmt = ps_stmtreg(he)
         case TOK_IF
             ps_stmt = ps_if
-        case TOK_EOF
+        case TOK_EOF, TOK_ENDIF
             ps_stmt = 0
+            tok_please_repeat
         case else
-            fatalerror "Syntax error: unexpected " + tok_human_readable$(he.typ)
+            fatalerror "Syntax error: unexpected " + tok_human_readable$(token)
     end select
     print "Completed statement"
 end function
@@ -97,10 +108,15 @@ function ps_if
     'the THEN
     ps_assert_token tok_next_token(he, literal$), TOK_THEN
 
-    'block of code
-    ast_attach root, ps_stmt
-
-    ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
+    token = tok_next_token(he, literal$)
+    if token = TOK_NEWLINE then 'Multi-line if
+        ast_attach root, ps_block
+        ps_assert_token tok_next_token(he, literal$), TOK_ENDIF
+    else
+        tok_please_repeat
+        ast_attach root, ps_stmt
+        ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
+    end if
     ps_if = root
     print "Completed conditional"
 end function
@@ -132,7 +148,8 @@ end function
 
 function ps_expr
     print "Start expr"
-    ps_expr = pt_expr(0)
+    pt_token = 0 'Reset pratt parser
+    ps_expr = pt_expr(1)
     tok_please_repeat
     print "Completed expr"
 end function
