@@ -30,9 +30,73 @@ sub ast_expand_constants_array()
     redim _preserve ast_constants(new_size) as string
 end sub
 
+sub ast_dump_pretty(root)
+    select case ast_nodes(root).typ
+    case AST_ASSIGN
+        print htable_names(ast_nodes(root).ref); " = ";
+        for i = 1 to len(ast_children(root)) step 4
+            ast_dump_pretty cvl(mid$(ast_children(root), i, 4))
+        next i
+    case AST_IF
+        print "IF ";
+        ast_dump_pretty cvl(left$(ast_children(root), 4))
+        print " THEN ";
+        ast_dump_pretty cvl(mid$(ast_children(root), 5, 4))
+    case AST_DO_PRE
+        print "DO-PRE";
+    case AST_DO_POST
+        print "DO-POST";
+    case AST_FOR
+        print "FOR";
+        print htable_names(ast_nodes(root).ref);
+    case AST_SELECT
+        print "SELECT";
+    case AST_CALL
+        print "call(";
+        print htable_names(ast_nodes(root).ref);
+        if len(ast_children(root)) then print ", ";
+        for i = 1 to len(ast_children(root)) step 4
+            ast_dump_pretty cvl(mid$(ast_children(root), i, 4))
+            if i + 3 < len(ast_children(root)) then print ", ";
+        next i
+        print ")";
+    case AST_CONSTANT
+        print ast_constants(ast_nodes(root).ref);
+    case AST_BLOCK
+        for i = 1 to len(ast_children(root)) step 4
+            ast_dump_pretty cvl(mid$(ast_children(root), i, 4))
+            print
+        next i
+    end select
+end sub
+
 sub ast_dump(root)
-    print "("; ast_nodes(root).typ; ast_nodes(root).ref;
+    print "(";
+    select case ast_nodes(root).typ
+    case AST_ASSIGN
+        print "ASSIGN ";
+        print htable_names(ast_nodes(root).ref);
+    case AST_IF
+        print "IF";
+    case AST_DO_PRE
+        print "DO-PRE";
+    case AST_DO_POST
+        print "DO-POST";
+    case AST_FOR
+        print "FOR";
+        print htable_names(ast_nodes(root).ref);
+    case AST_SELECT
+        print "SELECT";
+    case AST_CALL
+        print "CALL ";
+        print htable_names(ast_nodes(root).ref);
+    case AST_CONSTANT
+        print ast_constants(ast_nodes(root).ref);
+    case AST_BLOCK
+        print "BLOCK";
+    end select
     for i = 1 to len(ast_children(root)) step 4
+        if i <= len(ast_children(root)) then print " ";
         ast_dump cvl(mid$(ast_children(root), i, 4))
     next i
     print ")";

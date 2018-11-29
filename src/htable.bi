@@ -24,5 +24,6 @@ END TYPE
 
 DIM SHARED htable AS htable_t
 DIM SHARED htable_entries(100) AS hentry_t
+DIM SHARED htable_names(100) AS STRING
 
 htable_create htable, 127

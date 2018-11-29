@@ -3,7 +3,19 @@ function tok_human_readable$(token)
     tok_human_readable$ = ltrim$(str$(token))
 end function
 
+sub tok_please_repeat()
+    tokeng_state.prefill = TRUE
+end sub
+
 function tok_next_token(hentry as hentry_t, literal$)
+    if tokeng_state.prefill then
+        tokeng_state.prefill = FALSE
+        hentry = htable_entries(tokeng_repeat_hentry_id)
+        literal$ = tokeng_repeat_literal$
+        tok_next_token = tokeng_repeat_token
+        exit function
+    end if
+
     'ts_mappsings should be static and only initialised once, but this triggers a bug in QB64
     'static ts_mappings(TS_MAX)
     dim ts_mappings(TS_MAX)
@@ -31,30 +43,34 @@ function tok_next_token(hentry as hentry_t, literal$)
         case TS_ID
             id = htable_get_id(ucase$(ts_content$))
             if id = 0 then
-                tok_next_token = TOK_GENERIC
+                token = TOK_GENERIC
             else
                 hentry = htable_entries(id)
-                tok_next_token = hentry.typ
+                token = hentry.typ
             end if
             tokeng_state.linestart = FALSE
 
         case TS_NEWLINE
             tokeng_state.has_data = FALSE
             tokeng_state.linestart = TRUE
-            tok_next_token = TOK_NEWLINE
+            token = TOK_NEWLINE
 
         case else
             id = htable_get_id(ucase$(ts_content$))
             if id > 0 then
                 hentry = htable_entries(id)
-                tok_next_token = hentry.typ
+                token = hentry.typ
             else
-                tok_next_token = ts_mappings(ts_type)
+                token = ts_mappings(ts_type)
             end if
             tokeng_state.linestart = FALSE
     end select
     ' literal$ is a little badly named; it's just the text that was taken from the input
     literal$ = ucase$(ts_content$)
+    tokeng_repeat_token = token
+    tokeng_repeat_hentry_id = id
+    tokeng_repeat_literal$ = literal$
+    tok_next_token = token
     print "Read '" + literal$ + "' ("; tok_next_token; ")"
 end function
 
@@ -71,6 +87,7 @@ sub tok_init ()
     tokeng_state.curstate = 1
     tokeng_state.has_data = FALSE
     tokeng_state.linestart = TRUE
+    tokeng_state.prefill = FALSE
 end sub
 
 function tok_next_ts$(text$, ts_type)

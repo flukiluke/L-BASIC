@@ -2,9 +2,13 @@ $CHECKING:OFF
 DEFLNG A-Z
 
 FUNCTION htable_add_hentry (ckey$, he AS hentry_t)
-    IF htable.elements = UBOUND(htable_entries) THEN REDIM _PRESERVE htable_entries(htable.elements * 2) AS hentry_t
+    IF htable.elements = UBOUND(htable_entries) THEN
+        REDIM _PRESERVE htable_entries(htable.elements * 2) AS hentry_t
+        REDIM _PRESERVE htable_names(htable.elements * 2) AS STRING
+    END IF
     he.id = htable.elements + 1 '+1 to avoid using 0
     htable_entries(he.id) = he
+    htable_names(he.id) = ckey$
     htable_add_local htable, ckey$, he.id
     htable_add_hentry = htable.elements
 END FUNCTION

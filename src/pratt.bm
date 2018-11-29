@@ -29,6 +29,8 @@ function nud(token, he as hentry_t, literal$)
     case TOK_NUMINT
         node = ast_add_node(AST_CONSTANT)
         ast_nodes(node).ref = ast_add_constant(literal$)
+    case else
+        fatalerror "Unexpected " + tok_human_readable$(token) + " " + literal$
     end select
     nud = node
 end function
@@ -40,6 +42,8 @@ function led(token, he as hentry_t, literal$, left_node)
         ast_nodes(node).ref = he.id
         ast_attach node, left_node
         ast_attach node, pt_expr(10)
+    case else
+        fatalerror "Unexpected " + tok_human_readable$(token) + " " + literal$
     end select
     led = node
 end function

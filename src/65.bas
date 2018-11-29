@@ -34,9 +34,10 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
-'ps_file
-ignore = tok_next_token(he, literal$)
-ast_attach 0, pt_expr(0)
+ps_file
+'ignore = tok_next_token(he, literal$)
+'ast_nodes(0).typ = AST_BLOCK
+'ast_attach 0, pt_expr(0)
 ast_dump 0
 print
 system
@@ -93,8 +94,13 @@ function ps_if
     'Condition
     ast_attach root, ps_expr
 
+    'the THEN
     ps_assert_token tok_next_token(he, literal$), TOK_THEN
 
+    'block of code
+    ast_attach root, ps_stmt
+
+    ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
     ps_if = root
     print "Completed conditional"
 end function
@@ -119,20 +125,15 @@ end function
 function ps_stmtreg(he as hentry_t)
     print "Start stmtreg"
     root = ast_add_node(AST_CALL)
-    target = ast_add_node(AST_SREF)
-    target.ref = he.id
-    ast_attach root, target
-    ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
+    ast_nodes(root).ref = he.id
     ps_stmtreg = root
     print "Completed stmtreg"
 end function
 
 function ps_expr
     print "Start expr"
-    dim he as hentry_t
-    ignore = tok_next_token(he, literal$)
-    root = ast_add_node(AST_EXPR)
-    ps_expr = root
+    ps_expr = pt_expr(0)
+    tok_please_repeat
     print "Completed expr"
 end function
         
