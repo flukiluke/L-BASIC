@@ -1,21 +1,33 @@
-'tokgen - Token generator
-'Generate declarations of tokens and the TS's that map to them.
+'tokgen - Token Generator & Registerer
+'Create TOK_ definitions and register them in the lookup table
 '
-'Don't worry, this one's simpler than tsgen :)
-'The next layer above TS's are tokens, which are actual language keywords and elements.
+'Nearly every element of the program can be expressed as a token, which is identified with the TOK_
+'constant ID. The htable system also has stores all tokens by name and can tell you their ID.
+'Once you have the ID you can access the extra data defined for that token in htable_entries(). See
+'htable.bi for an explanation of that data.
 '
-'The input file is considered a list of tokens, one per line. These are declared as the token name
-'uppercased and prefixed with TOK_.
-'Optionally, the token may be followed by a space and a TS name, to indicate that that TS maps directly
-'to that token.
+'Note that because the ID's are assigned by the htable functions in the order items are registered,
+'any manual edits to the registration code will likely cause it to be out of sync with the TOK_ definitions.
+'Re-run this generation program instead.
 '
-'Blank lines are ignored, comments are given by # on their own line.
+'The input file has one line per token definition, consisting of two or more fields separated by spaces.
+'The first field is the token type, corresponding to a HE_ constant defined in htable.bi (without the HE_
+' prefix) or "LITERAL" which does not get an entry in the htable.
+'The next field is the the token itself. If the literal representation of the token needs to differ from
+'the name used in the constant (such as for symbols), a "safe" representation can be given in parentheses
+'immediately after the name. Example: "+(plus)". There must be no space between anywhere in the field.
+'Depending on the token type, there may be 0 or more data fields, often refered to as vn (v1, v2, etc.).
+'The format and meaning of these is specific to the token type.
+'
+'Blank lines are ignored. COmments may be given with # on their own line.
+
 $console:only
 _dest _console
 on error goto ehandler
+deflng a-z
 
 if _commandcount <> 3 then
-    print "Usage: "; command$(0); " "; "<input file> <token output file> <mapping output file>"
+    print "Usage: "; command$(0); " "; "<input file> <const file> <registration file>"
     system 1
 end if
 
@@ -28,27 +40,96 @@ open command$(1) for input as #1
 open command$(2) for output as #2
 open command$(3) for output as #3
 
+redim shared parts$(0)
+redim shared previous$(0)
+redim shared queued_literals$(0)
+dim shared linenum
+
 do while not eof(1)
     linenum = linenum + 1
     line input #1, l$
-    l$ = ltrim$(rtrim$(l$))
-    if not (left$(l$, 1) = "#" or l$ = "") then
-        if instr(l$, " ") then
-        tsname$ = mid$(l$, instr(l$, " ") + 1)
-        l$ = left$(l$, instr(l$, " ") - 1)
-        print #3, "ts_mappings&(TS_" + ucase$(tsname$) + ") = TOK_" + ucase$(l$)
-        end if
-        print #2, "CONST TOK_" + ucase$(l$) + " =" + str$(toknum&)
-        toknum& = toknum& + 1
+    l$ = ucase$(ltrim$(rtrim$(l$)))
+    if left$(l$, 1) = "#" or l$ = "" then _continue
+    split l$
+    if ubound(parts$) > ubound(previous$) then redim _preserve previous$(ubound(parts$))
+
+    altname_start = instr(parts$(1), "(")
+    if altname_start then
+        tokname$ = mid$(parts$(1), altname_start + 1, len(parts$(1)) - altname_start - 1)
+        toksym$ = left$(parts$(1), altname_start - 1)
+    else
+        tokname$ = parts$(1)
+        toksym$ = tokname$
     end if
-loop        
+    if parts$(0) = "LITERAL" then
+        queue_literal tokname$
+        _continue
+    end if
+    toknum = toknum + 1
+    print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
+    select case parts$(0)
+    case "GENERIC"
+        assertsize  2
+        if previous$(0) <> "GENERIC" then print #3, "he.typ = HE_GENERIC"
+    case "INFIX"
+        assertsize 4
+        if previous$(0) <> "INFIX" then print #3, "he.typ = HE_INFIX"
+        if previous$(2) <> parts$(2) then print #3, "he.v1 = "; parts$(2)
+        if previous$(3) <> parts$(3) then
+            if parts$(3) = "right" then print #3, "he.v2 = 1" else print #3, "he.v2 = 0"
+        end if
+    case else
+        fatalerror "Unknown token type " + parts$(0)
+    end select
+        for i = 0 to ubound(parts$)
+            previous$(i) = parts$(i)
+        next i
+        print #3, "htable_add_hentry " + chr$(34) + toksym$ + chr$(34) + ", he"
+loop
+
+for l = 1 to ubound(queued_literals$)
+    toknum = toknum + 1
+    print #2, "CONST TOK_" + queued_literals$(l) + " =" + str$(toknum)
+next l
+
 system
 
 ehandler:
-    print err; _errorline
+    print "Error"; err; _errorline
     system 1
 
-fatalerror:
-    print command$(0); ": "; command$(1); ":"; ltrim$(str$(linenum)); ": "; e$
+sub queue_literal(n$)
+    redim _preserve queued_literals$(ubound(queued_literals$) + 1)
+    queued_literals$(ubound(queued_literals$)) = n$
+end sub
+
+sub split(in$)
+    redim parts$(0)
+    start = 1
+    do
+        sp = instr(start, in$, " ")
+        if sp = start then
+            start = start + 1
+            _continue
+        end if
+        if sp then
+            parts$(ubound(parts$)) = mid$(in$, start, sp - start)
+            start = sp + 1
+            redim _preserve parts$(ubound(parts$) + 1)
+        else
+            parts$(ubound(parts$)) = mid$(in$, start)
+            exit sub
+        end if
+    loop
+end sub
+
+sub assertsize(expected)
+    if ubound(parts$) <> expected - 1 then
+        fatalerror "Expected" + str$(expected) + " components, got" + str$(ubound(parts$) + 1)
+    end if
+end sub
+
+sub fatalerror(msg$)
+    print command$(0); ": "; command$(1); ":"; ltrim$(str$(linenum)); ": "; msg$
     system 1
-    return
+end sub
