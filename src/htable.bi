@@ -20,7 +20,23 @@ END TYPE
 TYPE hentry_t
     id AS LONG
     typ AS LONG
+    'The vn are generic parameters whose meaning depends on typ.
+    v1 AS LONG
+    v2 AS LONG
 END TYPE
+
+'A generic entry. No vn parameters are used.
+CONST HE_NORMAL = 1
+'A function with infix notation.
+'v1 -> binding power (controls precedence)
+'v2 -> associativity (1/0 = right/left)
+CONST HE_INFIX = 2
+'A function with prefix notation (and parentheses are not required)
+'v1 -> binding power (controls precedence)
+CONST HE_PREFIX = 3
+'A variable.
+'v1 -> the data type as far as can be determined
+CONST HE_VARIABLE = 4
 
 DIM SHARED htable AS htable_t
 DIM SHARED htable_entries(100) AS hentry_t
