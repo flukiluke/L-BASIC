@@ -45,6 +45,7 @@ redim shared previous$(0)
 redim shared queued_literals$(0)
 dim shared linenum
 
+print #3, "dim registration_entry as hentry_t"
 do while not eof(1)
     linenum = linenum + 1
     line input #1, l$
@@ -70,13 +71,17 @@ do while not eof(1)
     select case parts$(0)
     case "GENERIC"
         assertsize  2
-        if previous$(0) <> "GENERIC" then print #3, "he.typ = HE_GENERIC"
+        if previous$(0) <> "GENERIC" then print #3, "registration_entry.typ = HE_GENERIC"
+    case "PREFIX"
+        assertsize 3
+        if previous$(0) <> "PREFIX" then print #3, "registration_entry.typ = HE_PREFIX"
+        if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
     case "INFIX"
         assertsize 4
-        if previous$(0) <> "INFIX" then print #3, "he.typ = HE_INFIX"
-        if previous$(2) <> parts$(2) then print #3, "he.v1 = "; parts$(2)
+        if previous$(0) <> "INFIX" then print #3, "registration_entry.typ = HE_INFIX"
+        if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
         if previous$(3) <> parts$(3) then
-            if parts$(3) = "right" then print #3, "he.v2 = 1" else print #3, "he.v2 = 0"
+            if parts$(3) = "right" then print #3, "registration_entry.v2 = 1" else print #3, "registration_entry.v2 = 0"
         end if
     case else
         fatalerror "Unknown token type " + parts$(0)
@@ -84,7 +89,7 @@ do while not eof(1)
         for i = 0 to ubound(parts$)
             previous$(i) = parts$(i)
         next i
-        print #3, "htable_add_hentry " + chr$(34) + toksym$ + chr$(34) + ", he"
+        print #3, "htable_add_hentry " + chr$(34) + toksym$ + chr$(34) + ", registration_entry"
 loop
 
 for l = 1 to ubound(queued_literals$)
