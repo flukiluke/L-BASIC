@@ -19,7 +19,7 @@
 'Depending on the token type, there may be 0 or more data fields, often refered to as vn (v1, v2, etc.).
 'The format and meaning of these is specific to the token type.
 '
-'Blank lines are ignored. COmments may be given with # on their own line.
+'Blank lines are ignored. Comments may be given with # on their own line.
 
 $console:only
 _dest _console
@@ -42,7 +42,6 @@ open command$(3) for output as #3
 
 redim shared parts$(0)
 redim shared previous$(0)
-redim shared queued_literals$(0)
 dim shared linenum
 
 print #3, "dim registration_entry as hentry_t"
@@ -63,7 +62,8 @@ do while not eof(1)
         toksym$ = tokname$
     end if
     if parts$(0) = "LITERAL" then
-        queue_literal tokname$
+        literal_toknum = literal_toknum - 1
+        print #2, "CONST TOK_" + tokname$ + " =" + str$(literal_toknum)
         _continue
     end if
     toknum = toknum + 1
@@ -91,22 +91,11 @@ do while not eof(1)
         next i
         print #3, "htable_add_hentry " + chr$(34) + toksym$ + chr$(34) + ", registration_entry"
 loop
-
-for l = 1 to ubound(queued_literals$)
-    toknum = toknum + 1
-    print #2, "CONST TOK_" + queued_literals$(l) + " =" + str$(toknum)
-next l
-
 system
 
 ehandler:
     print "Error"; err; _errorline
     system 1
-
-sub queue_literal(n$)
-    redim _preserve queued_literals$(ubound(queued_literals$) + 1)
-    queued_literals$(ubound(queued_literals$)) = n$
-end sub
 
 sub split(in$)
     redim parts$(0)
