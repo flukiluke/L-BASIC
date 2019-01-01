@@ -16,6 +16,8 @@
 'The next field is the the token itself. If the literal representation of the token needs to differ from
 'the name used in the constant (such as for symbols), a "safe" representation can be given in parentheses
 'immediately after the name. Example: "+(plus)". There must be no space between anywhere in the field.
+'A backslash followed by a number may optionally be used to represent a special character, such as \10 for
+'the newline.
 'Depending on the token type, there may be 0 or more data fields, often refered to as vn (v1, v2, etc.).
 'The format and meaning of these is specific to the token type.
 '
@@ -61,6 +63,11 @@ do while not eof(1)
         tokname$ = parts$(1)
         toksym$ = tokname$
     end if
+    if left$(toksym$, 1) = "\" then '"
+        toksym$ = "chr$(" + mid$(toksym$, 2) + ")"
+    else
+        toksym$ = chr$(34) + toksym$ + chr$(34)
+    end if
     if parts$(0) = "LITERAL" then
         literal_toknum = literal_toknum - 1
         print #2, "CONST TOK_" + tokname$ + " =" + str$(literal_toknum)
@@ -89,7 +96,7 @@ do while not eof(1)
         for i = 0 to ubound(parts$)
             previous$(i) = parts$(i)
         next i
-        print #3, "htable_add_hentry " + chr$(34) + toksym$ + chr$(34) + ", registration_entry"
+        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
 loop
 system
 
