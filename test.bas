@@ -1,6 +1,7 @@
-if 1 + 2 + 3 then beep
+if 1 / 3 + 2 * 3 then beep
 _autodisplay
-if 2 + 2 then
+if 1 - 2 + 3 then
     beep
     _autodisplay
-endif
+end if
+_autodisplay

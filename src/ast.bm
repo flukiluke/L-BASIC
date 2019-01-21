@@ -46,7 +46,7 @@ sub ast_dump_pretty(root)
         print " THEN ";
         if ast_nodes(cvl(mid$(ast_children(root), 5, 4))).typ = AST_BLOCK then print
         ast_dump_pretty cvl(mid$(ast_children(root), 5, 4))
-        if ast_nodes(cvl(mid$(ast_children(root), 5, 4))).typ = AST_BLOCK then print "ENDIF"
+        if ast_nodes(cvl(mid$(ast_children(root), 5, 4))).typ = AST_BLOCK then print "END IF";
     case AST_DO_PRE
         print "DO-PRE";
     case AST_DO_POST

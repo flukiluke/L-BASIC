@@ -46,6 +46,7 @@ redim shared parts$(0)
 redim shared previous$(0)
 dim shared linenum
 
+print #3, "dim shared tok_direct(1 to TS_MAX)"
 print #3, "dim registration_entry as hentry_t"
 do while not eof(1)
     linenum = linenum + 1
@@ -68,41 +69,52 @@ do while not eof(1)
     else
         toksym$ = chr$(34) + toksym$ + chr$(34)
     end if
-    if parts$(0) = "LITERAL" then
-        literal_toknum = literal_toknum - 1
-        print #2, "CONST TOK_" + tokname$ + " =" + str$(literal_toknum)
-        _continue
-    end if
-    toknum = toknum + 1
-    print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
     select case parts$(0)
     case "GENERIC"
         assertsize  2
+        toknum = toknum + 1
+        cur_toknum = toknum
+        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "GENERIC" then print #3, "registration_entry.typ = HE_GENERIC"
+        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "PREFIX"
         assertsize 3
+        toknum = toknum + 1
+        cur_toknum = toknum
+        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "PREFIX" then print #3, "registration_entry.typ = HE_PREFIX"
         if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
+        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "INFIX"
         assertsize 4
+        toknum = toknum + 1
+        cur_toknum = toknum
+        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "INFIX" then print #3, "registration_entry.typ = HE_INFIX"
         if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
         if previous$(3) <> parts$(3) then
             if parts$(3) = "right" then print #3, "registration_entry.v2 = 1" else print #3, "registration_entry.v2 = 0"
         end if
+        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+    case "LITERAL"
+        assertsize 2
+        literal_toknum = literal_toknum - 1
+        cur_toknum = literal_toknum
+        print #2, "CONST TOK_" + tokname$ + " ="; literal_toknum
     case else
         fatalerror "Unknown token type " + parts$(0)
     end select
-        for i = 0 to ubound(parts$)
-            previous$(i) = parts$(i)
-        next i
-        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+    if parts$(ubound(parts$)) = "DIRECT" then print #3, "tok_direct(TS_"; ucase$(tokname$); ") ="; cur_toknum
+    for i = 0 to ubound(parts$)
+        previous$(i) = parts$(i)
+    next i
 loop
 system
 
 ehandler:
     print "Error"; err; _errorline
     system 1
+
 
 sub split(in$)
     redim parts$(0)
@@ -125,8 +137,15 @@ sub split(in$)
 end sub
 
 sub assertsize(expected)
+    if parts$(ubound(parts$)) = "DIRECT" then expected = expected + 1
     if ubound(parts$) <> expected - 1 then
         fatalerror "Expected" + str$(expected) + " components, got" + str$(ubound(parts$) + 1)
+    end if
+end sub
+
+sub assertsize_range(min_expected, max_expected)
+    if ubound(parts$) < min_expected - 1 or ubound(parts$) > max_expected - 1 then
+        fatalerror "Expected between" + str$(min_expected) + " and" + str$(max_components) + " components, got" + str$(ubound(parts$) + 1)
     end if
 end sub
 

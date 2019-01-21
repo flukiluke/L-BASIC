@@ -1,47 +1,59 @@
 deflng a-z
 
 function pt_expr(rbp)
-    dim he as hentry_t
     if pt_token = 0 then
-        t = tok_next_token(he, literal$)
+        t = tok_next_token
+        content$ = tok_content$
     else
         t = pt_token
-        he = pt_next_he
-        literal$ = pt_next_literal$
+        content$ = pt_next_content$
     end if
-    pt_token = tok_next_token(pt_next_he, pt_next_literal$)
-    left_node = nud(t, he, literal$)
-    print "rbp:"; rbp; "lbp:"; lbp(pt_token)
+    pt_token = tok_next_token
+    pt_next_content$ = tok_content$
+    left_node = nud(t, content$)
     while rbp < lbp(pt_token)
         t = pt_token
-        he = pt_next_he
-        literal$ = pt_next_literal$
-        pt_token = tok_next_token(pt_next_he, pt_next_literal$)
-        left_node = led(t, he, literal$, left_node)
+        content$ = pt_next_content$
+        pt_token = tok_next_token
+        pt_next_content$ = tok_content$
+        left_node = led(t, content$, left_node)
     wend
     pt_expr = left_node
 end function
 
-function nud(token, he as hentry_t, literal$)
+function lbp(token)
+    dim he as hentry_t
+    he = htable_entries(token)
+    select case he.typ
+    case HE_INFIX
+        lbp = he.v1
+    case else
+        lbp = 0
+    end select
+end function
+
+function nud(token, content$)
     select case token
     case TOK_NUMINT
         node = ast_add_node(AST_CONSTANT)
-        ast_nodes(node).ref = ast_add_constant(literal$)
+        ast_nodes(node).ref = ast_add_constant(content$)
     case else
-        fatalerror "Unexpected " + tok_human_readable$(token) + " " + literal$
+        fatalerror "Unexpected " + tok_human_readable$(token) + " " + content$
     end select
     nud = node
 end function
 
-function led(token, he as hentry_t, literal$, left_node)
-    select case token
-    case TOK_PLUS
-        node = ast_add_node(AST_CALL)
-        ast_nodes(node).ref = he.id
+function led(token, content$, left_node)
+    dim he as hentry_t
+    he = htable_entries(token)
+    node = ast_add_node(AST_CALL)
+    ast_nodes(node).ref = token
+    select case he.typ
+    case HE_INFIX
         ast_attach node, left_node
-        ast_attach node, pt_expr(10)
+        ast_attach node, pt_expr(he.v1)
     case else
-        fatalerror "Unexpected " + tok_human_readable$(token) + " " + literal$
+        fatalerror "Unexpected " + tok_human_readable$(token) + " " + content$
     end select
     led = node
 end function

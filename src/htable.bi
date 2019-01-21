@@ -26,7 +26,7 @@ TYPE hentry_t
 END TYPE
 
 'A generic entry. No vn parameters are used.
-CONST HE_NORMAL = 1
+CONST HE_GENERIC = 1
 'A function with infix notation.
 'v1 -> binding power (controls precedence)
 'v2 -> associativity (1/0 = right/left)

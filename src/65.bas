@@ -8,21 +8,7 @@ on error goto generic_error
 '$include: 'tokeng.bi'
 '$include: 'pratt.bi'
 '$include: 'ast.bi'
-
-dim he as hentry_t
-
-he.typ = TOK_STMTREG
-ignore = htable_add_hentry("_AUTODISPLAY", he)
-ignore = htable_add_hentry("BEEP", he)
-ignore = htable_add_hentry("CLS", he)
-he.typ = TOK_IF
-ignore = htable_add_hentry("IF", he)
-he.typ = TOK_THEN
-ignore = htable_add_hentry("THEN", he)
-he.typ = TOK_ENDIF
-ignore = htable_add_hentry("ENDIF", he)
-he.typ = TOK_PLUS
-ignore = htable_add_hentry("+", he)
+'$include: '../build/token_registrations.bm'
 
 if _commandcount < 1 then
     inputfile$ = "/dev/stdin"
@@ -50,17 +36,14 @@ generic_error:
     end if
 
 sub ps_gobble(token)
-    dim he as hentry_t
     do
-        t = tok_next_token(he, literal$)
-    loop until t <> token or t = TOK_EOF
+        t = tok_next_token
+    loop until t <> token or t = 0 '0 indicates EOF
     tok_please_repeat
 end sub
     
-
 function ps_block
     print "Start block"
-    dim he as hentry_t
     root = ast_add_node(AST_BLOCK)
     do
         ps_gobble(TOK_NEWLINE)
@@ -74,48 +57,40 @@ end function
 
 function ps_stmt
     print "Start statement"
-    dim he as hentry_t
-    token = tok_next_token(he, literal$)
+    token = tok_next_token
     select case token
-        case TOK_GENERIC, TOK_VARIABLE
-            ' Assume implicit variable declaration
-            if token = TOK_GENERIC then
-                he.typ = TOK_VARIABLE
-                sref = htable_add_hentry(ucase$(literal$), he)
-            end if
-            ps_stmt = ps_assignment(sref)
-        case TOK_STMTREG
-            ps_stmt = ps_stmtreg(he)
         case TOK_IF
             ps_stmt = ps_if
-        case TOK_EOF, TOK_ENDIF
+        case TOK_END 'As in END IF, END SUB etc.
+            ps_stmt = 0
+        case TOK_EOF
             ps_stmt = 0
             tok_please_repeat
         case else
-            fatalerror "Syntax error: unexpected " + tok_human_readable$(token)
+            tok_please_repeat
+            ps_stmt = ps_stmtreg
     end select
     print "Completed statement"
 end function
 
 function ps_if
     print "Start conditional"
-    dim he as hentry_t
     root = ast_add_node(AST_IF)
     
     'Condition
     ast_attach root, ps_expr
 
     'the THEN
-    ps_assert_token tok_next_token(he, literal$), TOK_THEN
+    ps_assert_token tok_next_token, TOK_THEN
 
-    token = tok_next_token(he, literal$)
+    token = tok_next_token
     if token = TOK_NEWLINE then 'Multi-line if
         ast_attach root, ps_block
-        ps_assert_token tok_next_token(he, literal$), TOK_ENDIF
+        ps_assert_token tok_next_token, TOK_IF
     else
         tok_please_repeat
         ast_attach root, ps_stmt
-        ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
+        ps_assert_token tok_next_token, TOK_NEWLINE
     end if
     ps_if = root
     print "Completed conditional"
@@ -123,25 +98,25 @@ end function
     
 function ps_assignment (sref)
     print "Start assignment"
-    dim he as hentry_t
     root = ast_add_node(AST_ASSIGN)
     dest = ast_add_node(AST_SREF)
     ast_nodes(dest).ref = sref
     ast_attach root, dest
 
-    ps_assert_token tok_next_token(he, literal$), TOK_EQUALS
+    ps_assert_token tok_next_token, TOK_EQUALS
 
     ast_attach root, ps_expr
     ps_assignment = root
 
-    ps_assert_token tok_next_token(he, literal$), TOK_NEWLINE
+    ps_assert_token tok_next_token, TOK_NEWLINE
     print "Completed assignment"
 end function
 
-function ps_stmtreg(he as hentry_t)
+function ps_stmtreg
     print "Start stmtreg"
     root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = he.id
+    token = tok_next_token
+    ast_nodes(root).ref = htable_entries(token).id
     ps_stmtreg = root
     print "Completed stmtreg"
 end function

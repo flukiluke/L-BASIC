@@ -7,21 +7,21 @@ sub tok_please_repeat
     tokeng_state.prefill = TRUE
 end sub
 
-function tok_next_token(hentry as hentry_t, literal$)
+function tok_content$
+    ' Despite the name, this variable does indeed hold the current token data
+    ' (the idea being tok_next_token loads the token and then you call this function
+    ' to get more detail on it).
+    tok_content$ = tokeng_repeat_literal$
+end function
+
+function tok_next_token
     if tokeng_state.prefill then
         tokeng_state.prefill = FALSE
-        hentry = htable_entries(tokeng_repeat_hentry_id)
         literal$ = tokeng_repeat_literal$
         tok_next_token = tokeng_repeat_token
         exit function
     end if
 
-    'ts_mappsings should be static and only initialised once, but this triggers a bug in QB64
-    'static ts_mappings(TS_MAX)
-    dim ts_mappings(TS_MAX)
-    'if not ts_mappings(0) then
-        '$include: '../build/ts_mappings.bm'
-    'end if
     static in$
 
     if not tokeng_state.has_data then
@@ -44,10 +44,9 @@ function tok_next_token(hentry as hentry_t, literal$)
         case TS_ID
             id = htable_get_id(ucase$(ts_content$))
             if id = 0 then
-                token = TOK_GENERIC
+                fatalerror "Undefined " + ts_content$
             else
-                hentry = htable_entries(id)
-                token = hentry.typ
+                token = id
             end if
             tokeng_state.linestart = FALSE
 
@@ -57,25 +56,20 @@ function tok_next_token(hentry as hentry_t, literal$)
             token = TOK_NEWLINE
 
         case else
-            id = htable_get_id(ucase$(ts_content$))
-            if id > 0 then
-                hentry = htable_entries(id)
-                token = hentry.typ
+            if tok_direct(ts_type) then
+                token = tok_direct(ts_type)
             else
-                token = ts_mappings(ts_type)
+                fatalerror "Unhandled TS" + str$(ts_type)
             end if
             tokeng_state.linestart = FALSE
     end select
-    ' literal$ is a little badly named; it's just the text that was taken from the input
-    literal$ = ucase$(ts_content$)
+
     tokeng_repeat_token = token
-    tokeng_repeat_hentry_id = id
-    tokeng_repeat_literal$ = literal$
+    tokeng_repeat_literal$ = ts_content$
     tok_next_token = token
-    'print "Read '" + literal$ + "' ("; tok_next_token; ")"
 end function
 
-sub tok_init ()
+sub tok_init
     'read in arrays and set default values for some control variables
     for s = 1 to ubound(t_states~%, 2)
         read t_statenames$(s)
