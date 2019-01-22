@@ -10,18 +10,21 @@
 'any manual edits to the registration code will likely cause it to be out of sync with the TOK_ definitions.
 'Re-run this generation program instead.
 '
-'The input file has one line per token definition, consisting of two or more fields separated by spaces.
-'The first field is the token type, corresponding to a HE_ constant defined in htable.bi (without the HE_
-' prefix) or "LITERAL" which does not get an entry in the htable.
-'The next field is the the token itself. If the literal representation of the token needs to differ from
-'the name used in the constant (such as for symbols), a "safe" representation can be given in parentheses
-'immediately after the name. Example: "+(plus)". There must be no space between anywhere in the field.
-'A backslash followed by a number may optionally be used to represent a special character, such as \10 for
-'the newline.
-'Depending on the token type, there may be 0 or more data fields, often refered to as vn (v1, v2, etc.).
-'The format and meaning of these is specific to the token type.
+'Each line as the following format:
 '
-'Blank lines are ignored. Comments may be given with # on their own line.
+'TYPE NAME ARGS FLAGS
+'
+'TYPE is one of the HE_ constants defined in htable.bi (without the HE_ prefix) or "LITERAL", in which case
+'no htable entry is made.
+'NAME is the identifier for the token, and will be prefixed with TOK_. If the token contains special characters
+'a safe name may be given in parentheses, e.g "+(plus)". If the token is a special character (see below), it
+'should be represented as \xx where xx is the ASCII code. There must be no spaces anywhere in this field.
+'The ARGS given depend on the TYPE chosen. Each argument correponds to the vn parameters in htable.bi.
+'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
+'  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
+'  NOSYM: Prefix the token with a pipe "|" character in the htable, preventing it from clashing with other tokens.
+'Blank lines are ignored. Comments may be given with # on their own line. Special characters are (); and must
+'not appear outside of their described syntactic function.
 
 $console:only
 _dest _console
