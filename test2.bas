@@ -1,4 +1,3 @@
-x = 3
+x = 3 * 2
 beep
 _autodisplay
-if x then
