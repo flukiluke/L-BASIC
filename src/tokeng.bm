@@ -44,7 +44,7 @@ function tok_next_token
         case TS_ID
             id = htable_get_id(ucase$(ts_content$))
             if id = 0 then
-                fatalerror "Undefined " + ts_content$
+                token = TOK_UNKNOWN
             else
                 token = id
             end if

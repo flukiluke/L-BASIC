@@ -1,3 +1,5 @@
+literal unknown
+
 literal newline direct
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other

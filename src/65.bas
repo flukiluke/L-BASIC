@@ -56,6 +56,7 @@ function ps_block
 end function
 
 function ps_stmt
+    dim he as hentry_t
     print "Start statement"
     token = tok_next_token
     select case token
@@ -66,6 +67,10 @@ function ps_stmt
         case TOK_EOF
             ps_stmt = 0
             tok_please_repeat
+        case TOK_UNKNOWN
+            he.typ = HE_VARIABLE
+            htable_add_hentry tok_content$, he
+            ps_stmt = ps_assignment(htable.elements)
         case else
             tok_please_repeat
             ps_stmt = ps_stmtreg
@@ -96,12 +101,10 @@ function ps_if
     print "Completed conditional"
 end function
     
-function ps_assignment (sref)
+function ps_assignment(ref)
     print "Start assignment"
     root = ast_add_node(AST_ASSIGN)
-    dest = ast_add_node(AST_SREF)
-    ast_nodes(dest).ref = sref
-    ast_attach root, dest
+    ast_nodes(root).ref = ref
 
     ps_assert_token tok_next_token, TOK_EQUALS
 
