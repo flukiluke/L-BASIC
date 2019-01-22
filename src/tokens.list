@@ -1,40 +1,40 @@
-literal unknown
+generic unknown ; nosym
 
-literal newline direct
+generic newline ; direct nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # prefix <name> <precedence>
- prefix not      2
+prefix not      2
 # infix <name> <precedence> <associativity>
 infix and           2   left
 infix or            2   left
 infix xor           2   left
 infix eqv           2   left
 infix imp           2   left
-infix =(equals)     3   left direct
-infix <(cmp_lt)     3   left direct
-infix >(cmp_gt)     3   left direct
-infix >=(cmp_gteq)  3   left direct
-infix <=(cmp_lteq)  3   left direct
-infix +(plus)       4   left direct
-infix -(dash)       4   left direct
-infix *(star)       5   left direct
-infix /(slash)      5   left direct
-infix ^(power)      6   left direct
+infix =(equals)     3   left ; direct
+infix <(cmp_lt)     3   left ; direct
+infix >(cmp_gt)     3   left ; direct
+infix >=(cmp_gteq)  3   left ; direct
+infix <=(cmp_lteq)  3   left ; direct
+infix +(plus)       4   left ; direct
+infix -(dash)       4   left ; direct
+infix *(star)       5   left ; direct
+infix /(slash)      5   left ; direct
+infix ^(power)      6   left ; direct
 
 # Parentheses don't have any real meaning, they only direct the parsing
-literal oparen direct
-literal cparen direct
+generic oparen ; direct nosym
+generic cparen ; direct nosym
 
 # Numbers
 # numint: 1234, numdec: 12.34, numexp: 12.3E4, numbase: &H1234
-literal numint direct
-literal numdec direct
-literal numexp direct
-literal numbase direct
+literal numint ; direct
+literal numdec ; direct
+literal numexp ; direct
+literal numbase ; direct
 
 # A string
-literal string direct
+literal string ; direct
 
 # Some keywords for testing with
 generic if

@@ -64,14 +64,17 @@ do while not eof(1)
         tokname$ = parts$(1)
         toksym$ = tokname$
     end if
+
     if left$(toksym$, 1) = "\" then '"
         toksym$ = "chr$(" + mid$(toksym$, 2) + ")"
+        if instr(parts$(-1), "NOSYM") then toksym$ = chr$(34) + "|" + chr$(34) + "+" + toksym$
     else
+        if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
         toksym$ = chr$(34) + toksym$ + chr$(34)
     end if
     select case parts$(0)
     case "GENERIC"
-        assertsize  2
+        assertsize 2
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
@@ -104,7 +107,7 @@ do while not eof(1)
     case else
         fatalerror "Unknown token type " + parts$(0)
     end select
-    if parts$(ubound(parts$)) = "DIRECT" then print #3, "tok_direct(TS_"; ucase$(tokname$); ") ="; cur_toknum
+    if instr(parts$(-1), "DIRECT") then print #3, "tok_direct(TS_"; ucase$(tokname$); ") ="; cur_toknum
     for i = 0 to ubound(parts$)
         previous$(i) = parts$(i)
     next i
@@ -117,7 +120,11 @@ ehandler:
 
 
 sub split(in$)
-    redim parts$(0)
+    redim parts$(-1 to 0)
+    if instr(in$, ";") then
+        parts$(-1) = mid$(in$, instr(in$, ";") + 1)
+        in$ = rtrim$(left$(in$, instr(in$, ";") - 1))
+    end if
     start = 1
     do
         sp = instr(start, in$, " ")
@@ -128,7 +135,7 @@ sub split(in$)
         if sp then
             parts$(ubound(parts$)) = mid$(in$, start, sp - start)
             start = sp + 1
-            redim _preserve parts$(ubound(parts$) + 1)
+            redim _preserve parts$(-1 to ubound(parts$) + 1)
         else
             parts$(ubound(parts$)) = mid$(in$, start)
             exit sub
@@ -137,15 +144,8 @@ sub split(in$)
 end sub
 
 sub assertsize(expected)
-    if parts$(ubound(parts$)) = "DIRECT" then expected = expected + 1
     if ubound(parts$) <> expected - 1 then
         fatalerror "Expected" + str$(expected) + " components, got" + str$(ubound(parts$) + 1)
-    end if
-end sub
-
-sub assertsize_range(min_expected, max_expected)
-    if ubound(parts$) < min_expected - 1 or ubound(parts$) > max_expected - 1 then
-        fatalerror "Expected between" + str$(min_expected) + " and" + str$(max_components) + " components, got" + str$(ubound(parts$) + 1)
     end if
 end sub
 
