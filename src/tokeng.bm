@@ -1,6 +1,10 @@
 deflng a-z
 function tok_human_readable$(token)
-    tok_human_readable$ = htable_names$(token)
+    if token > 0 then
+        tok_human_readable$ = htable_names$(token)
+    else
+        tok_human_readable$ = "LITERAL_" + mid$(str$(token), 2)
+    end if
 end function
 
 sub tok_please_repeat
@@ -67,6 +71,7 @@ function tok_next_token
     tokeng_repeat_token = token
     tokeng_repeat_literal$ = ts_content$
     tok_next_token = token
+    'print tok_human_readable$(token)
 end function
 
 sub tok_init

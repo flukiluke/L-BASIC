@@ -136,8 +136,9 @@ end function
 
 function ps_expr
     print "Start expr"
-    pt_token = 0 'Reset pratt parser
-    ps_expr = pt_expr(1)
+    pt_token = tok_next_token
+    pt_content$ = tok_content$
+    ps_expr = pt_expr(0)
     tok_please_repeat
     print "Completed expr"
 end function

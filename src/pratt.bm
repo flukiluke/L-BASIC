@@ -1,27 +1,26 @@
 deflng a-z
 
 function pt_expr(rbp)
-    if pt_token = 0 then
-        t = tok_next_token
-        content$ = tok_content$
-    else
-        t = pt_token
-        content$ = pt_next_content$
-    end if
+    t = pt_token
+    content$ = pt_content$
     pt_token = tok_next_token
-    pt_next_content$ = tok_content$
+    pt_content$ = tok_content$
+
     left_node = nud(t, content$)
     while rbp < lbp(pt_token)
         t = pt_token
-        content$ = pt_next_content$
+        content$ = pt_content$
         pt_token = tok_next_token
-        pt_next_content$ = tok_content$
+        pt_content$ = tok_content$
         left_node = led(t, content$, left_node)
     wend
     pt_expr = left_node
 end function
 
 function lbp(token)
+    if token = TOK_CPAREN then
+        lbp = 0
+    end if
     dim he as hentry_t
     he = htable_entries(token)
     select case he.typ
@@ -34,16 +33,21 @@ end function
 
 function nud(token, content$)
     select case token
-    case TOK_NUMINT
+    case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRING
         node = ast_add_node(AST_CONSTANT)
         ast_nodes(node).ref = ast_add_constant(content$)
+    case TOK_OPAREN
+        node = pt_expr(0)
+        ps_assert_token pt_token, TOK_CPAREN
+        pt_token = tok_next_token
+        pt_content$ = tok_content$
     case else
         select case htable_entries(token).typ
         case HE_VARIABLE
             node = ast_add_node(AST_VAR)
             ast_nodes(node).ref = token
         case else
-            fatalerror "Unexpected " + tok_human_readable$(token) + " " + content$
+            fatalerror "Unexpected nud " + tok_human_readable$(token)
         end select
     end select
     nud = node
@@ -59,7 +63,7 @@ function led(token, content$, left_node)
         ast_attach node, left_node
         ast_attach node, pt_expr(he.v1)
     case else
-        fatalerror "Unexpected " + tok_human_readable$(token) + " " + content$
+        fatalerror "Unexpected led " + tok_human_readable$(token)
     end select
     led = node
 end function
