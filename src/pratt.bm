@@ -32,7 +32,7 @@ function nud(token, content$)
         ' See corresponding tokens.list definition before changing.
         node = ast_add_node(AST_CALL)
         ast_nodes(node).ref = TOK_NEGATIVE
-        ast_attach node, pt_expr(100)
+        ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v1)
     case else
         dim he as hentry_t
         he = htable_entries(token)

@@ -4,11 +4,10 @@ generic newline ; direct nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # prefix <name> <precedence>
-prefix not          100 
-# This unary minus negation is hardcoded in pratt.bm as well. Don't touch it.
-prefix -(negative)  100
-
 # infix <name> <precedence> <associativity>
+
+# The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).
+prefix not          2
 infix and           2   left
 infix or            2   left
 infix xor           2   left
@@ -23,7 +22,9 @@ infix +(plus)       4   left ; direct
 infix -(dash)       4   left ; direct
 infix *(star)       5   left ; direct
 infix /(slash)      5   left ; direct
-infix ^(power)      6   left ; direct
+# Note -3^2 = -(3^2)
+prefix negative     6
+infix ^(power)      7   left ; direct
 
 # Parentheses don't have any real meaning, they only direct the parsing
 generic oparen ; direct nosym
