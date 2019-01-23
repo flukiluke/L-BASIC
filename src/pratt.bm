@@ -7,7 +7,7 @@ function pt_expr(rbp)
     pt_content$ = tok_content$
 
     left_node = nud(t, content$)
-    while rbp < lbp(pt_token)
+    while rbp < lbp(pt_token, pt_content$)
         t = pt_token
         content$ = pt_content$
         pt_token = tok_next_token
@@ -15,20 +15,6 @@ function pt_expr(rbp)
         left_node = led(t, content$, left_node)
     wend
     pt_expr = left_node
-end function
-
-function lbp(token)
-    if token = TOK_CPAREN then
-        lbp = 0
-    end if
-    dim he as hentry_t
-    he = htable_entries(token)
-    select case he.typ
-    case HE_INFIX
-        lbp = he.v1
-    case else
-        lbp = 0
-    end select
 end function
 
 function nud(token, content$)
@@ -47,10 +33,28 @@ function nud(token, content$)
             node = ast_add_node(AST_VAR)
             ast_nodes(node).ref = token
         case else
-            fatalerror "Unexpected nud " + tok_human_readable$(token)
+            fatalerror "Unexpected operator " + tok_human_readable$(token)
         end select
     end select
     nud = node
+end function
+
+function lbp(token, content$)
+    select case token
+    case is < 0
+        fatalerror "Unexpected literal " + content$
+    case TOK_CPAREN
+        lbp = 0
+    case else
+        dim he as hentry_t
+        he = htable_entries(token)
+        select case he.typ
+        case HE_INFIX
+            lbp = he.v1
+        case else
+            lbp = 0
+        end select
+    end select
 end function
 
 function led(token, content$, left_node)
