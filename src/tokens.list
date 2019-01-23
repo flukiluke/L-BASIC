@@ -4,7 +4,10 @@ generic newline ; direct nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # prefix <name> <precedence>
-prefix not      2
+prefix not          100 
+# This unary minus negation is hardcoded in pratt.bm as well. Don't touch it.
+prefix -(negative)  100
+
 # infix <name> <precedence> <associativity>
 infix and           2   left
 infix or            2   left

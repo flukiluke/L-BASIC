@@ -27,11 +27,23 @@ function nud(token, content$)
         ps_assert_token pt_token, TOK_CPAREN
         pt_token = tok_next_token
         pt_content$ = tok_content$
+    case TOK_DASH
+        ' Hardcoded hack to change TOK_DASH into TOK_NEGATIVE
+        ' See corresponding tokens.list definition before changing.
+        node = ast_add_node(AST_CALL)
+        ast_nodes(node).ref = TOK_NEGATIVE
+        ast_attach node, pt_expr(100)
     case else
-        select case htable_entries(token).typ
+        dim he as hentry_t
+        he = htable_entries(token)
+        select case he.typ
         case HE_VARIABLE
             node = ast_add_node(AST_VAR)
             ast_nodes(node).ref = token
+        case HE_PREFIX
+            node = ast_add_node(AST_CALL)
+            ast_nodes(node).ref = token
+            ast_attach node, pt_expr(he.v1)
         case else
             fatalerror "Unexpected operator " + tok_human_readable$(token)
         end select
