@@ -1,6 +1,6 @@
 deflng a-z
 function tok_human_readable$(token)
-    tok_human_readable$ = ltrim$(str$(token))
+    tok_human_readable$ = htable_names$(token)
 end function
 
 sub tok_please_repeat

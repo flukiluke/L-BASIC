@@ -22,7 +22,17 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
-ast_dump_pretty ps_block
+block = ps_block
+print "Parsing complete"
+print
+print "Table of identifiers:"
+htable_dump
+print
+print "Table of constants:"
+ast_dump_constants
+print
+print "Program:"
+ast_dump_pretty block
 system
 
 file_error:
@@ -69,7 +79,7 @@ function ps_stmt
             tok_please_repeat
         case TOK_UNKNOWN
             he.typ = HE_VARIABLE
-            htable_add_hentry tok_content$, he
+            htable_add_hentry ucase$(tok_content$), he
             ps_stmt = ps_assignment(htable.elements)
         case else
             tok_please_repeat

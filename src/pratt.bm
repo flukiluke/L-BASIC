@@ -38,7 +38,13 @@ function nud(token, content$)
         node = ast_add_node(AST_CONSTANT)
         ast_nodes(node).ref = ast_add_constant(content$)
     case else
-        fatalerror "Unexpected " + tok_human_readable$(token) + " " + content$
+        select case htable_entries(token).typ
+        case HE_VARIABLE
+            node = ast_add_node(AST_VAR)
+            ast_nodes(node).ref = token
+        case else
+            fatalerror "Unexpected " + tok_human_readable$(token) + " " + content$
+        end select
     end select
     nud = node
 end function

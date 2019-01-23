@@ -40,3 +40,5 @@ const AST_CALL = 7
 const AST_CONSTANT = 8
 '(assign | if | do_pre | do_post | for | select | call)*
 const AST_BLOCK = 9
+'ref is reference to htable
+const AST_VAR = 10
