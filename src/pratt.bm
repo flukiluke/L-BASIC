@@ -65,7 +65,11 @@ function led(token, content$, left_node)
     select case he.typ
     case HE_INFIX
         ast_attach node, left_node
-        ast_attach node, pt_expr(he.v1)
+        if he.v2 = 0 then 'Left-associative
+            ast_attach node, pt_expr(he.v1)
+        else 'right-associative
+            ast_attach node, pt_expr(he.v1 - 1)
+        end if
     case else
         fatalerror "Unexpected led " + tok_human_readable$(token)
     end select

@@ -99,7 +99,7 @@ do while not eof(1)
         if previous$(0) <> "INFIX" then print #3, "registration_entry.typ = HE_INFIX"
         if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
         if previous$(3) <> parts$(3) then
-            if parts$(3) = "right" then print #3, "registration_entry.v2 = 1" else print #3, "registration_entry.v2 = 0"
+            if parts$(3) = "RIGHT" then print #3, "registration_entry.v2 = 1" else print #3, "registration_entry.v2 = 0"
         end if
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "LITERAL"
