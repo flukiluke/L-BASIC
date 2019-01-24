@@ -70,6 +70,8 @@ function ps_stmt
     print "Start statement"
     token = tok_next_token
     select case token
+        case is < 0
+            fatalerror "Unexpected literal " + tok_content$
         case TOK_IF
             ps_stmt = ps_if
         case TOK_END 'As in END IF, END SUB etc.
@@ -82,8 +84,14 @@ function ps_stmt
             htable_add_hentry ucase$(tok_content$), he
             ps_stmt = ps_assignment(htable.elements)
         case else
-            tok_please_repeat
-            ps_stmt = ps_stmtreg
+            he = htable_entries(token)
+            select case he.typ
+            case HE_VARIABLE
+                ps_stmt = ps_assignment(he.id)
+            case else
+                tok_please_repeat
+                ps_stmt = ps_stmtreg
+            end select
     end select
     print "Completed statement"
 end function
