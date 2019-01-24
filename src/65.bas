@@ -82,12 +82,13 @@ function ps_stmt
         case TOK_UNKNOWN
             he.typ = HE_VARIABLE
             htable_add_hentry ucase$(tok_content$), he
-            ps_stmt = ps_assignment(htable.elements)
+            'It's not really an existing variable, is it.
+            ps_stmt = ps_assignment(ps_existing_variable(htable.elements))
         case else
             he = htable_entries(token)
             select case he.typ
             case HE_VARIABLE
-                ps_stmt = ps_assignment(he.id)
+                ps_stmt = ps_assignment(ps_existing_variable(he.id))
             case else
                 tok_please_repeat
                 ps_stmt = ps_stmtreg
@@ -124,6 +125,7 @@ function ps_assignment(ref)
     root = ast_add_node(AST_ASSIGN)
     ast_nodes(root).ref = ref
 
+
     ps_assert_token tok_next_token, TOK_EQUALS
 
     ast_attach root, ps_expr
@@ -151,6 +153,24 @@ function ps_expr
     print "Completed expr"
 end function
         
+function ps_existing_variable(token)
+    print "Start existing variable"
+    'Always called after parsing base variable name, passed in as token
+    'Check for type suffixes
+    t = tok_next_token
+    print ">>"; tok_human_readable$(t)
+    select case t
+    case TOK_BYTE_SFX, TOK_INTEGER_SFX, TOK_LONG_SFX, TOK_INTEGER64_SFX, TOK_UBYTE_SFX, TOK_UINTEGER_SFX, TOK_ULONG_SFX, TOK_UINTEGER64_SFX, TOK_SINGLE_SFX, TOK_DOUBLE_SFX, TOK_FLOAT_SFX, TOK_STRING_SFX
+        'Assert type is as recorded
+        print "Type check OK"
+    case else
+        tok_please_repeat
+    end select
+    ps_existing_variable = token
+    print "Completed existing variable"
+end function
+
+
 sub ps_assert_token(actual, expected)
     if actual <> expected then
         fatalerror "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(actual)

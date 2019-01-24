@@ -40,6 +40,24 @@ literal numbase ; direct
 # A string
 literal string ; direct
 
+# Type symbols
+# No _BIT because it's messy and barely used
+generic byte_sfx        ; direct nosym
+generic integer_sfx     ; direct nosym
+generic long_sfx        ; direct nosym
+generic integer64_sfx   ; direct nosym
+# Unsigned equivalents. I'm undecided on how useful these actually are
+generic ubyte_sfx       ; direct nosym
+generic uinteger_sfx    ; direct nosym
+generic ulong_sfx       ; direct nosym
+generic uinteger64_sfx  ; direct nosym
+
+generic single_sfx      ; direct nosym
+generic double_sfx      ; direct nosym
+generic float_sfx       ; direct nosym
+generic string_sfx      ; direct nosym
+
+
 # Some keywords for testing with
 generic if
 generic then

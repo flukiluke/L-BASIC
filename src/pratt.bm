@@ -29,17 +29,21 @@ function nud(token, content$)
         pt_content$ = tok_content$
     case TOK_DASH
         ' Hardcoded hack to change TOK_DASH into TOK_NEGATIVE
-        ' See corresponding tokens.list definition before changing.
         node = ast_add_node(AST_CALL)
         ast_nodes(node).ref = TOK_NEGATIVE
         ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v1)
+    case TOK_UNKNOWN
+        ' This is where we would handle implicit variable definitions
+        fatalerror "Variable " + content$ + " used before assignment or definition"
     case else
         dim he as hentry_t
         he = htable_entries(token)
         select case he.typ
         case HE_VARIABLE
             node = ast_add_node(AST_VAR)
-            ast_nodes(node).ref = token
+            tok_please_repeat
+            ast_nodes(node).ref = ps_existing_variable(token)
+            pt_token = tok_next_token
         case HE_PREFIX
             node = ast_add_node(AST_CALL)
             ast_nodes(node).ref = token
