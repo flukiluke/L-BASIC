@@ -19,6 +19,11 @@ dim shared ast_last_node as long
 dim shared ast_constants(100) as string
 dim shared ast_last_constant as long
 
+const AST_FALSE = 0
+const AST_TRUE = 1
+ast_constants(AST_FALSE) = "0"
+ast_constants(AST_TRUE) = "-1"
+ast_last_constant = 1
 
 'The types of node. Note the regex-like notation with ? for optionality.
 

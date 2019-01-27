@@ -1,5 +1,9 @@
-'x = 3 * 2
-'y = x + 3 / x ^ 9
-z = "Hello" + ("world" + 2e9) / 3.4 
+z% = 1 and (2 + 3)
+while
+z% = 1 and 2 + 3
 beep
-_autodisplay
+wend
+x =1
+if x = 2 then
+y = 2
+end if

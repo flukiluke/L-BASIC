@@ -32,7 +32,7 @@ print "Table of constants:"
 ast_dump_constants
 print
 print "Program:"
-ast_dump_pretty block
+ast_dump_pretty block, 0
 system
 
 file_error:
@@ -74,11 +74,19 @@ function ps_stmt
             fatalerror "Unexpected literal " + tok_content$
         case TOK_IF
             ps_stmt = ps_if
-        case TOK_END 'As in END IF, END SUB etc.
-            ps_stmt = 0
-        case TOK_EOF
+        case TOK_DO
+            ps_stmt = ps_do
+        case TOK_WHILE
+            ps_stmt = ps_while
+        case TOK_LOOP, TOK_WEND, TOK_EOF
+            'These all end a block in some fashion. Repeat so that the
+            'block-specific code can assert the ending token
             ps_stmt = 0
             tok_please_repeat
+        case TOK_END 'As in END IF, END SUB etc.
+            'Like above, but no repeat so the block-specific ending token
+            'can be asserted
+            ps_stmt = 0
         case TOK_UNKNOWN
             he.typ = HE_VARIABLE
             htable_add_hentry ucase$(tok_content$), he
@@ -95,6 +103,82 @@ function ps_stmt
             end select
     end select
     print "Completed statement"
+end function
+
+function ps_while
+    print "Start WHILE block"
+    root = ast_add_node(AST_DO_PRE)
+    ast_attach root, ps_expr
+    ps_assert_token tok_next_token, TOK_NEWLINE
+    ast_attach root, ps_block
+    ps_assert_token tok_next_token, TOK_WEND
+    ps_while = root
+end function
+
+function ps_do
+    print "Start DO block"
+    check = tok_next_token
+    if check = TOK_WHILE or check = TOK_UNTIL then
+        ps_do = ps_do_pre(check)
+    elseif check = TOK_NEWLINE then
+        ps_do = ps_do_post
+    else
+        fatalerror "Unexpected " + tok_content$
+    end if
+    print "Completed DO block"
+end function
+
+function ps_do_pre(check)
+    print "Start DO-PRE"
+    root = ast_add_node(AST_DO_PRE)
+    'Condition is WHILE guard; UNTIL will need the guard to be negated
+    raw_guard = ps_expr
+    if check = TOK_UNTIL then
+        guard = ast_add_node(AST_CALL)
+        ast_nodes(guard).ref = TOK_EQUALS
+        false_const = ast_add_node(AST_CONSTANT)
+        false_const.ref = AST_FALSE
+        ast_attach guard, false_const
+        ast_attach guard, raw_guard
+    else
+        'TOK_WHILE guaranteed by ps_do
+        guard = raw_guard
+    end if
+    ast_attach root, guard
+    ps_assert_token tok_next_token, TOK_NEWLINE
+    ast_attach root, ps_block
+    ps_assert_token tok_next_token, TOK_LOOP
+    ps_do_pre = root
+    print "Completed DO-PRE"
+end function
+
+function ps_do_post
+    print "Start DO-POST"
+    root = ast_add_node(AST_DO_POST)
+    block = ps_block
+    ps_assert_token tok_next_token, TOK_LOOP
+
+    check = tok_next_token
+    if check = TOK_NEWLINE then
+        'Oh boy, infinite loop!
+        guard = ast_add_node(AST_CONSTANT)
+        ast_nodes(guard).ref = AST_TRUE
+    elseif check = TOK_WHILE then
+        guard = ps_expr
+    elseif check = TOK_UNTIL then
+        guard = ast_add_node(AST_CALL)
+        ast_nodes(guard).ref = TOK_EQUALS
+        false_const = ast_add_node(AST_CONSTANT)
+        false_const.ref = AST_FALSE
+        ast_attach guard, false_const
+        ast_attach guard, ps_expr
+    else
+        fatalerror "Unexpected " + tok_content$
+    end if
+    ast_attach root, guard
+    ast_attach root, block
+    ps_do_post = root
+    print "Completed DO-POST"
 end function
 
 function ps_if
@@ -158,7 +242,6 @@ function ps_existing_variable(token)
     'Always called after parsing base variable name, passed in as token
     'Check for type suffixes
     t = tok_next_token
-    print ">>"; tok_human_readable$(t)
     select case t
     case TOK_BYTE_SFX, TOK_INTEGER_SFX, TOK_LONG_SFX, TOK_INTEGER64_SFX, TOK_UBYTE_SFX, TOK_UINTEGER_SFX, TOK_ULONG_SFX, TOK_UINTEGER64_SFX, TOK_SINGLE_SFX, TOK_DOUBLE_SFX, TOK_FLOAT_SFX, TOK_STRING_SFX
         'Assert type is as recorded

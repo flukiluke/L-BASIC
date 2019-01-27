@@ -62,6 +62,13 @@ generic string_sfx      ; direct nosym
 generic if
 generic then
 generic else
+
+generic do
+generic loop
+generic until
+generic while
+generic wend
+
 # end is a little bit of a hack, really. At this stage pretend it's always a
 # call to the END function, but in parsing we'll have an exception for gobbling END IF etc.
 generic end
