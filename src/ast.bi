@@ -21,9 +21,11 @@ dim shared ast_last_constant as long
 
 const AST_FALSE = 0
 const AST_TRUE = 1
+const AST_ONE = 2
 ast_constants(AST_FALSE) = "0"
 ast_constants(AST_TRUE) = "-1"
-ast_last_constant = 1
+ast_constants(AST_ONE) = "1"
+ast_last_constant = 2
 
 'The types of node. Note the regex-like notation with ? for optionality.
 
@@ -35,7 +37,7 @@ const AST_IF = 2
 const AST_DO_PRE = 3
 'do expr block => DO: block: LOOP WHILE expr
 const AST_DO_POST = 4
-'do expr1 expr2 expr3 block => FOR ref = expr1 TO expr2 STEP expr3
+'for expr1 expr2 expr3 block => FOR ref = expr1 TO expr2 STEP expr3
 const AST_FOR = 5
 'select expr1 (expr block)* block? => SELECT CASE expr1: CASE expr: block: CASE expr: block: CASE ELSE: block
 const AST_SELECT = 6

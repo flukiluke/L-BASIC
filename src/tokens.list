@@ -69,6 +69,11 @@ generic until
 generic while
 generic wend
 
+generic for
+generic to
+generic step
+generic next
+
 # end is a little bit of a hack, really. At this stage pretend it's always a
 # call to the END function, but in parsing we'll have an exception for gobbling END IF etc.
 generic end

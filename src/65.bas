@@ -78,7 +78,9 @@ function ps_stmt
             ps_stmt = ps_do
         case TOK_WHILE
             ps_stmt = ps_while
-        case TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_EOF
+        case TOK_FOR
+            ps_stmt = ps_for
+        case TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_EOF
             'These all end a block in some fashion. Repeat so that the
             'block-specific code can assert the ending token
             ps_stmt = 0
@@ -103,6 +105,58 @@ function ps_stmt
             end select
     end select
     print "Completed statement"
+end function
+
+function ps_for
+    print "Start FOR block"
+    dim he as hentry_t
+    root = ast_add_node(AST_FOR)
+    t = tok_next_token
+    if t = TOK_UNKNOWN then
+        he.typ = HE_VARIABLE
+        htable_add_hentry ucase$(tok_content$), he
+        iterator = ps_existing_variable(htable.elements)
+    else
+        fatalerror "Expected new variable as iterator"
+    end if
+    ps_assert_token tok_next_token, TOK_EQUALS
+
+    start_val = ps_expr
+    ps_assert_token tok_next_token, TOK_TO
+    end_val = ps_expr
+    t = tok_next_token
+    if t = TOK_STEP then
+        step_val = ps_expr
+        ps_assert_token tok_next_token, TOK_NEWLINE
+    elseif t = TOK_NEWLINE then
+        'Default is STEP 1
+        step_val = ast_add_node(AST_CONSTANT)
+        ast_nodes(step_val).ref = AST_ONE
+    else
+        fatalerror "Unexpected " + tok_content$
+    end if
+
+    block = ps_block
+
+    'This section aaaaaaall error checking
+    ps_assert_token tok_next_token, TOK_NEXT
+    t = tok_next_token
+    if t < 0 then
+        fatalerror "Expected variable reference, not a literal"
+    elseif t = TOK_UNKNOWN then
+        fatalerror "Unknown variable"
+    end if
+    he = htable_entries(t)
+    if he.typ <> HE_VARIABLE then fatalerror "Unexpected " + tok_content$
+    if iterator <> ps_existing_variable(t) then fatalerror "Variable in NEXT does not match variable in FOR"
+    ps_assert_token tok_next_token, TOK_NEWLINE
+
+    ast_nodes(root).ref = iterator
+    ast_attach root, start_val
+    ast_attach root, end_val
+    ast_attach root, step_val
+    ast_attach root, block
+    ps_for = root
 end function
 
 function ps_while
