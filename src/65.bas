@@ -202,7 +202,6 @@ function ps_if
     else
         tok_please_repeat
         ast_attach root, ps_stmt
-        ps_assert_token tok_next_token, TOK_NEWLINE
     end if
     ps_if = root
     print "Completed conditional"
