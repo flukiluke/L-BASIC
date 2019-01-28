@@ -78,7 +78,7 @@ function ps_stmt
             ps_stmt = ps_do
         case TOK_WHILE
             ps_stmt = ps_while
-        case TOK_LOOP, TOK_WEND, TOK_EOF
+        case TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_EOF
             'These all end a block in some fashion. Repeat so that the
             'block-specific code can assert the ending token
             ps_stmt = 0
@@ -184,17 +184,21 @@ end function
 function ps_if
     print "Start conditional"
     root = ast_add_node(AST_IF)
-    
     'Condition
     ast_attach root, ps_expr
-
-    'the THEN
     ps_assert_token tok_next_token, TOK_THEN
 
     token = tok_next_token
     if token = TOK_NEWLINE then 'Multi-line if
         ast_attach root, ps_block
-        ps_assert_token tok_next_token, TOK_IF
+        t = tok_next_token
+        if t = TOK_ELSE then
+            ps_assert_token tok_next_token, TOK_NEWLINE
+            ast_attach root, ps_block
+            t = tok_next_token
+        end if
+        'END IF, with the END being eaten by ps_block
+        ps_assert_token t, TOK_IF
     else
         tok_please_repeat
         ast_attach root, ps_stmt
@@ -208,13 +212,9 @@ function ps_assignment(ref)
     print "Start assignment"
     root = ast_add_node(AST_ASSIGN)
     ast_nodes(root).ref = ref
-
-
     ps_assert_token tok_next_token, TOK_EQUALS
-
     ast_attach root, ps_expr
     ps_assignment = root
-
     ps_assert_token tok_next_token, TOK_NEWLINE
     print "Completed assignment"
 end function

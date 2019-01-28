@@ -19,6 +19,14 @@ sub ast_attach(parent, child)
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
 
+function ast_num_children(node)
+    ast_num_children = len(ast_children(node)) / len(dummy&)
+end function
+
+function ast_get_child(node, index)
+    ast_get_child = cvl(mid$(ast_children(node), len(dummy&) * (index - 1) + 1, len(dummy&)))
+end function
+
 sub ast_expand_nodes_arrays()
     new_size = ubound(ast_nodes) * 2
     redim _preserve ast_nodes(new_size) as ast_node_t
@@ -41,26 +49,30 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty cvl(ast_children(root)), 0
     case AST_IF
         print "IF ";
-        ast_dump_pretty cvl(left$(ast_children(root), 4)), 0
-        print indent$; " THEN ";
-        if ast_nodes(cvl(mid$(ast_children(root), 5, 4))).typ = AST_BLOCK then
+        ast_dump_pretty ast_get_child(root, 1), 0
+        print " THEN ";
+        if ast_nodes(ast_get_child(root, 2)).typ = AST_BLOCK then
             print
-            ast_dump_pretty cvl(mid$(ast_children(root), 5, 4)), indent_level + 1
+            ast_dump_pretty ast_get_child(root, 2), indent_level + 1
+            if ast_num_children(root) > 2 then
+                print indent$; "ELSE"
+                ast_dump_pretty ast_get_child(root, 3), indent_level + 1
+            end if
             print indent$; "END IF";
         else
-            ast_dump_pretty cvl(mid$(ast_children(root), 5, 4)), 0
+            ast_dump_pretty ast_get_child(root, 2), 0
         end if
     case AST_DO_PRE
         print indent$; "DO WHILE ";
-        ast_dump_pretty cvl(left$(ast_children(root), 4)), 0
+        ast_dump_pretty ast_get_child(root, 1), 0
         print
-        ast_dump_pretty cvl(mid$(ast_children(root), 5, 4)), indent_level + 1
+        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
         print indent$; "LOOP";
     case AST_DO_POST
         print indent$; "DO"
-        ast_dump_pretty cvl(mid$(ast_children(root), 5, 4)), indent_level + 1
+        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
         print indent$; "LOOP WHILE ";
-        ast_dump_pretty cvl(left$(ast_children(root), 4)), 0
+        ast_dump_pretty ast_get_child(root, 1), 0
     case AST_FOR
         print indent$; "FOR";
         print indent$; htable_names(ast_nodes(root).ref);
@@ -70,17 +82,17 @@ sub ast_dump_pretty(root, indent_level)
         print "call(";
         print htable_names(ast_nodes(root).ref);
         if len(ast_children(root)) then print ", ";
-        for i = 1 to len(ast_children(root)) step 4
-            ast_dump_pretty cvl(mid$(ast_children(root), i, 4)), 0
-            if i + 3 < len(ast_children(root)) then print ", ";
+        for i = 1 to ast_num_children(root)
+            ast_dump_pretty ast_get_child(root, i), 0
+            if i <> ast_num_children(root) then print ", ";
         next i
         print ")";
     case AST_CONSTANT
         print ast_constants(ast_nodes(root).ref);
     case AST_BLOCK
-        for i = 1 to len(ast_children(root)) step 4
+        for i = 1 to ast_num_children(root)
             print indent$;
-            ast_dump_pretty cvl(mid$(ast_children(root), i, 4)), indent_level
+            ast_dump_pretty ast_get_child(root, i), indent_level
             print
         next i
     case AST_VAR
