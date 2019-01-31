@@ -1,0 +1,44 @@
+sub ty_restrict(variable, typ)
+    current_type = htable_entries(variable).v1
+    select case current_type
+    case TYPE_ANY
+        htable_entries(variable).v1 = typ
+    case typ
+        'Ok. Do nothing.
+    case 0
+        fatalerror "Attempt to restrict untyped variable"
+    case else
+        fatalerror "Attemped type restriction conflicts with current restriction"
+    end select
+end sub
+
+function ty_sfx2type(sfx_token)
+    select case sfx_token
+    case TOK_BYTE_SFX
+        ty_sfx2type = TYPE_BYTE
+    case TOK_INTEGER_SFX
+        ty_sfx2type = TYPE_INTEGER
+    case TOK_LONG_SFX
+        ty_sfx2type = TYPE_LONG
+    case TOK_INTEGER64_SFX
+        ty_sfx2type = TYPE_INTEGER64
+    case TOK_UBYTE_SFX
+        ty_sfx2type = TYPE_UBYTE
+    case TOK_UINTEGER_SFX
+        ty_sfx2type = TYPE_UINTEGER
+    case TOK_ULONG_SFX
+        ty_sfx2type = TYPE_ULONG
+    case TOK_UINTEGER64_SFX
+        ty_sfx2type = TYPE_UINTEGER64
+    case TOK_SINGLE_SFX
+        ty_sfx2type = TYPE_SINGLE
+    case TOK_DOUBLE_SFX
+        ty_sfx2type = TYPE_DOUBLE
+    case TOK_FLOAT_SFX
+        ty_sfx2type = TYPE_FLOAT
+    case TOK_STRING_SFX
+        ty_sfx2type = TYPE_STRING
+    case else
+        ty_sfx2type = 0
+    end select
+end function

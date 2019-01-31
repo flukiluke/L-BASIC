@@ -16,6 +16,10 @@ FUNCTION htable_get_id (ckey$)
     htable_get_id = htable_get_local(htable, ckey$)
 END FUNCTION
 
+FUNCTION htable_last_id
+    htable_last_id = htable.elements
+END FUNCTION
+
 sub htable_dump
     print " ID          Name     Typ     v1     v2"
     for i = 1 to htable.elements

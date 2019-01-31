@@ -4,6 +4,7 @@ $console:only
 _dest _console
 on error goto generic_error
 
+'$include: 'type.bi'
 '$include: 'htable.bi'
 '$include: 'tokeng.bi'
 '$include: 'pratt.bi'
@@ -90,15 +91,12 @@ function ps_stmt
             'can be asserted
             ps_stmt = 0
         case TOK_UNKNOWN
-            he.typ = HE_VARIABLE
-            htable_add_hentry ucase$(tok_content$), he
-            'It's not really an existing variable, is it.
-            ps_stmt = ps_assignment(ps_existing_variable(htable.elements))
+            ps_stmt = ps_assignment(ps_variable(token, tok_content$))
         case else
             he = htable_entries(token)
             select case he.typ
             case HE_VARIABLE
-                ps_stmt = ps_assignment(ps_existing_variable(he.id))
+                ps_stmt = ps_assignment(ps_variable(token, tok_content$))
             case else
                 tok_please_repeat
                 ps_stmt = ps_stmtreg
@@ -113,9 +111,7 @@ function ps_for
     root = ast_add_node(AST_FOR)
     t = tok_next_token
     if t = TOK_UNKNOWN then
-        he.typ = HE_VARIABLE
-        htable_add_hentry ucase$(tok_content$), he
-        iterator = ps_existing_variable(htable.elements)
+        iterator = ps_variable(t, tok_content$)
     else
         fatalerror "Expected new variable as iterator"
     end if
@@ -148,7 +144,7 @@ function ps_for
     end if
     he = htable_entries(t)
     if he.typ <> HE_VARIABLE then fatalerror "Unexpected " + tok_content$
-    if iterator <> ps_existing_variable(t) then fatalerror "Variable in NEXT does not match variable in FOR"
+    if iterator <> ps_variable(t, tok_content$) then fatalerror "Variable in NEXT does not match variable in FOR"
     ps_assert_token tok_next_token, TOK_NEWLINE
 
     ast_nodes(root).ref = iterator
@@ -290,22 +286,32 @@ function ps_expr
     print "Completed expr"
 end function
         
-function ps_existing_variable(token)
-    print "Start existing variable"
-    'Always called after parsing base variable name, passed in as token
+function ps_variable(token, content$)
+    print "Start variable"
+    dim he as hentry_t
+    'Do array & udt element stuff here.
+    'For now only support simple variables.
+  
+    'New variable?
+    if token = TOK_UNKNOWN then
+        he.typ = HE_VARIABLE
+        htable_add_hentry ucase$(content$), he
+        var = htable_last_id
+        htable_entries(var).v1 = TYPE_ANY
+    else
+        var = token
+    end if
+
     'Check for type suffixes
     t = tok_next_token
-    select case t
-    case TOK_BYTE_SFX, TOK_INTEGER_SFX, TOK_LONG_SFX, TOK_INTEGER64_SFX, TOK_UBYTE_SFX, TOK_UINTEGER_SFX, TOK_ULONG_SFX, TOK_UINTEGER64_SFX, TOK_SINGLE_SFX, TOK_DOUBLE_SFX, TOK_FLOAT_SFX, TOK_STRING_SFX
-        'Assert type is as recorded
-        print "Type check OK"
-    case else
+    if ty_sfx2type(t) then
+        ty_restrict var, ty_sfx2type(t)
+    else
         tok_please_repeat
-    end select
-    ps_existing_variable = token
-    print "Completed existing variable"
+    end if
+    ps_variable = var
+    print "End variable"
 end function
-
 
 sub ps_assert_token(actual, expected)
     if actual <> expected then
@@ -324,3 +330,4 @@ end sub
 '$include: 'htable.bm'
 '$include: 'tokeng.bm'
 '$include: 'ast.bm'
+'$include: 'type.bm'

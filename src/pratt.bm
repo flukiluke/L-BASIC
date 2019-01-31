@@ -33,8 +33,12 @@ function nud(token, content$)
         ast_nodes(node).ref = TOK_NEGATIVE
         ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v1)
     case TOK_UNKNOWN
-        ' This is where we would handle implicit variable definitions
-        fatalerror "Variable " + content$ + " used before assignment or definition"
+        'Implicit variable definitions
+        node = ast_add_node(AST_VAR)
+        tok_please_repeat
+        print ">>"; token
+        ast_nodes(node).ref = ps_variable(token, content$)
+        pt_token = tok_next_token
     case else
         dim he as hentry_t
         he = htable_entries(token)
@@ -42,7 +46,7 @@ function nud(token, content$)
         case HE_VARIABLE
             node = ast_add_node(AST_VAR)
             tok_please_repeat
-            ast_nodes(node).ref = ps_existing_variable(token)
+            ast_nodes(node).ref = ps_variable(token, content$)
             pt_token = tok_next_token
         case HE_PREFIX
             node = ast_add_node(AST_CALL)

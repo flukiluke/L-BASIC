@@ -1,4 +1,4 @@
-QB64 = /home/luke/comp/git_qb64/qb64
+QB64 = /home/luke/comp/git_qb64/qb64 -v
 
 BUILD_DIR = $(CURDIR)/build
 SRC_DIR = $(CURDIR)/src
