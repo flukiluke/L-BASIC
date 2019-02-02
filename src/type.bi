@@ -1,16 +1,36 @@
+'A linked list to hold function type signatures
+'The first element is the return type, subsequent elements are arguments.
+type type_signature_t
+    value as long
+    succ as long 'Can't call this "next" :(
+end type
+
+dim shared type_signatures(10) as type_signature_t
+dim shared type_last_signature as long
+
 'Variable data types
-'TYPE_ANY means we have not placed any restrictions on the type of this
-'variable yet.
-CONST TYPE_ANY = 1
-CONST TYPE_BYTE = 2
-CONST TYPE_INTEGER = 3
-CONST TYPE_LONG = 4
-CONST TYPE_INTEGER64 = 5
-CONST TYPE_UBYTE = 6
-CONST TYPE_UINTEGER = 7
-CONST TYPE_ULONG = 8
-CONST TYPE_UINTEGER64 = 9
-CONST TYPE_SINGLE = 10
-CONST TYPE_DOUBLE = 11
-CONST TYPE_FLOAT = 12
-CONST TYPE_STRING = 13
+'This element is not typed and attempting to give it a type in as error
+const TYPE_NONE = 0
+'This element is typed, but haven't restricted its type at all
+const TYPE_ANY = 1
+'Restricted to be numeric, but no further detail
+const TYPE_NUMBER = 2
+'One byte
+const TYPE_BYTE = 3
+'Two bytes
+const TYPE_INTEGER = 4
+'Four bytes
+const TYPE_LONG = 5
+'Eight bytes
+const TYPE_INTEGER64 = 6
+'Unsigned versions of above
+const TYPE_UBYTE = 7
+const TYPE_UINTEGER = 8
+const TYPE_ULONG = 9
+const TYPE_UINTEGER64 = 10
+'Floating point numbers of various size
+const TYPE_SINGLE = 11
+const TYPE_DOUBLE = 12
+const TYPE_FLOAT = 13
+'Everyone's favourite non-numeric type
+const TYPE_STRING = 14

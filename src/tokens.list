@@ -1,6 +1,7 @@
 generic unknown ; nosym
 
 generic newline ; direct nosym
+generic ,(comma); direct nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # prefix <name> <precedence>
@@ -73,6 +74,9 @@ generic for
 generic to
 generic step
 generic next
+
+function chr string ubyte
+function left string string,number
 
 # end is a little bit of a hack, really. At this stage pretend it's always a
 # call to the END function, but in parsing we'll have an exception for gobbling END IF etc.

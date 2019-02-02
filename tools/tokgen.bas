@@ -56,7 +56,7 @@ do while not eof(1)
     line input #1, l$
     l$ = ucase$(ltrim$(rtrim$(l$)))
     if left$(l$, 1) = "#" or l$ = "" then _continue
-    split l$
+    split l$, " "
     if ubound(parts$) > ubound(previous$) then redim _preserve previous$(ubound(parts$))
 
     altname_start = instr(parts$(1), "(")
@@ -82,6 +82,15 @@ do while not eof(1)
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "GENERIC" then print #3, "registration_entry.typ = HE_GENERIC"
+        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+    case "FUNCTION"
+        assertsize 4
+        toknum = toknum + 1
+        cur_toknum = toknum
+        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
+        if previous$(0) <> "FUNCTION" then print #3, "registration_entry.typ = HE_FUNCTION"
+        print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(2) + ")"
+        process_arg_list parts$(3)
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "PREFIX"
         assertsize 3
@@ -121,8 +130,15 @@ ehandler:
     print "Error"; err; _errorline
     system 1
 
+sub process_arg_list(arglist$)
+    split arglist$, ","
+    if parts$(0) = "" then exit sub 'No arguments
+    for i  = 0 to ubound(parts$)
+        print #3, "type_chain_argument registration_entry.v1, TYPE_"; parts$(i)
+    next i
+end sub
 
-sub split(in$)
+sub split(in$, splitchar$)
     redim parts$(-1 to 0)
     if instr(in$, ";") then
         parts$(-1) = mid$(in$, instr(in$, ";") + 1)
@@ -130,7 +146,7 @@ sub split(in$)
     end if
     start = 1
     do
-        sp = instr(start, in$, " ")
+        sp = instr(start, in$, splitchar$)
         if sp = start then
             start = start + 1
             _continue

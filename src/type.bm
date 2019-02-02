@@ -1,3 +1,38 @@
+sub type_dump_functions
+    dim s as type_signature_t
+    for i = 1 to htable.elements
+        if htable_entries(i).typ = HE_FUNCTION then
+            s = type_signatures(htable_entries(i).v1)
+            print htable_names(i); "(";
+            while s.succ <> 0
+                s = type_signatures(s.succ)
+                print type_human_readable$(s.value);
+                if s.succ <> 0 then print ",";
+            wend
+            print ") -> ";
+            print type_human_readable$(s.value)
+        end if
+    next i
+end sub
+
+function type_add_signature(typ)
+    type_last_signature = type_last_signature + 1
+    if ubound(type_signatures) = type_last_signature then
+        redim _preserve type_signatures(type_last_signature * 2) as type_signature_t
+    end if
+    type_signatures(type_last_signature).value = typ
+    type_add_signature = type_last_signature
+end function
+
+sub type_chain_argument(root, typ)
+    new = type_add_signature(typ)
+    node = root
+    while type_signatures(node).succ <> 0
+        node = type_signatures(node).succ
+    wend
+    type_signatures(node).succ = new
+end sub
+
 sub ty_restrict(variable, typ)
     current_type = htable_entries(variable).v1
     select case current_type
@@ -40,5 +75,42 @@ function ty_sfx2type(sfx_token)
         ty_sfx2type = TYPE_STRING
     case else
         ty_sfx2type = 0
+    end select
+end function
+
+function type_human_readable$(typ)
+    select case typ
+    case TYPE_NONE
+        type_human_readable$ = "none"
+    case TYPE_ANY
+        type_human_readable$ = "any"
+    case TYPE_NUMBER
+        type_human_readable$ = "number"
+    case TYPE_BYTE
+        type_human_readable$ = "byte"
+    case TYPE_INTEGER
+        type_human_readable$ = "integer"
+    case TYPE_LONG
+        type_human_readable$ = "long"
+    case TYPE_INTEGER64
+        type_human_readable$ = "integer64"
+    case TYPE_UBYTE
+        type_human_readable$ = "ubyte"
+    case TYPE_UINTEGER
+        type_human_readable$ = "uinteger"
+    case TYPE_ULONG
+        type_human_readable$ = "ulong"
+    case TYPE_UINTEGER64
+        type_human_readable$ = "uinteger64"
+    case TYPE_SINGLE
+        type_human_readable$ = "single"
+    case TYPE_DOUBLE
+        type_human_readable$ = "double"
+    case TYPE_FLOAT
+        type_human_readable$ = "float"
+    case TYPE_STRING
+        type_human_readable$ = "string"
+    case else
+        type_human_readable$ = "UNKNOWN"
     end select
 end function

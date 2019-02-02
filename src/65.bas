@@ -29,6 +29,9 @@ print
 print "Table of identifiers:"
 htable_dump
 print
+print "Function type signatures:"
+type_dump_functions
+print
 print "Table of constants:"
 ast_dump_constants
 print
@@ -286,6 +289,32 @@ function ps_expr
     print "Completed expr"
 end function
         
+function ps_funccall(func)
+    print "Start function call"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = func
+    t = tok_next_token
+    if t = TOK_OPAREN then
+        ps_funcargs root
+        ps_assert_token tok_next_token, TOK_CPAREN
+    else
+        'No arguments
+        tok_please_repeat
+    end if
+    ps_funccall = root
+    print "Completed function call"
+end function
+
+sub ps_funcargs(root)
+    t = TOK_COMMA
+    while t = TOK_COMMA
+        expr = ps_expr
+        ast_attach root, expr
+        t = tok_next_token
+    wend
+    tok_please_repeat
+end sub
+
 function ps_variable(token, content$)
     print "Start variable"
     dim he as hentry_t

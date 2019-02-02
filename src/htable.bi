@@ -37,6 +37,9 @@ CONST HE_PREFIX = 3
 'A variable.
 'v1 -> the data type as far as can be determined
 CONST HE_VARIABLE = 4
+'A function (subs too!)
+'v1 -> reference to the type signature
+CONST HE_FUNCTION = 5
 
 DIM SHARED htable AS htable_t
 DIM SHARED htable_entries(100) AS hentry_t
