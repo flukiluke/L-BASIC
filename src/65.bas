@@ -100,9 +100,11 @@ function ps_stmt
             select case he.typ
             case HE_VARIABLE
                 ps_stmt = ps_assignment(ps_variable(token, tok_content$))
-            case else
+            case HE_FUNCTION
                 tok_please_repeat
                 ps_stmt = ps_stmtreg
+            case else
+                fatalerror tok_content$ + " doesn't belong here"
             end select
     end select
     print "Completed statement"
@@ -273,12 +275,29 @@ end function
 
 function ps_stmtreg
     print "Start stmtreg"
+    dim sig as type_signature_t
+
     root = ast_add_node(AST_CALL)
     token = tok_next_token
     ast_nodes(root).ref = htable_entries(token).id
+
+    type_return_sig token, sig
+    if sig.value <> TYPE_NONE then
+        fatalerror "Function returning value used as statement"
+    end if
+
+    while type_next_sig(sig)
+        ps_stmtarg root
+        if sig.succ <> 0 then ps_assert_token tok_next_token, TOK_COMMA
+    wend
+
     ps_stmtreg = root
     print "Completed stmtreg"
 end function
+
+sub ps_stmtarg(root)
+    ast_attach root, ps_expr
+end sub
 
 function ps_expr
     print "Start expr"
@@ -291,6 +310,10 @@ end function
         
 function ps_funccall(func)
     print "Start function call"
+    'Brief type check - this is only for functions as opposed to subs
+    if type_signatures(htable_entries(func).v1).value = TYPE_NONE then
+        fatalerror htable_names(func) + " does not return a value"
+    end if
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = func
     t = tok_next_token

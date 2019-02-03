@@ -1,7 +1,6 @@
 generic unknown ; nosym
-
 generic newline ; direct nosym
-generic ,(comma); direct nosym
+generic comma   ; direct nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # prefix <name> <precedence>
@@ -58,11 +57,13 @@ generic double_sfx      ; direct nosym
 generic float_sfx       ; direct nosym
 generic string_sfx      ; direct nosym
 
-
-# Some keywords for testing with
+# Basic language constructs
 generic if
 generic then
 generic else
+# end is special because it's both a command on its own and part of END IF.
+# It gets special treatment in the statement parser.
+generic end
 
 generic do
 generic loop
@@ -75,12 +76,10 @@ generic to
 generic step
 generic next
 
-function chr string ubyte
-function left string string,number
+# functions with return type none are subs
+function _autodisplay   none
+function beep           none
+function chr            string  ubyte
+function _copypalette   none    number,number
+function left           string  string,number
 
-# end is a little bit of a hack, really. At this stage pretend it's always a
-# call to the END function, but in parsing we'll have an exception for gobbling END IF etc.
-generic end
-
-generic beep
-generic _autodisplay

@@ -84,13 +84,15 @@ do while not eof(1)
         if previous$(0) <> "GENERIC" then print #3, "registration_entry.typ = HE_GENERIC"
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "FUNCTION"
-        assertsize 4
+        assertsize_range 3, 4
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "FUNCTION" then print #3, "registration_entry.typ = HE_FUNCTION"
         print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(2) + ")"
-        process_arg_list parts$(3)
+        if ubound(parts$) = 3 then
+            process_arg_list parts$(3)
+        end if
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "PREFIX"
         assertsize 3
@@ -160,6 +162,12 @@ sub split(in$, splitchar$)
             exit sub
         end if
     loop
+end sub
+
+sub assertsize_range(min_expected, max_expected)
+    if ubound(parts$) < min_expected - 1 or ubound(parts$) > max_expected + 1 then
+        fatalerror "Expected between " + str$(min_expected) + " and " + str$(max_expected) + " components, got" + str$(ubound(parts$) + 1)
+    end if
 end sub
 
 sub assertsize(expected)

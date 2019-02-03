@@ -15,6 +15,19 @@ sub type_dump_functions
     next i
 end sub
 
+sub type_return_sig(token, sig as type_signature_t)
+    sig = type_signatures(htable_entries(token).v1)
+end sub
+
+function type_next_sig(sig as type_signature_t)
+    if sig.succ = 0 then
+        type_next_sig = FALSE
+        exit function
+    end if
+    sig = type_signatures(sig.succ)
+    type_next_sig = TRUE
+end function
+
 function type_add_signature(typ)
     type_last_signature = type_last_signature + 1
     if ubound(type_signatures) = type_last_signature then
