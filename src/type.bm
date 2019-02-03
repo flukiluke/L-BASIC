@@ -46,7 +46,7 @@ sub type_chain_argument(root, typ)
     type_signatures(node).succ = new
 end sub
 
-sub ty_restrict(variable, typ)
+sub type_restrict(variable, typ)
     current_type = htable_entries(variable).v1
     select case current_type
     case TYPE_ANY
@@ -60,34 +60,34 @@ sub ty_restrict(variable, typ)
     end select
 end sub
 
-function ty_sfx2type(sfx_token)
+function type_sfx2type(sfx_token)
     select case sfx_token
     case TOK_BYTE_SFX
-        ty_sfx2type = TYPE_BYTE
+        type_sfx2type = TYPE_BYTE
     case TOK_INTEGER_SFX
-        ty_sfx2type = TYPE_INTEGER
+        type_sfx2type = TYPE_INTEGER
     case TOK_LONG_SFX
-        ty_sfx2type = TYPE_LONG
+        type_sfx2type = TYPE_LONG
     case TOK_INTEGER64_SFX
-        ty_sfx2type = TYPE_INTEGER64
+        type_sfx2type = TYPE_INTEGER64
     case TOK_UBYTE_SFX
-        ty_sfx2type = TYPE_UBYTE
+        type_sfx2type = TYPE_UBYTE
     case TOK_UINTEGER_SFX
-        ty_sfx2type = TYPE_UINTEGER
+        type_sfx2type = TYPE_UINTEGER
     case TOK_ULONG_SFX
-        ty_sfx2type = TYPE_ULONG
+        type_sfx2type = TYPE_ULONG
     case TOK_UINTEGER64_SFX
-        ty_sfx2type = TYPE_UINTEGER64
+        type_sfx2type = TYPE_UINTEGER64
     case TOK_SINGLE_SFX
-        ty_sfx2type = TYPE_SINGLE
+        type_sfx2type = TYPE_SINGLE
     case TOK_DOUBLE_SFX
-        ty_sfx2type = TYPE_DOUBLE
+        type_sfx2type = TYPE_DOUBLE
     case TOK_FLOAT_SFX
-        ty_sfx2type = TYPE_FLOAT
+        type_sfx2type = TYPE_FLOAT
     case TOK_STRING_SFX
-        ty_sfx2type = TYPE_STRING
+        type_sfx2type = TYPE_STRING
     case else
-        ty_sfx2type = 0
+        type_sfx2type = 0
     end select
 end function
 

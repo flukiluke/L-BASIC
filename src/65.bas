@@ -356,8 +356,8 @@ function ps_variable(token, content$)
 
     'Check for type suffixes
     t = tok_next_token
-    if ty_sfx2type(t) then
-        ty_restrict var, ty_sfx2type(t)
+    if type_sfx2type(t) then
+        type_restrict var, type_sfx2type(t)
     else
         tok_please_repeat
     end if
