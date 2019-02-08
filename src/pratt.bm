@@ -33,7 +33,7 @@ function nud(token, content$)
         ' Hardcoded hack to change TOK_DASH into TOK_NEGATIVE
         node = ast_add_node(AST_CALL)
         ast_nodes(node).ref = TOK_NEGATIVE
-        ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v1)
+        ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v2)
     case TOK_UNKNOWN
         'Implicit variable definitions
         node = ast_add_node(AST_VAR)
@@ -56,7 +56,7 @@ function nud(token, content$)
         case HE_PREFIX
             node = ast_add_node(AST_CALL)
             ast_nodes(node).ref = token
-            ast_attach node, pt_expr(he.v1)
+            ast_attach node, pt_expr(he.v2)
         case else
             fatalerror "Unexpected operator " + tok_human_readable$(token)
         end select
@@ -75,7 +75,7 @@ function lbp(token, content$)
         he = htable_entries(token)
         select case he.typ
         case HE_INFIX
-            lbp = he.v1
+            lbp = he.v2
         case else
             lbp = 0
         end select
@@ -90,10 +90,10 @@ function led(token, content$, left_node)
     select case he.typ
     case HE_INFIX
         ast_attach node, left_node
-        if he.v2 = 0 then 'Left-associative
-            ast_attach node, pt_expr(he.v1)
+        if he.v3 = 0 then 'Left-associative
+            ast_attach node, pt_expr(he.v2)
         else 'right-associative
-            ast_attach node, pt_expr(he.v1 - 1)
+            ast_attach node, pt_expr(he.v2 - 1)
         end if
     case else
         fatalerror "Unexpected led " + tok_human_readable$(token)

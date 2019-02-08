@@ -21,9 +21,9 @@ FUNCTION htable_last_id
 END FUNCTION
 
 sub htable_dump
-    print " ID          Name     Typ     v1     v2"
+    print " ID          Name     Typ     v1     v2     v3"
     for i = 1 to htable.elements
-        print using "###    \            \ ###    ###    ###"; i; htable_names(i); htable_entries(i).typ,htable_entries(i).v1; htable_entries(i).v2
+        print using "###    \            \ ###    ###    ###    ###"; i; htable_names(i); htable_entries(i).typ,htable_entries(i).v1; htable_entries(i).v2; htable_entries(i).v3
     next i
 end sub
 

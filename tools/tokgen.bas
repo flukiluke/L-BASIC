@@ -47,6 +47,7 @@ open command$(3) for output as #3
 
 redim shared parts$(0)
 redim shared previous$(0)
+redim shared args$(0)
 dim shared linenum
 
 print #3, "dim shared tok_direct(1 to TS_MAX)"
@@ -56,7 +57,7 @@ do while not eof(1)
     line input #1, l$
     l$ = ucase$(ltrim$(rtrim$(l$)))
     if left$(l$, 1) = "#" or l$ = "" then _continue
-    split l$, " "
+    split l$
     if ubound(parts$) > ubound(previous$) then redim _preserve previous$(ubound(parts$))
 
     altname_start = instr(parts$(1), "(")
@@ -95,23 +96,27 @@ do while not eof(1)
         end if
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "PREFIX"
-        assertsize 3
+        assertsize 5
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "PREFIX" then print #3, "registration_entry.typ = HE_PREFIX"
-        if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
+        print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(3) + ")"
+        if previous$(2) <> parts$(2) then print #3, "registration_entry.v2 = "; parts$(2)
+        process_arg_list parts$(4)
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "INFIX"
-        assertsize 4
+        assertsize 6
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "INFIX" then print #3, "registration_entry.typ = HE_INFIX"
-        if previous$(2) <> parts$(2) then print #3, "registration_entry.v1 = "; parts$(2)
+        print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(4) + ")"
+        if previous$(2) <> parts$(2) then print #3, "registration_entry.v2 = "; parts$(2)
         if previous$(3) <> parts$(3) then
-            if parts$(3) = "RIGHT" then print #3, "registration_entry.v2 = 1" else print #3, "registration_entry.v2 = 0"
+            if parts$(3) = "RIGHT" then print #3, "registration_entry.v3 = 1" else print #3, "registration_entry.v3 = 0"
         end if
+        process_arg_list parts$(5)
         print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
     case "LITERAL"
         assertsize 2
@@ -133,14 +138,14 @@ ehandler:
     system 1
 
 sub process_arg_list(arglist$)
-    split arglist$, ","
-    if parts$(0) = "" then exit sub 'No arguments
-    for i  = 0 to ubound(parts$)
-        print #3, "type_chain_argument registration_entry.v1, TYPE_"; parts$(i)
+    split_args arglist$
+    if args$(0) = "" then exit sub 'No arguments
+    for i  = 0 to ubound(args$)
+        print #3, "type_chain_argument registration_entry.v1, TYPE_"; args$(i)
     next i
 end sub
 
-sub split(in$, splitchar$)
+sub split(in$)
     redim parts$(-1 to 0)
     if instr(in$, ";") then
         parts$(-1) = mid$(in$, instr(in$, ";") + 1)
@@ -148,7 +153,7 @@ sub split(in$, splitchar$)
     end if
     start = 1
     do
-        sp = instr(start, in$, splitchar$)
+        sp = instr(start, in$, " ")
         if sp = start then
             start = start + 1
             _continue
@@ -159,6 +164,26 @@ sub split(in$, splitchar$)
             redim _preserve parts$(-1 to ubound(parts$) + 1)
         else
             parts$(ubound(parts$)) = mid$(in$, start)
+            exit sub
+        end if
+    loop
+end sub
+
+sub split_args(in$)
+    redim args$(-1 to 0)
+    start = 1
+    do
+        sp = instr(start, in$, ",")
+        if sp = start then
+            start = start + 1
+            _continue
+        end if
+        if sp then
+            args$(ubound(args$)) = mid$(in$, start, sp - start)
+            start = sp + 1
+            redim _preserve args$(-1 to ubound(args$) + 1)
+        else
+            args$(ubound(args$)) = mid$(in$, start)
             exit sub
         end if
     loop

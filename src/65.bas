@@ -1,3 +1,4 @@
+'This compiler is a one-man effort, so by Conway's Law, it is a one pass compiler.
 const FALSE = 0, TRUE = NOT FALSE
 deflng a-z
 $console:only
@@ -267,7 +268,10 @@ function ps_assignment(ref)
     root = ast_add_node(AST_ASSIGN)
     ast_nodes(root).ref = ref
     ps_assert_token tok_next_token, TOK_EQUALS
-    ast_attach root, ps_expr
+    expr = ps_expr
+    ast_attach root, expr
+    'Assignment restricts lvalue's type to that of rvalue's.
+    type_restrict ref, type_of_expr(expr)
     ps_assignment = root
     ps_assert_token tok_next_token, TOK_NEWLINE
     print "Completed assignment"
@@ -310,10 +314,6 @@ end function
         
 function ps_funccall(func)
     print "Start function call"
-    'Brief type check - this is only for functions as opposed to subs
-    if type_signatures(htable_entries(func).v1).value = TYPE_NONE then
-        fatalerror htable_names(func) + " does not return a value"
-    end if
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = func
     t = tok_next_token
@@ -329,12 +329,22 @@ function ps_funccall(func)
 end function
 
 sub ps_funcargs(root)
+    dim sig as type_signature_t
+    func = ast_nodes(root).ref
+    type_return_sig func, sig
     t = TOK_COMMA
     while t = TOK_COMMA
+        if type_next_sig(sig) = 0 then
+            fatalerror "Function passed more arguments than expected"
+        end if
         expr = ps_expr
+        type_restrict_expr expr, sig.value
         ast_attach root, expr
         t = tok_next_token
     wend
+    if type_next_sig(sig) then
+        fatalerror "Function expected more arguments"
+    end if
     tok_please_repeat
 end sub
 

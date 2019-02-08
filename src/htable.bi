@@ -23,16 +23,19 @@ TYPE hentry_t
     'The vn are generic parameters whose meaning depends on typ.
     v1 AS LONG
     v2 AS LONG
+    v3 AS LONG
 END TYPE
 
 'A generic entry. No vn parameters are used.
 CONST HE_GENERIC = 1
 'A function with infix notation.
-'v1 -> binding power (controls precedence)
-'v2 -> associativity (1/0 = right/left)
+'v1 -> reference to the type signature
+'v2 -> binding power (controls precedence)
+'v3 -> associativity (1/0 = right/left)
 CONST HE_INFIX = 2
 'A function with prefix notation (and parentheses are not required)
-'v1 -> binding power (controls precedence)
+'v1 -> reference to the type signature
+'v2 -> binding power (controls precedence)
 CONST HE_PREFIX = 3
 'A variable.
 'v1 -> the data type as far as can be determined

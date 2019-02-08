@@ -1,16 +1,16 @@
 sub type_dump_functions
-    dim s as type_signature_t
+    dim sig as type_signature_t
     for i = 1 to htable.elements
-        if htable_entries(i).typ = HE_FUNCTION then
-            s = type_signatures(htable_entries(i).v1)
-            print htable_names(i); "(";
-            while s.succ <> 0
-                s = type_signatures(s.succ)
-                print type_human_readable$(s.value);
-                if s.succ <> 0 then print ",";
+        typ = htable_entries(i).typ
+        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_INFIX then
+            print htable_names(i); " ";
+            type_return_sig i, sig
+            print type_human_readable$(sig.value); " (";
+            while type_next_sig(sig)
+                print type_human_readable$(sig.value);
+                if sig.succ <> 0 then print ", ";
             wend
-            print ") -> ";
-            print type_human_readable$(s.value)
+            print ")"
         end if
     next i
 end sub
@@ -46,8 +46,52 @@ sub type_chain_argument(root, typ)
     type_signatures(node).succ = new
 end sub
 
+sub type_restrict_expr(expr, typ)
+    select case ast_nodes(expr).typ
+    case AST_CALL
+        'Don't actually do any restriction, just type check
+        if not type_can_cast(type_of_call(expr), typ) then
+            fatalerror "Cannot convert return type of function to type of argument"
+        end if
+    case AST_CONSTANT
+        'Do something useful?
+        if not type_can_cast(type_of_constant(expr), typ) then
+            fatalerror "Type of constant does not match type of argument"
+        end if
+    case AST_VAR
+        type_restrict ast_nodes(expr).ref, typ
+    case else
+        fatalerror "Cannot restrict type of expression"
+    end select
+end sub
+
+function type_can_cast(a, b)
+    if a = b then
+        type_can_cast = TRUE
+    elseif a = TYPE_ANY or b = TYPE_ANY then
+        type_can_cast = TRUE
+    elseif a = TYPE_NUMBER and type_is_numeric(b) then
+        type_can_cast = TRUE
+    elseif b = TYPE_NUMBER and type_is_numeric(a) then
+        type_can_cast = TRUE
+    else
+        type_can_cast = FALSE
+    end if
+end function
+
+function type_is_numeric(t)
+    'This had to occur somewere, I suppose
+    select case t
+    case TYPE_BYTE, TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_UBYTE, TYPE_UINTEGER, TYPE_ULONG, TYPE_UINTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_FLOAT
+        type_is_numeric = TRUE
+    case else
+        type_is_numeric = FALSE
+    end select
+end function
+
 sub type_restrict(variable, typ)
     current_type = htable_entries(variable).v1
+    print "Restrict "; htable_names(variable); " to "; type_human_readable$(typ)
     select case current_type
     case TYPE_ANY
         htable_entries(variable).v1 = typ
@@ -59,6 +103,33 @@ sub type_restrict(variable, typ)
         fatalerror "Attemped type restriction conflicts with current restriction"
     end select
 end sub
+
+function type_of_expr(root)
+    select case ast_nodes(root).typ
+    case AST_CONSTANT
+        type_of_expr = type_of_constant(root)
+    case AST_CALL
+        type_of_expr = type_of_call(root)
+    case AST_VAR
+        type_of_expr = type_of_var(root)
+    case else
+        fatalerror "Cannot determine type of expression"
+    end select
+end function
+
+function type_of_constant(node)
+    fatalerror "Cannot determine type of constant"
+end function
+
+function type_of_call(node)
+    dim sig as type_signature_t
+    type_return_sig ast_nodes(node).ref, sig
+    type_of_call = sig.value
+end function
+
+function type_of_var(node)
+    type_of_var = htable_entries(ast_nodes(node).ref).v1
+end function
 
 function type_sfx2type(sfx_token)
     select case sfx_token
