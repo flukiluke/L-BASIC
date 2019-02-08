@@ -92,6 +92,7 @@ end function
 sub type_restrict(variable, typ)
     current_type = htable_entries(variable).v1
     print "Restrict "; htable_names(variable); " to "; type_human_readable$(typ)
+    if typ = TYPE_ANY then exit sub
     select case current_type
     case TYPE_ANY
         htable_entries(variable).v1 = typ
