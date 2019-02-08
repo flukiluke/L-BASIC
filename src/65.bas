@@ -300,6 +300,22 @@ sub ps_stmtarg(root)
     ast_attach root, ps_expr
 end sub
 
+function ps_opt_sigil(expected)
+    print "Start optional sigil"
+    'if expected > 0 then it must match the type of the sigil
+    typ = type_sfx2type(tok_next_token)
+    if typ then
+        ps_opt_sigil = typ
+        if expected and typ <> expected then
+            fatalerror "Type sigil is incorrect"
+        end if
+    else
+        ps_opt_sigil = 0
+        tok_please_repeat
+    end if
+    print "Completed optional sigil"
+end function
+
 function ps_expr
     print "Start expr"
     pt_token = tok_next_token
@@ -313,6 +329,7 @@ function ps_funccall(func)
     print "Start function call"
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = func
+    dummy = ps_opt_sigil(type_of_call(root))
     t = tok_next_token
     if t = TOK_OPAREN then
         ps_funcargs root
@@ -361,12 +378,10 @@ function ps_variable(token, content$)
         var = token
     end if
 
-    'Check for type suffixes
-    t = tok_next_token
-    if type_sfx2type(t) then
-        type_restrict var, type_sfx2type(t)
-    else
-        tok_please_repeat
+    'Check for type sigil
+    sigil = ps_opt_sigil(0)
+    if sigil then
+        type_restrict var, sigil
     end if
     ps_variable = var
     print "End variable"

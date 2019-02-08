@@ -17,7 +17,6 @@ dim shared ast_last_node as long
 
 'Every number and string appearing in the program gets an entry here
 dim shared ast_constants(100) as string
-'This array also manipulated by the type module
 dim shared ast_constant_types(100) as long
 dim shared ast_last_constant as long
 

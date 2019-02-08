@@ -9,7 +9,7 @@ function ast_add_constant(token, content$)
         'This should probably refine the type further to something concrete
         ast_constant_types(ast_last_constant) = TYPE_NUMBER
     case TOK_NUMBASE
-        ast_constants(ast_last_constant) = str$(val(content$))
+        ast_constants(ast_last_constant) = ltrim$(str$(val(content$)))
         ast_constant_types(ast_last_constant) = TYPE_NUMBER
     case TOK_NUMEXP
         fatalerror "No support for numbers with exponents"
