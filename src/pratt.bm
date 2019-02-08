@@ -24,7 +24,7 @@ function nud(token, content$)
     select case token
     case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRING
         node = ast_add_node(AST_CONSTANT)
-        ast_nodes(node).ref = ast_add_constant(content$)
+        ast_nodes(node).ref = ast_add_constant(token, content$)
     case TOK_OPAREN
         node = pt_expr(0)
         ps_assert_token pt_token, TOK_CPAREN

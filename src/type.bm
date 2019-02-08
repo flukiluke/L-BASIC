@@ -2,7 +2,7 @@ sub type_dump_functions
     dim sig as type_signature_t
     for i = 1 to htable.elements
         typ = htable_entries(i).typ
-        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_INFIX then
+        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
             print htable_names(i); " ";
             type_return_sig i, sig
             print type_human_readable$(sig.value); " (";
@@ -118,7 +118,7 @@ function type_of_expr(root)
 end function
 
 function type_of_constant(node)
-    fatalerror "Cannot determine type of constant"
+    type_of_constant = ast_constant_types(ast_nodes(node).ref)
 end function
 
 function type_of_call(node)

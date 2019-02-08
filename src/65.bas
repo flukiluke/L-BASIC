@@ -290,10 +290,7 @@ function ps_stmtreg
         fatalerror "Function returning value used as statement"
     end if
 
-    while type_next_sig(sig)
-        ps_stmtarg root
-        if sig.succ <> 0 then ps_assert_token tok_next_token, TOK_COMMA
-    wend
+    ps_funcargs root
 
     ps_stmtreg = root
     print "Completed stmtreg"

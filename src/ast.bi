@@ -17,14 +17,19 @@ dim shared ast_last_node as long
 
 'Every number and string appearing in the program gets an entry here
 dim shared ast_constants(100) as string
+'This array also manipulated by the type module
+dim shared ast_constant_types(100) as long
 dim shared ast_last_constant as long
 
 const AST_FALSE = 0
 const AST_TRUE = 1
 const AST_ONE = 2
 ast_constants(AST_FALSE) = "0"
+ast_constant_types(AST_FALSE) = TYPE_NUMBER
 ast_constants(AST_TRUE) = "-1"
+ast_constant_types(AST_TRUE) = TYPE_NUMBER
 ast_constants(AST_ONE) = "1"
+ast_constant_types(AST_ONE) = TYPE_NUMBER
 ast_last_constant = 2
 
 'The types of node. Note the regex-like notation with ? for optionality.
