@@ -125,7 +125,7 @@ end sub
 
 sub ast_dump_constants
     print " ID    Type      Value"
-    for i = 0 to ast_last_constant
+    for i = 1 to ast_last_constant
         print using "###    &    &"; i; type_human_readable(ast_constant_types(i)); ast_constants(i)
     next i
 end sub

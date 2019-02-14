@@ -37,8 +37,9 @@ function type_add_signature(typ)
     type_add_signature = type_last_signature
 end function
 
-sub type_chain_argument(root, typ)
+sub type_chain_argument(root, typ, required)
     new = type_add_signature(typ)
+    type_signatures(new).flags = TYPE_REQUIRED and required
     node = root
     while type_signatures(node).succ <> 0
         node = type_signatures(node).succ

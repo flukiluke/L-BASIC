@@ -141,7 +141,13 @@ sub process_arg_list(arglist$)
     split_args arglist$
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
-        print #3, "type_chain_argument registration_entry.v1, TYPE_"; args$(i)
+        if left$(args$(i), 1) = "?" then
+            args$(i) = mid$(args$(i), 2)
+            required = 0 
+        else
+            required = -1
+        end if
+        print #3, "type_chain_argument registration_entry.v1, TYPE_"; args$(i); ","; required
     next i
 end sub
 

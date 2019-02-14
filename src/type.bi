@@ -2,6 +2,7 @@
 'The first element is the return type, subsequent elements are arguments.
 type type_signature_t
     value as long
+    flags as long
     succ as long 'Can't call this "next" :(
 end type
 
@@ -34,3 +35,6 @@ const TYPE_DOUBLE = 12
 const TYPE_FLOAT = 13
 'Everyone's favourite non-numeric type
 const TYPE_STRING = 14
+
+'Flags for type_signature_t.flags
+const TYPE_REQUIRED = 1

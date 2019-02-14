@@ -4,13 +4,16 @@ deflng a-z
 $console:only
 _dest _console
 on error goto generic_error
+dim shared timer_start#
 
+start_timer
 '$include: 'type.bi'
 '$include: 'htable.bi'
 '$include: 'tokeng.bi'
 '$include: 'pratt.bi'
 '$include: 'ast.bi'
 '$include: '../build/token_registrations.bm'
+end_timer "Data structure and token initialisation"
 
 if _commandcount < 1 then
     inputfile$ = "/dev/stdin"
@@ -24,8 +27,9 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
+start_timer
 block = ps_block
-print "Parsing complete"
+end_timer "Parsing"
 print
 print "Table of identifiers:"
 htable_dump
@@ -296,10 +300,6 @@ function ps_stmtreg
     print "Completed stmtreg"
 end function
 
-sub ps_stmtarg(root)
-    ast_attach root, ps_expr
-end sub
-
 function ps_opt_sigil(expected)
     print "Start optional sigil"
     'if expected > 0 then it must match the type of the sigil
@@ -343,23 +343,58 @@ function ps_funccall(func)
 end function
 
 sub ps_funcargs(root)
+    print "Start funcargs"
     dim sig as type_signature_t
     func = ast_nodes(root).ref
     type_return_sig func, sig
-    t = TOK_COMMA
-    while t = TOK_COMMA
-        if type_next_sig(sig) = 0 then
-            fatalerror "Function passed more arguments than expected"
-        end if
-        expr = ps_expr
-        type_restrict_expr expr, sig.value
-        ast_attach root, expr
-        t = tok_next_token
-    wend
     if type_next_sig(sig) then
-        fatalerror "Function expected more arguments"
+        arg_count = 1
+        do
+            print "Argument"; arg_count; ":"
+            t = tok_next_token
+            print ">>"; tok_human_readable$(t)
+            select case t
+            case TOK_CPAREN, TOK_NEWLINE
+                'Pack up folks, end of the arg list.
+                if arg_count > ast_num_children(root) then
+                    if sig.flags AND TYPE_REQUIRED then fatalerror "Argument cannot be omitted"
+                    arg = ast_add_node(AST_CONSTANT)
+                    ast_nodes(arg).ref = AST_NONE
+                    ast_attach root, arg
+                end if
+                tok_please_repeat
+                exit do
+            case TOK_COMMA
+                if arg_count > ast_num_children(root) then
+                    if sig.flags AND TYPE_REQUIRED then fatalerror "Argument cannot be omitted"
+                    arg = ast_add_node(AST_CONSTANT)
+                    ast_nodes(arg).ref = AST_NONE
+                    ast_attach root, arg
+                end if
+                arg_count = arg_count + 1
+                if type_next_sig(sig) = 0 then fatalerror "More arguments than expected"
+            case else
+                tok_please_repeat
+                ps_funcarg root, sig
+            end select
+        loop
+        'Fill in any extra arguments if they were omitted
+        while type_next_sig(sig)
+            if sig.flags AND TYPE_REQUIRED then fatalerror "A required argument was not supplied"
+            arg = ast_add_node(AST_CONSTANT)
+            ast_nodes(arg).ref = AST_NONE
+            ast_attach root, arg
+        wend
     end if
-    tok_please_repeat
+    print "Completed funcargs"
+end sub
+
+sub ps_funcarg(root, sig as type_signature_t)
+    print "Start funcarg"
+    arg = ps_expr
+    type_restrict_expr arg, sig.value
+    ast_attach root, arg
+    print "Completed funcarg"
 end sub
 
 function ps_variable(token, content$)
@@ -398,6 +433,14 @@ end sub
 sub fatalerror(msg$)
     print command$(0) + ": " + msg$
     system
+end sub
+
+sub start_timer
+    timer_start# = timer(0.001)
+end sub
+
+sub end_timer(msg$)
+    print msg$; using " done in ##.### seconds"; timer(0.001) - timer_start#
 end sub
 
 '$include: 'pratt.bm'
