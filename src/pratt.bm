@@ -21,6 +21,7 @@ sub pt_refresh
 end sub
 
 function nud(token, content$)
+    dim sig as type_signature_t
     select case token
     case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRING
         node = ast_add_node(AST_CONSTANT)
@@ -56,7 +57,11 @@ function nud(token, content$)
         case HE_PREFIX
             node = ast_add_node(AST_CALL)
             ast_nodes(node).ref = token
-            ast_attach node, pt_expr(he.v2)
+            expr = pt_expr(he.v2)
+            type_return_sig token, sig
+            if type_next_sig(sig) = 0 then fatalerror "Prefix function is argumentless"
+            type_restrict_expr expr, sig.value
+            ast_attach node, expr
         case else
             fatalerror "Unexpected operator " + tok_human_readable$(token)
         end select
@@ -84,17 +89,24 @@ end function
 
 function led(token, content$, left_node)
     dim he as hentry_t
+    dim sig as type_signature_t
     he = htable_entries(token)
     node = ast_add_node(AST_CALL)
     ast_nodes(node).ref = token
     select case he.typ
     case HE_INFIX
+        type_return_sig token, sig
+        if type_next_sig(sig) = 0 then fatalerror "Infix function is left-argumentless"
+        type_restrict_expr left_node, sig.value
         ast_attach node, left_node
         if he.v3 = 0 then 'Left-associative
-            ast_attach node, pt_expr(he.v2)
+            right_node = pt_expr(he.v2)
         else 'right-associative
-            ast_attach node, pt_expr(he.v2 - 1)
+            right_node = pt_expr(he.v2 - 1)
         end if
+        if type_next_sig(sig) = 0 then fatalerror "Infix function is right-argumentless"
+        type_restrict_expr right_node, sig.value
+        ast_attach node, right_node
     case else
         fatalerror "Unexpected led " + tok_human_readable$(token)
     end select

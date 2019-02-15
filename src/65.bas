@@ -1,4 +1,3 @@
-'This compiler is a one-man effort, so by Conway's Law, it is a one pass compiler.
 const FALSE = 0, TRUE = NOT FALSE
 deflng a-z
 $console:only
