@@ -88,7 +88,9 @@ function ps_stmt
             ps_stmt = ps_while
         case TOK_FOR
             ps_stmt = ps_for
-        case TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_EOF
+        case TOK_SELECT
+            ps_stmt = ps_select
+        case TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
             'These all end a block in some fashion. Repeat so that the
             'block-specific code can assert the ending token
             ps_stmt = 0
@@ -112,6 +114,27 @@ function ps_stmt
             end select
     end select
     print "Completed statement"
+end function
+
+function ps_select
+    print "Start SELECT block"
+    dim he as hentry_t
+    root = ast_add_node(AST_SELECT)
+    ps_assert_token tok_next_token, TOK_CASE
+    expr = ps_expr
+    ast_attach root, expr
+    ps_assert_token tok_next_token, TOK_NEWLINE
+    t = tok_next_token
+    do
+        ps_assert_token t, TOK_CASE
+        guard = ps_expr
+        type_restrict_expr guard, type_of_expr(expr)
+        block = ps_block
+        ast_attach root, guard
+        ast_attach root, block
+        t = tok_next_token
+    loop while t <> TOK_SELECT 'ps_block eats the END
+    ps_select = root
 end function
 
 function ps_for

@@ -100,7 +100,16 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty ast_get_child(root,  4), indent_level + 1
         print indent$; "NEXT "; htable_names(ast_nodes(root).ref);
     case AST_SELECT
-        print indent$; "SELECT";
+        print indent$; "SELECT CASE ";
+        ast_dump_pretty ast_get_child(root, 1), 0
+        print
+        for i = 2 to ast_num_children(root) step 2
+            print indent$; "CASE ";
+            ast_dump_pretty ast_get_child(root, i), 0
+            print
+            ast_dump_pretty ast_get_child(root, i + 1), indent_level + 1
+        next i
+        print indent$; "END SELECT";
     case AST_CALL
         print "call(";
         print htable_names(ast_nodes(root).ref);
@@ -111,7 +120,11 @@ sub ast_dump_pretty(root, indent_level)
         next i
         print ")";
     case AST_CONSTANT
-        print ast_constants(ast_nodes(root).ref);
+        if type_of_constant(root) = TYPE_STRING then
+            print chr$(34); ast_constants(ast_nodes(root).ref); chr$(34);
+        else
+            print ast_constants(ast_nodes(root).ref);
+        end if
     case AST_BLOCK
         for i = 1 to ast_num_children(root)
             print indent$;

@@ -52,12 +52,12 @@ sub type_restrict_expr(expr, typ)
     case AST_CALL
         'Don't actually do any restriction, just type check
         if not type_can_cast(type_of_call(expr), typ) then
-            fatalerror "Cannot convert return type of function to type of argument"
+            fatalerror "Cannot convert return type of function to expected type"
         end if
     case AST_CONSTANT
         'Do something useful?
         if not type_can_cast(type_of_constant(expr), typ) then
-            fatalerror "Type of constant does not match type of argument"
+            fatalerror "Constant is of unexpected type"
         end if
     case AST_VAR
         type_restrict ast_nodes(expr).ref, typ

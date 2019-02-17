@@ -74,6 +74,9 @@ generic to
 generic step
 generic next
 
+generic select
+generic case
+
 # functions with return type none are subs
 function _autodisplay   none
 function beep           none
