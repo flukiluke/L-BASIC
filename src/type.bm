@@ -83,7 +83,7 @@ end function
 function type_is_numeric(t)
     'This had to occur somewere, I suppose
     select case t
-    case TYPE_BYTE, TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_UBYTE, TYPE_UINTEGER, TYPE_ULONG, TYPE_UINTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_FLOAT
+    case TYPE_INTEGER, TYPE_LONG, TYPE_BIGINTEGER, TYPE_SINGLE, TYPE_DOUBLE, TYPE_OFFSET
         type_is_numeric = TRUE
     case else
         type_is_numeric = FALSE
@@ -135,28 +135,14 @@ end function
 
 function type_sfx2type(sfx_token)
     select case sfx_token
-    case TOK_BYTE_SFX
-        type_sfx2type = TYPE_BYTE
-    case TOK_INTEGER_SFX
+    case TOK_INTEGER_SFX, TOK_LONG_SFX
         type_sfx2type = TYPE_INTEGER
-    case TOK_LONG_SFX
-        type_sfx2type = TYPE_LONG
-    case TOK_INTEGER64_SFX
-        type_sfx2type = TYPE_INTEGER64
-    case TOK_UBYTE_SFX
-        type_sfx2type = TYPE_UBYTE
-    case TOK_UINTEGER_SFX
-        type_sfx2type = TYPE_UINTEGER
-    case TOK_ULONG_SFX
-        type_sfx2type = TYPE_ULONG
-    case TOK_UINTEGER64_SFX
-        type_sfx2type = TYPE_UINTEGER64
-    case TOK_SINGLE_SFX
+    case TOK_BIGINTEGER_SFX
+        type_sfx2type = TYPE_BIGINTEGER
+    case TOK_SINGLE_SFX, TOK_DOUBLE_SFX
         type_sfx2type = TYPE_SINGLE
-    case TOK_DOUBLE_SFX
-        type_sfx2type = TYPE_DOUBLE
-    case TOK_FLOAT_SFX
-        type_sfx2type = TYPE_FLOAT
+    case TOK_OFFSET_SFX
+        type_sfx2type = TYPE_OFFSET
     case TOK_STRING_SFX
         type_sfx2type = TYPE_STRING
     case else
@@ -172,31 +158,17 @@ function type_human_readable$(typ)
         type_human_readable$ = "any"
     case TYPE_NUMBER
         type_human_readable$ = "number"
-    case TYPE_BYTE
-        type_human_readable$ = "byte"
-    case TYPE_INTEGER
+    case TYPE_INTEGER, TYPE_LONG
         type_human_readable$ = "integer"
-    case TYPE_LONG
-        type_human_readable$ = "long"
-    case TYPE_INTEGER64
-        type_human_readable$ = "integer64"
-    case TYPE_UBYTE
-        type_human_readable$ = "ubyte"
-    case TYPE_UINTEGER
-        type_human_readable$ = "uinteger"
-    case TYPE_ULONG
-        type_human_readable$ = "ulong"
-    case TYPE_UINTEGER64
-        type_human_readable$ = "uinteger64"
+    case TYPE_BIGINTEGER
+        type_human_readable$ = "biginteger"
     case TYPE_SINGLE
         type_human_readable$ = "single"
     case TYPE_DOUBLE
         type_human_readable$ = "double"
-    case TYPE_FLOAT
-        type_human_readable$ = "float"
     case TYPE_STRING
         type_human_readable$ = "string"
     case else
-        type_human_readable$ = "UNKNOWN"
+        type_human_readable$ = "unknown"
     end select
 end function

@@ -5,7 +5,6 @@
 %class hexchar = 0123456789ABCDEFabcdef
 %class sp = \09\0b\0c\20
 %class nl = \0a
-%class tilde = ~
 %class bang = !
 %class amp = &
 
@@ -52,10 +51,8 @@ String: "" ~ General ! STRING
 General: $letter ~ Id
 General: $number ~ Number
 General: "? ~ General ! ID
-General: $tilde ~ TildePfx
 General: $bang ~ General ! SINGLE_SFX
-General: "` ~ General ! BIT_SFX
-General: "# ~ HashPfx
+General: "# ~ General ! DOUBLE_SFX
 General: "$ ~ General ! STRING_SFX
 General: "% ~ PercentPfx
 General: "^ ~ General ! POWER
@@ -102,19 +99,12 @@ NumExpSgn: "- ~ NumExp
 NumExp: * ~ General & NUMEXP
 NumExp: $number ~ NumExp
 
-TildePfx: "% ~ TildePercentPfx
-TildePfx: "` ~ General ! UBIT_SFX
-TildePfx: $amp ~ TildeAmpersandPfx
-
-HashPfx: * ~ General & DOUBLE_SFX
-HashPfx: "# ~ General ! FLOAT_SFX
-
 PercentPfx: * ~ General & INTEGER_SFX
-PercentPfx: "% ~ General ! BYTE_SFX
 PercentPfx: $amp ~ General ! OFFSET_SFX
 
 AmpersandPfx: * ~ General & LONG_SFX
-AmpersandPfx: $amp ~ General ! INTEGER64_SFX
+AmpersandPfx: $amp ~ General ! BIGINTEGER_SFX
+
 AmpersandPfx: "h ~ NumBase
 AmpersandPfx: "o ~ NumBase
 AmpersandPfx: "b ~ NumBase
@@ -124,13 +114,6 @@ AmpersandPfx: "B ~ NumBase
 
 NumBase: * ~ General & NUMBASE
 NumBase: $hexchar ~ NumBase
-
-TildePercentPfx: * ~ General & UINTEGER_SFX
-TildePercentPfx: "% ~ General ! UBYTE_SFX
-TildePercentPfx: $amp ~ General ! UOFFSET_SFX
-
-TildeAmpersandPfx: * ~ General & ULONG_SFX
-TildeAmpersandPfx: $amp ~ General ! UINTEGER64_SFX
 
 LtPfx: * ~ General & CMP_LT
 LtPfx: "= ~ General ! CMP_LTEQ

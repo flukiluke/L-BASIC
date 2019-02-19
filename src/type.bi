@@ -16,25 +16,25 @@ const TYPE_NONE = 0
 const TYPE_ANY = 1
 'Restricted to be numeric, but no further detail
 const TYPE_NUMBER = 2
-'One byte
-const TYPE_BYTE = 3
-'Two bytes
-const TYPE_INTEGER = 4
-'Four bytes
-const TYPE_LONG = 5
-'Eight bytes
-const TYPE_INTEGER64 = 6
-'Unsigned versions of above
-const TYPE_UBYTE = 7
-const TYPE_UINTEGER = 8
-const TYPE_ULONG = 9
-const TYPE_UINTEGER64 = 10
-'Floating point numbers of various size
-const TYPE_SINGLE = 11
-const TYPE_DOUBLE = 12
-const TYPE_FLOAT = 13
+
+'A machine-native integer, guaranteed to be at least 32 bits wide
+const TYPE_INTEGER = 3
+'Note that LONG is just an alias for INTEGER
+const TYPE_LONG = 3
+
+'An arbitrary-width integer
+const TYPE_BIGINTEGER
+
+'Not yet used, but intended for pointers
+const TYPE_OFFSET = 4
+
+'A floating-point number
+const TYPE_SINGLE = 5
+'Note that DOUBLE is just an alias for SINGLE
+const TYPE_DOUBLE = 5
+
 'Everyone's favourite non-numeric type
-const TYPE_STRING = 14
+const TYPE_STRING = 6
 
 'Flags for type_signature_t.flags
 const TYPE_REQUIRED = 1
