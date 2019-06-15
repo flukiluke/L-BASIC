@@ -296,8 +296,17 @@ function ps_assignment(ref)
     ps_assert_token tok_next_token, TOK_EQUALS
     expr = ps_expr
     ast_attach root, expr
-    'Assignment restricts lvalue's type to that of rvalue's.
-    type_restrict ref, type_of_expr(expr)
+    dest_type = htable_entries(ref).v1
+    ' Ensure rvalue can be stored in dest
+    if type_is_instance(type_of_expr(expr), dest_type) then
+        type_restrict_expr expr, dest_type
+        'If the variable is already a concrete type we shouldn't go fiddling with that
+        if not type_is_concrete(dest_type) then
+            type_restrict_var ref, type_of_expr(expr)
+        end if
+    else
+        fatalerror "Cannot store right side in destination variable"
+    end if
     ps_assignment = root
     ps_assert_token tok_next_token, TOK_NEWLINE
     print "Completed assignment"
@@ -438,7 +447,7 @@ function ps_variable(token, content$)
     'Check for type sigil
     sigil = ps_opt_sigil(0)
     if sigil then
-        type_restrict var, sigil
+        type_restrict_var var, sigil
     end if
     ps_variable = var
     print "End variable"

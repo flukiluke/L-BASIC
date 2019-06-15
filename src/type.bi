@@ -14,27 +14,29 @@ dim shared type_last_signature as long
 const TYPE_NONE = 0
 'This element is typed, but haven't restricted its type at all
 const TYPE_ANY = 1
-'Restricted to be numeric, but no further detail
-const TYPE_NUMBER = 2
+
+'All numbers are numeric; offsets are numeric but not a number (see type_can_cast)
+const TYPE_NUMERIC = 2
+const TYPE_NUMBER = 3
 
 'A machine-native integer, guaranteed to be at least 32 bits wide
-const TYPE_INTEGER = 3
+const TYPE_INTEGER = 4
 'Note that LONG is just an alias for INTEGER
-const TYPE_LONG = 3
+const TYPE_LONG = 4
 
 'An arbitrary-width integer
-const TYPE_BIGINTEGER
+const TYPE_BIGINTEGER = 5
 
 'Not yet used, but intended for pointers
-const TYPE_OFFSET = 4
+const TYPE_OFFSET = 6
 
 'A floating-point number
-const TYPE_SINGLE = 5
+const TYPE_SINGLE = 7
 'Note that DOUBLE is just an alias for SINGLE
-const TYPE_DOUBLE = 5
+const TYPE_DOUBLE = 7
 
 'Everyone's favourite non-numeric type
-const TYPE_STRING = 6
+const TYPE_STRING = 8
 
 'Flags for type_signature_t.flags
 const TYPE_REQUIRED = 1

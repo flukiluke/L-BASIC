@@ -1,33 +1,74 @@
-sub type_dump_functions
-    dim sig as type_signature_t
-    for i = 1 to htable.elements
-        typ = htable_entries(i).typ
-        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
-            print htable_names(i); " ";
-            type_return_sig i, sig
-            print type_human_readable$(sig.value); " (";
-            while type_next_sig(sig)
-                print type_human_readable$(sig.value);
-                if sig.succ <> 0 then print ", ";
-            wend
-            print ")"
-        end if
-    next i
-end sub
+'These first few functions type_is_* encode the type hierachy. In the tree shown, types below
+'are more specific than the types above. This means an object of a specific type can be used
+'anywhere a more generic type is expected.
+'The ANY, NUMERIC and NUMBER types allow us to declare objects that can later be restricted
+'in type to something more specific, and to write functions that seeminly take multiple types
+'of argument.
+'The tree of types:
+'          ANY
+'           | `
+'           |   `
+'        NUMERIC  STRING
+'           | `
+'           |   `
+'        NUMBER   OFFSET
+'       /      \
+'      /        \
+'  BIGINTEGER    DOUBLE
+'      \         /
+'       \       /
+'        INTEGER
 
-sub type_return_sig(token, sig as type_signature_t)
-    sig = type_signatures(htable_entries(token).v1)
-end sub
-
-function type_next_sig(sig as type_signature_t)
-    if sig.succ = 0 then
-        type_next_sig = FALSE
-        exit function
+'is child below parent on the type tree?
+function type_is_instance(child, parent)
+    if child = parent then
+        type_is_instance = TRUE
+    elseif parent = TYPE_ANY then
+        'All types are child of ANY
+        type_is_instance = TRUE
+    elseif parent = TYPE_NUMBER then
+        type_is_instance = type_is_number(child)
+    elseif parent = TYPE_NUMERIC then
+        type_is_instance = type_is_numeric(child)
+    elseif child = TYPE_INTEGER then
+        'INTEGER is child of doubles and bigintegers
+        type_is_instance = (parent = TYPE_BIGINTEGER or parent = TYPE_DOUBLE)
+    else
+        type_is_instance = FALSE
     end if
-    sig = type_signatures(sig.succ)
-    type_next_sig = TRUE
 end function
 
+function type_is_concrete(t)
+    select case t
+    case TYPE_ANY, TYPE_NUMERIC, TYPE_NUMBER
+        type_is_concrete = FALSE
+    case else
+        type_is_concrete = TRUE
+    end select
+end function
+
+function type_is_numeric(t)
+    select case t
+    case TYPE_INTEGER, TYPE_LONG, TYPE_BIGINTEGER, TYPE_SINGLE, TYPE_DOUBLE, TYPE_OFFSET, TYPE_NUMBER
+        type_is_numeric = TRUE
+    case else
+        type_is_numeric = FALSE
+    end select
+end function
+
+function type_is_number(t)
+    select case t
+    case TYPE_INTEGER, TYPE_LONG, TYPE_BIGINTEGER, TYPE_SINGLE, TYPE_DOUBLE
+        type_is_number = TRUE
+    case else
+        type_is_number = FALSE
+    end select
+end function
+
+'Type signatures for functions are a linked list, handled by the next few functions.
+'The first element in the list is the return type, then any arguments are subsequent elements.
+
+'Create a new LL for a new function
 function type_add_signature(typ)
     type_last_signature = type_last_signature + 1
     if ubound(type_signatures) = type_last_signature then
@@ -37,6 +78,7 @@ function type_add_signature(typ)
     type_add_signature = type_last_signature
 end function
 
+'Add an element to an existing LL
 sub type_chain_argument(root, typ, required)
     new = type_add_signature(typ)
     type_signatures(new).flags = TYPE_REQUIRED and required
@@ -47,65 +89,64 @@ sub type_chain_argument(root, typ, required)
     type_signatures(node).succ = new
 end sub
 
+'Get the return type of a function (the first element in the LL)
+sub type_return_sig(token, sig as type_signature_t)
+    sig = type_signatures(htable_entries(token).v1)
+end sub
+
+'Get next element in LL
+function type_next_sig(sig as type_signature_t)
+    if sig.succ = 0 then
+        type_next_sig = FALSE
+        exit function
+    end if
+    sig = type_signatures(sig.succ)
+    type_next_sig = TRUE
+end function
+
+'The type_restrict_* functions allow us to insist that an object has a specific type,
+'or something at least as specific as that. Attempting to restrict something to a type
+'that is not a descendant of it on the tree is an error.
+'Explicit type_restrict_* functions are pulled out of type_restrict_expr as needed.
 sub type_restrict_expr(expr, typ)
     select case ast_nodes(expr).typ
     case AST_CALL
         'Don't actually do any restriction, just type check
-        if not type_can_cast(type_of_call(expr), typ) then
+        if not type_is_instance(type_of_call(expr), typ) then
             fatalerror "Cannot convert return type of function to expected type"
         end if
     case AST_CONSTANT
         'Do something useful?
-        if not type_can_cast(type_of_constant(expr), typ) then
+        if not type_is_instance(type_of_constant(expr), typ) then
             fatalerror "Constant is of unexpected type"
         end if
     case AST_VAR
-        type_restrict ast_nodes(expr).ref, typ
+        type_restrict_var ast_nodes(expr).ref, typ
     case else
         fatalerror "Cannot restrict type of expression"
     end select
 end sub
 
-function type_can_cast(a, b)
-    if a = b then
-        type_can_cast = TRUE
-    elseif a = TYPE_ANY or b = TYPE_ANY then
-        type_can_cast = TRUE
-    elseif a = TYPE_NUMBER and type_is_numeric(b) then
-        type_can_cast = TRUE
-    elseif b = TYPE_NUMBER and type_is_numeric(a) then
-        type_can_cast = TRUE
-    else
-        type_can_cast = FALSE
-    end if
-end function
-
-function type_is_numeric(t)
-    'This had to occur somewere, I suppose
-    select case t
-    case TYPE_INTEGER, TYPE_LONG, TYPE_BIGINTEGER, TYPE_SINGLE, TYPE_DOUBLE, TYPE_OFFSET
-        type_is_numeric = TRUE
-    case else
-        type_is_numeric = FALSE
-    end select
-end function
-
-sub type_restrict(variable, typ)
-    current_type = htable_entries(variable).v1
+sub type_restrict_var(variable, typ)
     print "Restrict "; htable_names(variable); " to "; type_human_readable$(typ)
-    if typ = TYPE_ANY then exit sub
-    select case current_type
-    case TYPE_ANY
-        htable_entries(variable).v1 = typ
-    case typ
-        'Ok. Do nothing.
-    case 0
-        fatalerror "Attempt to restrict untyped variable"
-    case else
-        fatalerror "Attemped type restriction conflicts with current restriction"
-    end select
+    current_type = htable_entries(variable).v1
+
+    'If the variable is already more specific than the requested restriction, do nothing
+    if type_is_instance(current_type, typ) then
+        print "Restriction is impotent"
+        exit sub
+    end if
+
+    'Note the reversed arguments - we want to make sure the requested type is descendant
+    'of the type the variable currently has
+    if not type_is_instance(typ, current_type) then
+        fatalerror "Attempted type restriction conflicts with current restriction"
+    end if
+
+    htable_entries(variable).v1 = typ
 end sub
 
+'Straight-forward functions for getting the type of an object.
 function type_of_expr(root)
     select case ast_nodes(root).typ
     case AST_CONSTANT
@@ -133,6 +174,21 @@ function type_of_var(node)
     type_of_var = htable_entries(ast_nodes(node).ref).v1
 end function
 
+'Distinguish between INTEGER and BIGINTEGER constants
+function type_detect_numint_type(content$)
+    ' Currently hard-coded for 32-bit integers
+    if len(content$) < 10 then
+        type_detect_numint_type = TYPE_INTEGER
+    elseif len(content$) > 10 then
+        type_detect_numint_type = TYPE_BIGINTEGER
+    elseif _strcmp("2147483647", content$) = -1 then
+        type_detect_numint_type = TYPE_BIGINTEGER
+    else
+        type_detect_numint_type = TYPE_INTEGER
+    end if
+end function
+    
+'Conversions between things for parsing and display purposes
 function type_sfx2type(sfx_token)
     select case sfx_token
     case TOK_INTEGER_SFX, TOK_LONG_SFX
@@ -162,9 +218,7 @@ function type_human_readable$(typ)
         type_human_readable$ = "integer"
     case TYPE_BIGINTEGER
         type_human_readable$ = "biginteger"
-    case TYPE_SINGLE
-        type_human_readable$ = "single"
-    case TYPE_DOUBLE
+    case TYPE_SINGLE, TYPE_DOUBLE
         type_human_readable$ = "double"
     case TYPE_STRING
         type_human_readable$ = "string"
@@ -172,3 +226,22 @@ function type_human_readable$(typ)
         type_human_readable$ = "unknown"
     end select
 end function
+
+'For debugging
+sub type_dump_functions
+    dim sig as type_signature_t
+    for i = 1 to htable.elements
+        typ = htable_entries(i).typ
+        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
+            print htable_names(i); " ";
+            type_return_sig i, sig
+            print type_human_readable$(sig.value); " (";
+            while type_next_sig(sig)
+                print type_human_readable$(sig.value);
+                if sig.succ <> 0 then print ", ";
+            wend
+            print ")"
+        end if
+    next i
+end sub
+

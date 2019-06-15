@@ -28,11 +28,11 @@ const AST_ONE = 4
 ast_constants(AST_NONE) = "None"
 ast_constant_types(AST_NONE) = TYPE_ANY
 ast_constants(AST_FALSE) = "0"
-ast_constant_types(AST_FALSE) = TYPE_NUMBER
+ast_constant_types(AST_FALSE) = TYPE_NUMERIC
 ast_constants(AST_TRUE) = "-1"
-ast_constant_types(AST_TRUE) = TYPE_NUMBER
+ast_constant_types(AST_TRUE) = TYPE_NUMERIC
 ast_constants(AST_ONE) = "1"
-ast_constant_types(AST_ONE) = TYPE_NUMBER
+ast_constant_types(AST_ONE) = TYPE_NUMERIC
 ast_last_constant = 4
 
 'The types of node. Note the regex-like notation with ? for optionality.

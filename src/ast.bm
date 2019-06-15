@@ -4,13 +4,15 @@ function ast_add_constant(token, content$)
     if ast_last_constant = ubound(ast_constants) then ast_expand_constants_array
     ast_last_constant = ast_last_constant + 1
     select case token
-    case TOK_NUMINT, TOK_NUMDEC
+    case TOK_NUMINT
         ast_constants(ast_last_constant) = content$
-        'This should probably refine the type further to something concrete
-        ast_constant_types(ast_last_constant) = TYPE_NUMBER
+        ast_constant_types(ast_last_constant) = type_detect_numint_type(content$)
+    case TOK_NUMDEC
+        ast_constants(ast_last_constant) = content$
+        ast_constant_types(ast_last_constant) = TYPE_DOUBLE
     case TOK_NUMBASE
         ast_constants(ast_last_constant) = ltrim$(str$(val(content$)))
-        ast_constant_types(ast_last_constant) = TYPE_NUMBER
+        ast_constant_types(ast_last_constant) = type_detect_numint_type(ast_constants(ast_last_constant))
     case TOK_NUMEXP
         fatalerror "No support for numbers with exponents"
     case TOK_STRING
