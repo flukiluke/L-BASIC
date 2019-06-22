@@ -78,3 +78,4 @@ function _copypalette   none    number,number
 function left           string  string,number
 function print          none    any
 function rgba           number  number,?number,?number,?number
+function int            integer number

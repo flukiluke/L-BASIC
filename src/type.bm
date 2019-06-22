@@ -212,6 +212,8 @@ function type_human_readable$(typ)
         type_human_readable$ = "none"
     case TYPE_ANY
         type_human_readable$ = "any"
+    case TYPE_NUMERIC
+        type_human_readable$ = "numeric"
     case TYPE_NUMBER
         type_human_readable$ = "number"
     case TYPE_INTEGER, TYPE_LONG
