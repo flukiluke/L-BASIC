@@ -1,5 +1,5 @@
-'$include: '../build/ts_data.bi'
-'$include: '../build/token_data.bi'
+'$include: '../../build/ts_data.bi'
+'$include: '../../build/token_data.bi'
 
 type tokeniser_state_t
     index as long

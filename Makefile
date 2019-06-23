@@ -1,27 +1,39 @@
-QB64 = /home/luke/comp/git_qb64/qb64 -v
+# This should point to your QB64 installation
+QB64 := /home/luke/comp/git_qb64/qb64 -v
 
-BUILD_DIR = $(CURDIR)/build
-SRC_DIR = $(CURDIR)/src
-TOOLS_DIR = $(CURDIR)/tools
+BUILD_DIR := $(CURDIR)/build
+SRC_DIR := $(CURDIR)/src
+TOOLS_DIR := $(CURDIR)/tools
+OUT_DIR := $(CURDIR)/out
+$(shell mkdir -p $(OUT_DIR) $(BUILD_DIR) &> /dev/null)
 
-SRC = $(SRC_DIR)/65.bas $(wildcard $(SRC_DIR)/*.bm) $(wildcard $(SRC_DIR)/*.bi)
-TS_FILES = $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
-TOKEN_FILES = $(BUILD_DIR)/token_data.bi $(BUILD_DIR)/token_registrations.bm
+all: compiler
 
-all: 65
+compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser
 
-65: $(TS_FILES) $(TOKEN_FILES) $(SRC_BI) $(SRC_BM)
-	$(QB64) -x $(SRC_DIR)/65.bas -o $(BUILD_DIR)/65
+# Main user-called binary
+$(OUT_DIR)/65: $(SRC_DIR)/65.bas
+	$(QB64) -x $< -o $@
 
-$(TS_FILES): $(SRC_DIR)/ts.rules $(BUILD_DIR)/tsgen.tool
-	$(BUILD_DIR)/tsgen.tool $(SRC_DIR)/ts.rules
+TS_FILES := $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
+TOKEN_FILES := $(BUILD_DIR)/token_data.bi $(BUILD_DIR)/token_registrations.bm
 
-$(TOKEN_FILES): $(SRC_DIR)/tokens.list $(BUILD_DIR)/tokgen.tool
-	$(BUILD_DIR)/tokgen.tool $(SRC_DIR)/tokens.list $(TOKEN_FILES)
+$(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
+                   $(wildcard $(SRC_DIR)/parser/*.bm) \
+                   $(wildcard $(SRC_DIR)/parser/*.bi) \
+				   $(TS_FILES) \
+				   $(TOKEN_FILES)
+	$(QB64) -x $(SRC_DIR)/parser/parser.bas -o $(OUT_DIR)/parser
+
+$(TS_FILES): $(SRC_DIR)/parser/ts.rules $(BUILD_DIR)/tsgen.tool
+	$(BUILD_DIR)/tsgen.tool $(SRC_DIR)/parser/ts.rules
+
+$(TOKEN_FILES): $(SRC_DIR)/parser/tokens.list $(BUILD_DIR)/tokgen.tool
+	$(BUILD_DIR)/tokgen.tool $(SRC_DIR)/parser/tokens.list $(TOKEN_FILES)
 
 $(BUILD_DIR)/%.tool: $(TOOLS_DIR)/%.bas
 	$(QB64) -x $< -o $@.tool
 
 .PHONY: clean
 clean:
-	rm $(BUILD_DIR)/*
+	rm -r $(BUILD_DIR) $(OUT_DIR)
