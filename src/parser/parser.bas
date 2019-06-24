@@ -14,13 +14,14 @@ start_timer
 '$include: '../../build/token_registrations.bm'
 end_timer "Data structure and token initialisation"
 
-if _commandcount < 1 then
-    inputfile$ = "/dev/stdin"
-elseif _commandcount > 1 then
-    fatalerror "Too many arguments."
-else
-    inputfile$ = command$(1)
+'We expect exactly two arguments, an input file and output file
+if _commandcount <> 2 then
+    print "Usage: " + command$(0) + " <input file> <output file>"
+    print "In almost all cases you don't want to run this program directly; you want to run 65 instead"
+    system
 end if
+inputfile$ = command$(1)
+outputfile$ = command$(2)
 
 on error goto file_error
 open inputfile$ for input as #1

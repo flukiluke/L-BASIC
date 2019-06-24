@@ -58,7 +58,7 @@ end if
 parser_output$ = mktemp$(tmpdir$)
 parser_cmd$ = execdir$ + "/parser" + exesuffix$ + " " + escape$(options.inputfile) + " " + escape$(parser_output$)
 if options.verbose then print "Executing "; parser_cmd$
-'parser_ret = shell(parser_cmd$)
+parser_ret = shell(parser_cmd$)
 if parser_ret <> 0 then
     if options.verbose then print "Return code"; parser_ret; "; exiting"
     system
