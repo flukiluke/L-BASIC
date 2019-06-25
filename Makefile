@@ -17,10 +17,12 @@ $(OUT_DIR)/65: $(SRC_DIR)/65.bas
 
 TS_FILES := $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
 TOKEN_FILES := $(BUILD_DIR)/token_data.bi $(BUILD_DIR)/token_registrations.bm
+COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.bm) $(wildcard $(SRC_DIR)/common/*.bi)
 
 $(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
                    $(wildcard $(SRC_DIR)/parser/*.bm) \
                    $(wildcard $(SRC_DIR)/parser/*.bi) \
+				   $(COMMON_SRC) \
 				   $(TS_FILES) \
 				   $(TOKEN_FILES)
 	$(QB64) -x $(SRC_DIR)/parser/parser.bas -o $(OUT_DIR)/parser

@@ -10,7 +10,7 @@
 'any manual edits to the registration code will likely cause it to be out of sync with the TOK_ definitions.
 'Re-run this generation program instead.
 '
-'Each line as the following format:
+'Each line has the following format:
 '
 'TYPE NAME ARGS FLAGS
 '

@@ -3,16 +3,15 @@ deflng a-z
 $console:only
 _dest _console
 on error goto generic_error
-dim shared timer_start#
 
-start_timer
-'$include: 'type.bi'
-'$include: 'htable.bi'
+'$include: '../common/type.bi'
+'$include: '../common/ast.bi'
+'$include: '../common/htable.bi'
+'$include: '../common/sif.bi'
+
 '$include: 'tokeng.bi'
 '$include: 'pratt.bi'
-'$include: 'ast.bi'
 '$include: '../../build/token_registrations.bm'
-end_timer "Data structure and token initialisation"
 
 'We expect exactly two arguments, an input file and output file
 if _commandcount <> 2 then
@@ -27,9 +26,10 @@ on error goto file_error
 open inputfile$ for input as #1
 on error goto generic_error
 
-start_timer
+ast_init
 block = ps_block
-end_timer "Parsing"
+sif_write outputfile$, block
+
 print
 print "Table of identifiers:"
 htable_dump
@@ -467,16 +467,10 @@ sub fatalerror(msg$)
     system
 end sub
 
-sub start_timer
-    timer_start# = timer(0.001)
-end sub
-
-sub end_timer(msg$)
-    print msg$; using " done in ##.### seconds"; timer(0.001) - timer_start#
-end sub
+'$include: '../common/type.bm'
+'$include: '../common/ast.bm'
+'$include: '../common/htable.bm'
+'$include: '../common/sif.bm'
 
 '$include: 'pratt.bm'
-'$include: 'htable.bm'
 '$include: 'tokeng.bm'
-'$include: 'ast.bm'
-'$include: 'type.bm'

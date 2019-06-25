@@ -1,0 +1,43 @@
+sub sif_write(filename$, root_node)
+    fh = freefile
+    open filename$ for binary as #fh
+
+    dim header as sif_header_t
+    header.version = SIF_VERSION
+    header.num_constants = ast_last_constant
+    header.num_ast_nodes = ast_last_node
+    header.root_node = root_node
+    header.num_hentries = htable.elements
+    put #fh, , header
+
+    write_string_array fh, ast_constants(), ast_last_constant
+    write_long_array fh, ast_constant_types(), ast_last_constant
+    for i = 1 to ast_last_node
+        put #fh, , ast_nodes(i)
+    next i
+    write_string_array fh, ast_children(), ast_last_node
+
+    for i = 1 to htable.elements
+        put #fh, , htable_entries(i)
+    next i
+    write_string_array fh, htable_names(), htable.elements
+
+    for i = 1 to type_last_signature
+        put #fh, , type_signatures(i)
+    next i
+end sub
+
+sub write_long_array(fh, arr() as long, size)
+    for i = 1 to size
+        put #fh, , arr(i)
+    next i
+end sub
+
+sub write_string_array(fh, arr() as string, size)
+    dim l as long
+    for i = 1 to size
+        l = len(arr(i))
+        put #fh, , l
+        put #fh, , arr(i)
+    next i
+end sub

@@ -1,5 +1,18 @@
 deflng a-z
 
+' Initialise a clean AST
+sub ast_init
+    ast_constants(AST_NONE) = "None"
+    ast_constant_types(AST_NONE) = TYPE_ANY
+    ast_constants(AST_FALSE) = "0"
+    ast_constant_types(AST_FALSE) = TYPE_NUMERIC
+    ast_constants(AST_TRUE) = "-1"
+    ast_constant_types(AST_TRUE) = TYPE_NUMERIC
+    ast_constants(AST_ONE) = "1"
+    ast_constant_types(AST_ONE) = TYPE_NUMERIC
+    ast_last_constant = 4
+end sub
+
 function ast_add_constant(token, content$)
     if ast_last_constant = ubound(ast_constants) then ast_expand_constants_array
     ast_last_constant = ast_last_constant + 1
@@ -45,14 +58,14 @@ end function
 
 sub ast_expand_nodes_arrays()
     new_size = ubound(ast_nodes) * 2
-    redim _preserve ast_nodes(new_size) as ast_node_t
-    redim _preserve ast_children(new_size) as string
+    redim _preserve ast_nodes(1 to new_size) as ast_node_t
+    redim _preserve ast_children(1 to new_size) as string
 end sub
 
 sub ast_expand_constants_array()
     new_size = ubound(ast_constants) * 2
-    redim _preserve ast_constants(new_size) as string
-    redim _preserve ast_constant_types(new_size) as long
+    redim _preserve ast_constants(1 to new_size) as string
+    redim _preserve ast_constant_types(1 to new_size) as long
 end sub
 
 sub ast_dump_pretty(root, indent_level)
