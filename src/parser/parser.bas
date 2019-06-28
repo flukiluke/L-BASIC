@@ -1,5 +1,6 @@
 const FALSE = 0, TRUE = NOT FALSE
 deflng a-z
+'$dynamic
 $console:only
 _dest _console
 on error goto generic_error
