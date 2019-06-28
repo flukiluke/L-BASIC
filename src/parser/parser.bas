@@ -30,7 +30,8 @@ on error goto generic_error
 ast_init
 block = ps_block
 sif_write outputfile$, block
-
+'Pass data through SIF module as a test (should produce identical output)
+block = sif_read(outputfile$)
 print
 print "Table of identifiers:"
 htable_dump
