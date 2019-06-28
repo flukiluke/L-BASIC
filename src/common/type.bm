@@ -228,22 +228,3 @@ function type_human_readable$(typ)
         type_human_readable$ = "unknown"
     end select
 end function
-
-'For debugging
-sub type_dump_functions
-    dim sig as type_signature_t
-    for i = 1 to htable.elements
-        typ = htable_entries(i).typ
-        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
-            print htable_names(i); " ";
-            type_return_sig i, sig
-            print type_human_readable$(sig.value); " (";
-            while type_next_sig(sig)
-                print type_human_readable$(sig.value);
-                if sig.succ <> 0 then print ", ";
-            wend
-            print ")"
-        end if
-    next i
-end sub
-

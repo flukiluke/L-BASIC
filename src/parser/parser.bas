@@ -17,6 +17,7 @@ on error goto generic_error
 'We expect exactly two arguments, an input file and output file
 if _commandcount <> 2 then
     print "Usage: " + command$(0) + " <input file> <output file>"
+    print "65 parser: converts source code to a SIF file."
     print "In almost all cases you don't want to run this program directly; you want to run 65 instead"
     system
 end if
@@ -28,22 +29,8 @@ open inputfile$ for input as #1
 on error goto generic_error
 
 ast_init
-block = ps_block
-sif_write outputfile$, block
-'Pass data through SIF module as a test (should produce identical output)
-block = sif_read(outputfile$)
-print
-print "Table of identifiers:"
-htable_dump
-print
-print "Function type signatures:"
-type_dump_functions
-print
-print "Table of constants:"
-ast_dump_constants
-print
-print "Program:"
-ast_dump_pretty block, 0
+root = ps_block
+sif_write outputfile$, root
 system
 
 file_error:
@@ -466,7 +453,7 @@ end sub
 
 sub fatalerror(msg$)
     print command$(0) + ": " + msg$
-    system
+    system 1
 end sub
 
 '$include: '../common/type.bm'

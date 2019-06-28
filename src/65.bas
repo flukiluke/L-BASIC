@@ -4,9 +4,12 @@ _dest _console
 const FALSE = 0, TRUE = not FALSE
 deflng a-z
 randomize timer
+on error goto generic_error
 
 dim shared VERSION$
 VERSION$ = "initial dev. version"
+
+dim shared temp_files$(0)
 
 $if win = 0 then
     declare library
@@ -62,9 +65,35 @@ if options.verbose then print "Executing "; parser_cmd$
 parser_ret = shell(parser_cmd$)
 if parser_ret <> 0 then
     if options.verbose then print "Return code"; parser_ret; "; exiting"
+    cleanup
     system
 end if
+
+target_cmd$ = execdir$ + "/" + options.target + exesuffix$ + " " + escape$(parser_output$) + " " + escape$(options.outputfile)
+if options.verbose then print "Executing "; target_cmd$
+target_ret = shell(target_cmd$)
+if target_ret <> 0 then
+    if options.verbose then print "Return code"; target_ret; "; exiting"
+    cleanup
+    system
+end if
+
+cleanup
 system
+
+generic_error:
+    cleanup
+    if _inclerrorline then
+        fatalerror "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
+    else
+        fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
+    end if
+
+sub cleanup
+    for i = 1 to ubound(temp_files$)
+        if _fileexists(temp_files$(i)) then kill temp_files$(i)
+    next i
+end sub
 
 function escape$(original$)
     'The function is really not correct
@@ -85,10 +114,12 @@ end function
 
 'This would be so much easier if we could use mktemp(1)
 function mktemp$(tmpdir$)
+    redim _preserve temp_files$(1 to ubound(temp_files$) + 1)
     n$ = tmpdir$ + "/65-" + ltrim$(str$(getpid&)) + "-"
     for i = 1 to 8
         n$ = n$ + chr$(int(rnd * 26) + 97)
     next i
+    temp_files$(ubound(temp_files$)) = n$
     mktemp$ = n$
 end function
 
@@ -104,7 +135,7 @@ end function
 
 sub fatalerror (msg$)
     print "Error: " + msg$
-    system
+    system 1
 end sub
     
 sub show_version

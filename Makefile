@@ -9,7 +9,7 @@ $(shell mkdir -p $(OUT_DIR) $(BUILD_DIR) &> /dev/null)
 
 all: compiler
 
-compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser
+compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump
 
 # Main user-called binary
 $(OUT_DIR)/65: $(SRC_DIR)/65.bas
@@ -18,6 +18,10 @@ $(OUT_DIR)/65: $(SRC_DIR)/65.bas
 TS_FILES := $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
 TOKEN_FILES := $(BUILD_DIR)/token_data.bi $(BUILD_DIR)/token_registrations.bm
 COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.bm) $(wildcard $(SRC_DIR)/common/*.bi)
+
+$(OUT_DIR)/dump: $(SRC_DIR)/targets/dump/target.bas \
+                 $(COMMON_SRC)
+	$(QB64) -x $(SRC_DIR)/targets/dump/target.bas -o $(OUT_DIR)/dump
 
 $(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
                    $(wildcard $(SRC_DIR)/parser/*.bm) \
