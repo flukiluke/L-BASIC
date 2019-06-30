@@ -39,8 +39,8 @@ type options_t
     verbose as integer
 end type
 
-dim options as options_t
-parse_cmd_line_args options
+dim shared options as options_t
+parse_cmd_line_args
 
 'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
 if options.inputfile = "" then fatalerror "No input files"
@@ -90,6 +90,10 @@ generic_error:
     end if
 
 sub cleanup
+    if options.keep_intermediates and options.verbose then
+        print "Keeping intermediate files"
+        exit sub
+    end if
     for i = 1 to ubound(temp_files$)
         if _fileexists(temp_files$(i)) then kill temp_files$(i)
     next i
@@ -163,7 +167,7 @@ sub list_targets
     print "  dump - Render program data as plain text for debugging"
 end sub
 
-sub parse_cmd_line_args(options as options_t)
+sub parse_cmd_line_args()
     for i = 1 TO _commandcount
         arg$ = command$(i)
         select case arg$
