@@ -1,10 +1,4 @@
-const FALSE = 0, TRUE = NOT FALSE
-deflng a-z
-'$dynamic
-$console:only
-_dest _console
-on error goto generic_error
-
+'$include: '../common/util.bi'
 '$include: '../common/type.bi'
 '$include: '../common/ast.bi'
 '$include: '../common/htable.bi'
@@ -31,17 +25,13 @@ on error goto generic_error
 ast_init
 root = ps_block
 sif_write outputfile$, root
+cleanup
 system
 
 file_error:
     fatalerror inputfile$ + ": Does not exist or inaccessible."
 
-generic_error:
-    if _inclerrorline then
-        fatalerror "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
-    else
-        fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
-    end if
+'$include: '../common/util.bm'
 
 sub ps_gobble(token)
     do
@@ -449,11 +439,6 @@ sub ps_assert_token(actual, expected)
     else
         print "Assert " + tok_human_readable(expected)
     end if
-end sub
-
-sub fatalerror(msg$)
-    print command$(0) + ": " + msg$
-    system 1
 end sub
 
 '$include: '../common/type.bm'

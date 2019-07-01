@@ -1,10 +1,4 @@
-'$dynamic
-$console:only
-_dest _console
-const FALSE = 0, TRUE = not FALSE
-deflng a-z
-on error goto generic_error
-
+'$include: '../../common/util.bi'
 '$include: '../../common/type.bi'
 '$include: '../../common/ast.bi'
 '$include: '../../common/htable.bi'
@@ -33,19 +27,10 @@ print #1,
 print #1, "Program:"
 ast_dump_pretty root, 0
 
+cleanup
 system
 
-generic_error:
-    if _inclerrorline then
-        fatalerror "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
-    else
-        fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
-    end if
-
-sub fatalerror(msg$)
-    print command$(0) + ": " + msg$
-    system 1
-end sub
+'$include: '../../common/util.bm'
 
 sub type_dump_functions
     dim sig as type_signature_t
@@ -160,6 +145,7 @@ sub ast_dump_constants
         print #1, using "###    &    &"; i; type_human_readable(ast_constant_types(i)); ast_constants(i)
     next i
 end sub
+
 '$include: '../../common/type.bm'
 '$include: '../../common/ast.bm'
 '$include: '../../common/htable.bm'

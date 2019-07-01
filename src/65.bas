@@ -1,32 +1,7 @@
-'$dynamic
-$console:only
-_dest _console
-const FALSE = 0, TRUE = not FALSE
-deflng a-z
-randomize timer
-on error goto generic_error
+'$include: 'common/util.bi'
 
 dim shared VERSION$
 VERSION$ = "initial dev. version"
-
-dim shared temp_files$(0)
-
-$if win = 0 then
-    declare library
-        function getpid&
-    end declare
-$end if
-
-if instr(_os$, "[WINDOWS]") then
-    exesuffix$ = ".exe"
-    'I have no idea if I'm doing this properly
-    tmpdir$ = environ$("TEMP")
-    if tmpdir$ = "" then tmpdir$ = "C:/TEMP"
-else
-    exesuffix$ = ""
-    tmpdir$ = environ$("TMPDIR")
-    if tmpdir$ = "" then tmpdir$ = "/tmp"
-end if
 
 execdir$ = _cwd$ 'Programs to be executed relative to here
 basedir$ = _startdir$ 'Data files relative to here
@@ -66,7 +41,7 @@ parser_ret = shell(parser_cmd$)
 if parser_ret <> 0 then
     if options.verbose then print "Return code"; parser_ret; "; exiting"
     cleanup
-    system
+    system 1
 end if
 
 target_cmd$ = execdir$ + "/" + options.target + exesuffix$ + " " + escape$(parser_output$) + " " + escape$(options.outputfile)
@@ -75,57 +50,13 @@ target_ret = shell(target_cmd$)
 if target_ret <> 0 then
     if options.verbose then print "Return code"; target_ret; "; exiting"
     cleanup
-    system
+    system 1
 end if
 
 cleanup
 system
 
-generic_error:
-    cleanup
-    if _inclerrorline then
-        fatalerror "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
-    else
-        fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
-    end if
-
-sub cleanup
-    if options.keep_intermediates and options.verbose then
-        print "Keeping intermediate files"
-        exit sub
-    end if
-    for i = 1 to ubound(temp_files$)
-        if _fileexists(temp_files$(i)) then kill temp_files$(i)
-    next i
-end sub
-
-function escape$(original$)
-    'The function is really not correct
-    'A much better option would be to avoid using the shell entirely and use execv(3) or similar
-    for i = 1 to len(original$)
-        c$ = mid$(original$, i, 1)
-        select case c$
-            case "'"
-                o$ = o$ + "\'"
-            case "\"
-                o$ = o$ + "\\" '"
-            case else
-                o$ = o$ + c$
-        end select
-    next i
-    escape$ = o$
-end function
-
-'This would be so much easier if we could use mktemp(1)
-function mktemp$(tmpdir$)
-    redim _preserve temp_files$(1 to ubound(temp_files$) + 1)
-    n$ = tmpdir$ + "/65-" + ltrim$(str$(getpid&)) + "-"
-    for i = 1 to 8
-        n$ = n$ + chr$(int(rnd * 26) + 97)
-    next i
-    temp_files$(ubound(temp_files$)) = n$
-    mktemp$ = n$
-end function
+'$include: 'common/util.bm'
 
 'Strip the .bas extension if present
 function remove_ext$(fullname$)
@@ -137,11 +68,6 @@ function remove_ext$(fullname$)
     end if
 end function
 
-sub fatalerror (msg$)
-    print "Error: " + msg$
-    system 1
-end sub
-    
 sub show_version
     print "The '65 compiler (" + VERSION$ + ")"
     print "This version is still under heavy development!"
