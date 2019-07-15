@@ -1,0 +1,37 @@
+sub write_open_if(condition$)
+    print #Output_handle, writer_indent$ + "if (" + condition$ + ") {"
+    writer_indent_level = writer_indent_level + 1
+end sub
+
+sub write_if_else
+    writer_indent_level = writer_indent_level - 1
+    print #Output_handle, writer_indent$ + "} else {"
+    writer_indent_level = writer_indent_level + 1
+end sub
+
+sub write_close_if
+    writer_indent_level = writer_indent_level - 1
+    print #Output_handle, writer_indent$ + "}"
+end sub
+
+sub write_assignment(lhs$, rhs$)
+    print #Output_handle, writer_indent$ + lhs$ + " = " + rhs$ + ";"
+end sub
+
+function writer_call$(func$)
+    writer_call$ = func$ + "("
+end function
+
+function writer_add_callarg$(current$, arg$)
+    newstr$ = current$
+    if right$(newstr$, 1) <> "(" then newstr$ = newstr$ + ", "
+    writer_add_callarg$ = newstr$ + arg$
+end function
+
+function writer_end_call$(current$)
+    writer_end_call$ = current$ + ")"
+end function
+    
+function writer_indent$
+    writer_indent$ = space$(writer_indent_level * 2)
+end function

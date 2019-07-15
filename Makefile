@@ -9,7 +9,8 @@ $(shell mkdir -p $(OUT_DIR) $(BUILD_DIR) &> /dev/null)
 
 all: compiler
 
-compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump
+compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump $(OUT_DIR)/c
+
 
 # Main user-called binary
 $(OUT_DIR)/65: $(SRC_DIR)/65.bas
@@ -22,6 +23,12 @@ COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.bm) $(wildcard $(SRC_DIR)/common/*.
 $(OUT_DIR)/dump: $(SRC_DIR)/targets/dump/target.bas \
                  $(COMMON_SRC)
 	$(QB64) -x $(SRC_DIR)/targets/dump/target.bas -o $(OUT_DIR)/dump
+
+$(OUT_DIR)/c: $(SRC_DIR)/targets/c/target.bas \
+                 $(COMMON_SRC) \
+				 $(wildcard $(SRC_DIR)/targets/c/*.bm) \
+				 $(wildcard $(SRC_DIR)/targets/c/*.bi)
+	$(QB64) -x $(SRC_DIR)/targets/c/target.bas -o $(OUT_DIR)/c
 
 $(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
                    $(wildcard $(SRC_DIR)/parser/*.bm) \

@@ -1,1 +1,2 @@
-x& = int(17 + 8)
+x = 5
+if x = 7 then x = 1
