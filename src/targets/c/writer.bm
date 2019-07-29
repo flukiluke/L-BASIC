@@ -1,3 +1,7 @@
+sub write_vardec_local(varname$, ctyp$)
+    print #Output_handle, writer_intent$ + ctyp$ + " " + varname$ + ";"
+end sub
+    
 sub write_open_if(condition$)
     print #Output_handle, writer_indent$ + "if (" + condition$ + ") {"
     writer_indent_level = writer_indent_level + 1

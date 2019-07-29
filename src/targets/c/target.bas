@@ -21,6 +21,8 @@ dim shared Output_handle
 Output_handle = freefile
 open outputfile$ for output as #Output_handle
 
+generate_variable_declarations
+
 process_node root
 
 
@@ -30,6 +32,14 @@ cleanup
 system
 
 '$include: '../../common/util.bm'
+
+sub generate_variable_declarations
+    for i = 1 to htable.elements
+        if htable_entries(i).typ = HE_VARIABLE then
+            write_vardec_local mk_var_mangle$(htable_names(i)), mk_ctyp$(htable_entries(i).v1)
+        end if
+    next i
+end sub
 
 sub process_node(node)
     select case ast_nodes(node).typ
@@ -78,18 +88,37 @@ function mk_var_mangle$(src$)
     mk_var_mangle$ = "b6u" + src$
 end function
 
+function mk_ctyp$(typ)
+    select case typ
+    case TYPE_INTEGER
+        mk_ctyp$ = "int"
+    case TYPE_BIGINTEGER
+        ' This is not a conformant implementation; BIGINTEGER should be
+        ' arbitrary-sized integers (using something like GMP).
+        mk_ctyp$ = "long int"
+    case TYPE_OFFSET
+        mk_ctyp$ = "void *"
+    case TYPE_SINGLE
+        mk_ctyp$ = "double"
+    case TYPE_STRING
+        mk_ctyp$ = "char *"
+    case else
+        fatalerror type_human_readable$(typ) + " is unusable here"
+    end select
+end function
+
 function mk_call_mangle$(src$)
     select case src$
     case "="
-        mk_call_mangle$ = "b6mEQUALITY"
+        mk_call_mangle$ = "b6aEQUALITY"
     case "+"
-        mk_call_mangle$ = "b6mADD"
+        mk_call_mangle$ = "b6aADD"
     case "-"
-        mk_call_mangle$ = "b6mSUBTRACT"
+        mk_call_mangle$ = "b6aSUBTRACT"
     case "*"
-        mk_call_mangle$ = "b6mMULTIPLY"
+        mk_call_mangle$ = "b6aMULTIPLY"
     case "/"
-        mk_call_mangle$ = "b6mDIVIDE"
+        mk_call_mangle$ = "b6aDIVIDE"
     case else
         mk_call_mangle$ = "b6c" + src$
     end select
