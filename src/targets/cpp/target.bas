@@ -16,17 +16,33 @@ outputfile$ = command$(2)
 
 root = sif_read(inputfile$)
 
+intermediate_dir$ = mktemp_dir$(tmpdir$)
+mkdir intermediate_dir$
+intermediate_main_c$ = mktemp_wellknown$(intermediate_dir$, "b6main.c")
+intermediate_main_o$ = mktemp_wellknown$(intermediate_dir$, "b6main.o")
+
 dim shared Output_handle
-' For these early stages of development, the "output" file is just C code
 Output_handle = freefile
-open outputfile$ for output as #Output_handle
+open intermediate_main_c$ for output as #Output_handle
 
+write_open_function "b6main", mk_ctyp$(TYPE_NONE)
 generate_variable_declarations
-
 process_node root
+write_close_function
+close #Output_handle
 
+buildobj_cmd$ = "/usr/bin/gcc -c -o " + escape$(intermediate_main_o$) + " " + escape$(intermediate_main_c$)
+print buildobj_cmd$
+buildobj_ret = shell(buildobj_cmd$)
+if buildobj_ret <> 0 then
+    fatalerror "Invocation failed: " + buildobj_cmd$
+end if
 
-
+buildexe_cmd$ = "gcc -o " + escape$(outputfile$) + " " + _cwd$ + "/runtime/c/main.c " + escape$(intermediate_main_o$) + " " + _cwd$ + "/runtime/c/lib65.c"
+buildexe_ret = shell(buildexe_cmd$)
+if buildexe_ret <> 0 then
+    fatalerror "Invocation failed: " + buildexe_cmd$
+end if
 
 cleanup
 system
@@ -47,6 +63,8 @@ sub process_node(node)
         for i = 1 to ast_num_children(node)
             process_node ast_get_child(node, i)
         next i
+    case AST_CALL
+        write_subcall mk_expr$(node)
     case AST_ASSIGN
         rhs$ = mk_expr$(ast_get_child(node, 1))
         write_assignment mk_lvalue_ref$(ast_nodes(node).ref), rhs$
@@ -90,6 +108,8 @@ end function
 
 function mk_ctyp$(typ)
     select case typ
+    case TYPE_NONE
+        mk_ctyp$ = "void"
     case TYPE_INTEGER
         mk_ctyp$ = "int"
     case TYPE_BIGINTEGER

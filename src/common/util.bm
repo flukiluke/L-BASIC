@@ -14,12 +14,19 @@ sub fatalerror (msg$)
 end sub
     
 sub cleanup
+    exit sub
     if options.keep_intermediates and options.verbose then
         print "Keeping intermediate files"
-        exit sub
     end if
-    for i = 1 to ubound(temp_files$)
-        if _fileexists(temp_files$(i)) then kill temp_files$(i)
+    if options.keep_intermediates then exit sub
+
+    ' Going in reverse allows us to delete the contents of directories, then the directory itself.
+    for i = ubound(temp_files$) to 1 step -1
+        if right$(temp_files$(i), 1) = "/" then
+            if _direxists(temp_files$(i)) then kill temp_files$(i)
+        else
+            if _fileexists(temp_files$(i)) then kill temp_files$(i)
+        end if
     next i
 end sub
 
@@ -40,6 +47,13 @@ function escape$(original$)
     escape$ = o$
 end function
 
+function mktemp_dir$(tmpdir$)
+    dirname$ = mktemp$(tmpdir$)
+    dirname$ = dirname$ + "/"
+    temp_files$(ubound(temp_files$)) = dirname$
+    mktemp_dir$ = dirname$
+end function
+
 'This would be so much easier if we could use mktemp(1)
 function mktemp$(tmpdir$)
     redim _preserve temp_files$(1 to ubound(temp_files$) + 1)
@@ -49,4 +63,11 @@ function mktemp$(tmpdir$)
     next i
     temp_files$(ubound(temp_files$)) = n$
     mktemp$ = n$
+end function
+
+function mktemp_wellknown$(dir$, file$)
+    path$ = dir$ + "/" + file$
+    redim _preserve temp_files$(1 to ubound(temp_files$) + 1)
+    temp_files$(ubound(temp_files$)) = path$
+    mktemp_wellknown$ = path$
 end function

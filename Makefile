@@ -5,17 +5,31 @@ BUILD_DIR := $(CURDIR)/build
 SRC_DIR := $(CURDIR)/src
 TOOLS_DIR := $(CURDIR)/tools
 OUT_DIR := $(CURDIR)/out
-$(shell mkdir -p $(OUT_DIR) $(BUILD_DIR) &> /dev/null)
+$(shell mkdir -p $(OUT_DIR)/runtime/cpp $(BUILD_DIR)/runtime/cpp &> /dev/null)
 
-all: compiler
+all: compiler runtime
 
-compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump $(OUT_DIR)/c
+runtime: runtime-cpp
+
+compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump $(OUT_DIR)/cpp
 
 
 # Main user-called binary
 $(OUT_DIR)/65: $(SRC_DIR)/65.bas
 	$(QB64) -x $< -o $@
 
+
+# Runtime (i.e. running of the compiler) binaries and support files
+.PHONY: runtime-cpp
+runtime-cpp: $(OUT_DIR)/runtime/cpp/libraven.a
+
+CPP_LIBRAVEN_FILES := $(wildcard $(SRC_DIR)/runtime/cpp/lib/*.cpp)
+$(OUT_DIR)/runtime/cpp/libraven.a: $(CPP_LIBRAVEN_FILES)
+	echo $^
+	ar rcs $@ $^
+
+
+# Compiler units
 TS_FILES := $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
 TOKEN_FILES := $(BUILD_DIR)/token_data.bi $(BUILD_DIR)/token_registrations.bm
 COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.bm) $(wildcard $(SRC_DIR)/common/*.bi)
@@ -24,11 +38,11 @@ $(OUT_DIR)/dump: $(SRC_DIR)/targets/dump/target.bas \
                  $(COMMON_SRC)
 	$(QB64) -x $(SRC_DIR)/targets/dump/target.bas -o $(OUT_DIR)/dump
 
-$(OUT_DIR)/c: $(SRC_DIR)/targets/c/target.bas \
+$(OUT_DIR)/cpp: $(SRC_DIR)/targets/cpp/target.bas \
                  $(COMMON_SRC) \
-				 $(wildcard $(SRC_DIR)/targets/c/*.bm) \
-				 $(wildcard $(SRC_DIR)/targets/c/*.bi)
-	$(QB64) -x $(SRC_DIR)/targets/c/target.bas -o $(OUT_DIR)/c
+				 $(wildcard $(SRC_DIR)/targets/cpp/*.bm) \
+				 $(wildcard $(SRC_DIR)/targets/cpp/*.bi)
+	$(QB64) -x $(SRC_DIR)/targets/cpp/target.bas -o $(OUT_DIR)/cpp
 
 $(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
                    $(wildcard $(SRC_DIR)/parser/*.bm) \
