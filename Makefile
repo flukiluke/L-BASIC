@@ -1,33 +1,22 @@
 # This should point to your QB64 installation
 QB64 := /home/luke/comp/git_qb64/qb64 -v
 
+
 BUILD_DIR := $(CURDIR)/build
 SRC_DIR := $(CURDIR)/src
 TOOLS_DIR := $(CURDIR)/tools
 OUT_DIR := $(CURDIR)/out
-$(shell mkdir -p $(OUT_DIR)/runtime/cpp $(BUILD_DIR)/runtime/cpp &> /dev/null)
 
-all: compiler runtime
+$(shell mkdir -p $(OUT_DIR) $(BUILD_DIR) &> /dev/null)
 
-runtime: runtime-cpp
+all: compiler
 
-compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump $(OUT_DIR)/cpp
+compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump $(OUT_DIR)/run
 
 
 # Main user-called binary
 $(OUT_DIR)/65: $(SRC_DIR)/65.bas
 	$(QB64) -x $< -o $@
-
-
-# Runtime (i.e. running of the compiler) binaries and support files
-.PHONY: runtime-cpp
-runtime-cpp: $(OUT_DIR)/runtime/cpp/libraven.a
-
-CPP_LIBRAVEN_FILES := $(wildcard $(SRC_DIR)/runtime/cpp/lib/*.cpp)
-$(OUT_DIR)/runtime/cpp/libraven.a: $(CPP_LIBRAVEN_FILES)
-	echo $^
-	ar rcs $@ $^
-
 
 # Compiler units
 TS_FILES := $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
@@ -38,11 +27,11 @@ $(OUT_DIR)/dump: $(SRC_DIR)/targets/dump/target.bas \
                  $(COMMON_SRC)
 	$(QB64) -x $(SRC_DIR)/targets/dump/target.bas -o $(OUT_DIR)/dump
 
-$(OUT_DIR)/cpp: $(SRC_DIR)/targets/cpp/target.bas \
+$(OUT_DIR)/run: $(SRC_DIR)/targets/run/target.bas \
                  $(COMMON_SRC) \
-				 $(wildcard $(SRC_DIR)/targets/cpp/*.bm) \
-				 $(wildcard $(SRC_DIR)/targets/cpp/*.bi)
-	$(QB64) -x $(SRC_DIR)/targets/cpp/target.bas -o $(OUT_DIR)/cpp
+				 $(wildcard $(SRC_DIR)/targets/run/*.bm) \
+				 $(wildcard $(SRC_DIR)/targets/run/*.bi)
+	$(QB64) -x $(SRC_DIR)/targets/run/target.bas -o $(OUT_DIR)/run
 
 $(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
                    $(wildcard $(SRC_DIR)/parser/*.bm) \
