@@ -8,14 +8,14 @@ function sif_read(filename$)
     if header.version <> SIF_VERSION then error 64 'BAD FILE NAME
 
     ast_last_constant = header.num_constants
-    redim ast_constants(1 to ast_last_constant) as string
-    redim ast_constant_types(1 to ast_last_constant) as long
+    redim ast_constants(ast_last_constant) as string
+    redim ast_constant_types(ast_last_constant) as long
     read_string_array fh, ast_constants()
     read_long_array fh, ast_constant_types()
 
     ast_last_node = header.num_ast_nodes
-    redim ast_nodes(1 to ast_last_node) as ast_node_t
-    redim ast_children(1 to ast_last_node) as string
+    redim ast_nodes(ast_last_node) as ast_node_t
+    redim ast_children(ast_last_node) as string
     for i = 1 to ast_last_node
         get #fh, , ast_nodes(i)
     next i
@@ -32,7 +32,7 @@ function sif_read(filename$)
     next i
 
     type_last_signature = header.num_signatures
-    redim type_signatures(1 to type_last_signature) as type_signature_t
+    redim type_signatures(type_last_signature) as type_signature_t
     for i = 1 to type_last_signature
         get #fh, , type_signatures(i)
     next i

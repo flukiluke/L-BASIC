@@ -6,7 +6,7 @@ type type_signature_t
     succ as long 'Can't call this "next" :(
 end type
 
-redim shared type_signatures(1 to 10) as type_signature_t
+redim shared type_signatures(10) as type_signature_t
 dim shared type_last_signature as long
 
 'Variable data types

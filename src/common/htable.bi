@@ -45,7 +45,7 @@ CONST HE_VARIABLE = 4
 CONST HE_FUNCTION = 5
 
 DIM SHARED htable AS htable_t
-DIM SHARED htable_entries(1 to 100) AS hentry_t
-DIM SHARED htable_names(1 to 100) AS STRING
+DIM SHARED htable_entries(100) AS hentry_t
+DIM SHARED htable_names(100) AS STRING
 
 htable_create htable, 127
