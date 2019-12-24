@@ -128,12 +128,16 @@ sub type_restrict_expr(expr, typ)
 end sub
 
 sub type_restrict_var(variable, typ)
+$if DEBUG then    
     print "Restrict "; htable_names(variable); " to "; type_human_readable$(typ)
+$endif    
     current_type = htable_entries(variable).v1
 
     'If the variable is already more specific than the requested restriction, do nothing
     if type_is_instance(current_type, typ) then
+$if DEBUG then        
         print "Restriction is impotent"
+$endif        
         exit sub
     end if
 

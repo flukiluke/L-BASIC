@@ -1,3 +1,4 @@
+'$let DEBUG = 1
 '$include: '../common/util.bi'
 '$include: '../common/type.bi'
 '$include: '../common/ast.bi'
@@ -41,7 +42,9 @@ sub ps_gobble(token)
 end sub
     
 function ps_block
+$if DEBUG then
     print "Start block"
+$endif
     root = ast_add_node(AST_BLOCK)
     do
         ps_gobble(TOK_NEWLINE)
@@ -50,12 +53,16 @@ function ps_block
         ast_attach root, stmt
     loop
     ps_block = root
+$if DEBUG then    
     print "End block"
+$endif    
 end function
 
 function ps_stmt
     dim he as hentry_t
+$if DEBUG then    
     print "Start statement"
+$endif    
     token = tok_next_token
     select case token
         case is < 0
@@ -93,11 +100,15 @@ function ps_stmt
                 fatalerror tok_content$ + " doesn't belong here"
             end select
     end select
+$if DEBUG then    
     print "Completed statement"
+$endif    
 end function
 
 function ps_select
+$if DEBUG then    
     print "Start SELECT block"
+$endif    
     dim he as hentry_t
     root = ast_add_node(AST_SELECT)
     ps_assert_token tok_next_token, TOK_CASE
@@ -118,7 +129,9 @@ function ps_select
 end function
 
 function ps_for
+$if DEBUG then    
     print "Start FOR block"
+$endif    
     dim he as hentry_t
     root = ast_add_node(AST_FOR)
     t = tok_next_token
@@ -168,7 +181,9 @@ function ps_for
 end function
 
 function ps_while
+$if DEBUG then    
     print "Start WHILE block"
+$endif    
     root = ast_add_node(AST_DO_PRE)
     ast_attach root, ps_expr
     ps_assert_token tok_next_token, TOK_NEWLINE
@@ -178,7 +193,9 @@ function ps_while
 end function
 
 function ps_do
+$if DEBUG then    
     print "Start DO block"
+$endif    
     check = tok_next_token
     if check = TOK_WHILE or check = TOK_UNTIL then
         ps_do = ps_do_pre(check)
@@ -187,11 +204,15 @@ function ps_do
     else
         fatalerror "Unexpected " + tok_content$
     end if
+$if DEBUG then    
     print "Completed DO block"
+$endif    
 end function
 
 function ps_do_pre(check)
+$if DEBUG then    
     print "Start DO-PRE"
+$endif    
     root = ast_add_node(AST_DO_PRE)
     'Condition is WHILE guard; UNTIL will need the guard to be negated
     raw_guard = ps_expr
@@ -211,11 +232,15 @@ function ps_do_pre(check)
     ast_attach root, ps_block
     ps_assert_token tok_next_token, TOK_LOOP
     ps_do_pre = root
+$if DEBUG then    
     print "Completed DO-PRE"
+$endif    
 end function
 
 function ps_do_post
+$if DEBUG then    
     print "Start DO-POST"
+$endif    
     root = ast_add_node(AST_DO_POST)
     block = ps_block
     ps_assert_token tok_next_token, TOK_LOOP
@@ -240,11 +265,15 @@ function ps_do_post
     ast_attach root, guard
     ast_attach root, block
     ps_do_post = root
+$if DEBUG then    
     print "Completed DO-POST"
+$endif    
 end function
 
 function ps_if
+$if DEBUG then    
     print "Start conditional"
+$endif    
     root = ast_add_node(AST_IF)
     'Condition
     ast_attach root, ps_expr
@@ -266,11 +295,15 @@ function ps_if
         ast_attach root, ps_stmt
     end if
     ps_if = root
+$if DEBUG then    
     print "Completed conditional"
+$endif    
 end function
     
 function ps_assignment(ref)
+$if DEBUG then    
     print "Start assignment"
+$endif    
     root = ast_add_node(AST_ASSIGN)
     ast_nodes(root).ref = ref
     ps_assert_token tok_next_token, TOK_EQUALS
@@ -289,11 +322,15 @@ function ps_assignment(ref)
     end if
     ps_assignment = root
     ps_assert_token tok_next_token, TOK_NEWLINE
+$if DEBUG then    
     print "Completed assignment"
+$endif    
 end function
 
 function ps_stmtreg
+$if DEBUG then    
     print "Start stmtreg"
+$endif    
     dim sig as type_signature_t
 
     root = ast_add_node(AST_CALL)
@@ -308,11 +345,15 @@ function ps_stmtreg
     ps_funcargs root
 
     ps_stmtreg = root
+$if DEBUG then    
     print "Completed stmtreg"
+$endif    
 end function
 
 function ps_opt_sigil(expected)
+$if DEBUG then    
     print "Start optional sigil"
+$endif    
     'if expected > 0 then it must match the type of the sigil
     typ = type_sfx2type(tok_next_token)
     if typ then
@@ -324,20 +365,28 @@ function ps_opt_sigil(expected)
         ps_opt_sigil = 0
         tok_please_repeat
     end if
+$if DEBUG then    
     print "Completed optional sigil"
+$endif    
 end function
 
 function ps_expr
+$if DEBUG then    
     print "Start expr"
+$endif    
     pt_token = tok_next_token
     pt_content$ = tok_content$
     ps_expr = pt_expr(0)
     tok_please_repeat
+$if DEBUG then    
     print "Completed expr"
+$endif    
 end function
         
 function ps_funccall(func)
+$if DEBUG then    
     print "Start function call"
+$endif    
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = func
     dummy = ps_opt_sigil(type_of_call(root))
@@ -350,20 +399,28 @@ function ps_funccall(func)
         tok_please_repeat
     end if
     ps_funccall = root
+$if DEBUG then    
     print "Completed function call"
+$endif    
 end function
 
 sub ps_funcargs(root)
+$if DEBUG then    
     print "Start funcargs"
+$endif    
     dim sig as type_signature_t
     func = ast_nodes(root).ref
     type_return_sig func, sig
     if type_next_sig(sig) then
         arg_count = 1
         do
+$if DEBUG then            
             print "Argument"; arg_count; ":"
+$endif            
             t = tok_next_token
+$if DEBUG then            
             print ">>"; tok_human_readable$(t)
+$endif            
             select case t
             case TOK_CPAREN, TOK_NEWLINE
                 'Pack up folks, end of the arg list.
@@ -397,19 +454,27 @@ sub ps_funcargs(root)
             ast_attach root, arg
         wend
     end if
+$if DEBUG then    
     print "Completed funcargs"
+$endif    
 end sub
 
 sub ps_funcarg(root, sig as type_signature_t)
+$if DEBUG then    
     print "Start funcarg"
+$endif    
     arg = ps_expr
     type_restrict_expr arg, sig.value
     ast_attach root, arg
+$if DEBUG then    
     print "Completed funcarg"
+$endif    
 end sub
 
 function ps_variable(token, content$)
+$if DEBUG then    
     print "Start variable"
+$endif    
     dim he as hentry_t
     'Do array & udt element stuff here.
     'For now only support simple variables.
@@ -430,14 +495,18 @@ function ps_variable(token, content$)
         type_restrict_var var, sigil
     end if
     ps_variable = var
+$if DEBUG then    
     print "End variable"
+$endif    
 end function
 
 sub ps_assert_token(actual, expected)
     if actual <> expected then
         fatalerror "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(actual)
     else
+$if DEBUG then        
         print "Assert " + tok_human_readable(expected)
+$endif        
     end if
 end sub
 
