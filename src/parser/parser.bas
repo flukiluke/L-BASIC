@@ -1,4 +1,4 @@
-'$let DEBUG = 1
+$let DEBUG = 1
 '$include: '../common/util.bi'
 '$include: '../common/type.bi'
 '$include: '../common/ast.bi'

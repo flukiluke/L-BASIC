@@ -39,7 +39,8 @@ sub exec(root)
     case AST_ASSIGN
         print "Assignment"
     case AST_CALL
-        do_call root
+        dim ignored_result as value_t
+        do_call root, ignored_result
     case AST_IF
         print "Conditional; assuming true"
         exec ast_get_child(root, 2)
@@ -53,15 +54,6 @@ sub exec(root)
         print "FOR; skipping"
     case AST_SELECT
         print "SELECT; skipping"
-    end select
-end sub
-
-sub do_call(node)
-    dim v1 as value_t
-    select case ast_nodes(node).ref
-    case TOK_PRINT
-        eval ast_get_child(node, 1), v1
-        sub_print v1
     end select
 end sub
 
@@ -82,6 +74,18 @@ sub eval(node, result as value_t)
         case else
             fatalerror "Evaluation of non-concrete type"
         end select
+    case AST_CALL
+        do_call node, result
+    end select
+end sub
+
+sub do_call(node, result as value_t)
+    dim v1 as value_t
+    dim v2 as value_t
+    select case ast_nodes(node).ref
+    case TOK_PRINT
+        eval ast_get_child(node, 1), v1
+        sub_print v1
     end select
 end sub
 

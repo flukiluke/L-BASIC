@@ -65,6 +65,19 @@ function type_is_number(t)
     end select
 end function
 
+'This function is incomplete!
+'It does not handle abstract types.
+function type_common_parent(a, b)
+    if type_is_instance(a, b) then
+        type_common_parent = b
+    elseif type_is_instance(b, a) then
+        type_common_parent = a
+    else
+        type_common_parent = TYPE_ANY
+    end if
+end function
+
+
 'Type signatures for functions are a linked list, handled by the next few functions.
 'The first element in the list is the return type, then any arguments are subsequent elements.
 
