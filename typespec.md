@@ -32,6 +32,12 @@ An implicit cast takes place when assigning to a variable with a different type,
 * `x# = y#` remains as-is
 * `x$ = y%` is illegal
 
+## Constants
+The type of non-NUMBER types is obvious (a string literal is of STRING type). If a type suffix is present then that determines the type. Otherwise:
+* If the number has no decimal point or exponent, then its type is the smallest of INTEGER, LONG or INTEGER64 that can hold it. If no type can hold it, the next rule applies.
+* If the number has a decimal point or an exponent (e.g. 3E8) or does not fit an INTEGER64, then its type is the smallest of SINGLE, DOUBLE or QUAD that can hold it (with respect to magnitude). If no type can hold it, the number is illegal.
+A type suffix may not specify a type smaller than what would be determined by the above rules.
+
 ## Function arguments
 A function has 0 or more arguments and a return type (or a not-considered return type if it is a SUB). A function declaration specifies the type of each argument and the return type. When called, arguments are passed in one of two ways:
 * If an argument is specified as a single variable, it is passed _by reference_. The type of the variable must exactly match the declared type of the argument.
