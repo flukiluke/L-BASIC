@@ -33,17 +33,22 @@ system
 '$include: '../../common/util.bm'
 
 sub type_dump_functions
-    dim sig as type_signature_t
     for i = 1 to htable.elements
         typ = htable_entries(i).typ
         if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
-            print #1, htable_names(i); " ";
-            type_return_sig i, sig
-            print #1, type_human_readable$(sig.value); " (";
-            while type_next_sig(sig)
-                print #1, type_human_readable$(sig.value);
-                if sig.succ <> 0 then print #1, ", ";
-            wend
+            sig_index = htable_entries(i).v1
+            do
+                print #1, htable_names(i); " "; type_human_readable$(type_sig_return(sig_index)); " (";
+                for i = 1 to type_sig_numargs(sig_index)
+                    flags = type_sig_argflags(sig_index, i)
+                    if flags and TYPE_BYREF then print "BYREF ";
+                    if flags and TYPE_BYVAL then print "BYVAL ";
+                    if flags and TYPE_REQUIRED = 0 then print "OPTION ";
+                    print type_human_readable$(type_sig_argtype(sig_index, i));
+                    if i <> type_sig_numargs(sig_index) then print ", ";
+                next i
+                sig_index = type_signatures(sig_index).succ
+            loop while sig_index <> 0
             print #1, ")"
         end if
     next i
@@ -136,6 +141,10 @@ sub ast_dump_pretty(root, indent_level)
         next i
     case AST_VAR
         print #1, "var("; htable_names(ast_nodes(root).ref); ")";
+    case AST_CAST
+        print #1, "cast("; type_human_readable$(type_of_cast(root)); ", ";
+        ast_dump_pretty ast_get_child(root, 1), 0
+        print #1, ")";
     end select
 end sub
 

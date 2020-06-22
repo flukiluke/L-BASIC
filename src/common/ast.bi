@@ -4,6 +4,7 @@
 type ast_node_t
     typ as long
     ref as long
+    ref2 as long 'It pains me to add this, but I needed to put type signature references somewhere and I don't want to make a new node for that
     num_children as long
 end type
 
@@ -39,7 +40,7 @@ const AST_DO_POST = 4
 const AST_FOR = 5
 'select expr1 (expr block)* block? => SELECT CASE expr1: CASE expr: block: CASE expr: block: CASE ELSE: block
 const AST_SELECT = 6
-'call param* => A function call to ref with parameters
+'call param* => A function call to ref with type signature ref2 and parameters as children
 const AST_CALL = 7
 'ref is a reference to an entry in the constants table
 const AST_CONSTANT = 8
@@ -47,3 +48,5 @@ const AST_CONSTANT = 8
 const AST_BLOCK = 9
 'ref is reference to htable
 const AST_VAR = 10
+'For now casts are first-class AST elements instead of just CALLs. We'll see if this is a good idea or not. ref is a type, child is a CALL, CONSTANT or VAR.
+const AST_CAST = 11

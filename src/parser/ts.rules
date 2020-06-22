@@ -52,7 +52,7 @@ General: $letter ~ Id
 General: $number ~ Number
 General: "? ~ General ! ID
 General: $bang ~ General ! SINGLE_SFX
-General: "# ~ General ! DOUBLE_SFX
+General: "# ~ HashPfx
 General: "$ ~ General ! STRING_SFX
 General: "% ~ PercentPfx
 General: "^ ~ General ! POWER
@@ -102,8 +102,11 @@ NumExp: $number ~ NumExp
 PercentPfx: * ~ General & INTEGER_SFX
 PercentPfx: $amp ~ General ! OFFSET_SFX
 
+HashPfx: * ~ General & DOUBLE_SFX
+HashPfx: "# ~ General ! QUAD_SFX
+
 AmpersandPfx: * ~ General & LONG_SFX
-AmpersandPfx: $amp ~ General ! BIGINTEGER_SFX
+AmpersandPfx: $amp ~ General ! INTEGER64_SFX
 
 AmpersandPfx: "h ~ NumBase
 AmpersandPfx: "o ~ NumBase

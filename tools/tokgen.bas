@@ -10,19 +10,42 @@
 'any manual edits to the registration code will likely cause it to be out of sync with the TOK_ definitions.
 'Re-run this generation program instead.
 '
-'Each line has the following format:
+'The first element on the line is the type, which determines the format for the rest of the line.
 '
-'TYPE NAME ARGS FLAGS
+'generic NAME ; FLAGS
+'Adds a htable entry with no extra information.
+
+'literal NAME ; FLAGS
+'Represent a literal. Does not generate a htable entry.
 '
-'TYPE is one of the HE_ constants defined in htable.bi (without the HE_ prefix) or "LITERAL", in which case
-'no htable entry is made.
+'prefix NAME PRECEDENCE RETURN ARGS ; FLAGS
+'A prefix operator.
+
+'infix NAME PRECEDENCE ASSOCIATIVITY RETURN ARGS ; FLAGS
+'An infix operator.
+'
+'function NAME RETURN ARGS ; FLAGS
+'A function (or sub) with regular call syntax.
+
 'NAME is the identifier for the token, and will be prefixed with TOK_. If the token contains special characters
 'a safe name may be given in parentheses, e.g "+(plus)". If the token is a special character (see below), it
 'should be represented as \xx where xx is the ASCII code. There must be no spaces anywhere in this field.
-'The ARGS given depend on the TYPE chosen. Each argument correponds to the vn parameters in htable.bi.
+'
+'PRECEDENCE is an integer for parsing precedence. Larger values are higher precedence.
+
+'ASSOCIATIVTY is "left" or "right".
+'
+'RETURN is "none" or a type name to represent the return type of the function call.
+'
+'ARGS is a comma-separated string specifying the type and nature of arguments passed to a function.
+'Each comma-separated element is a type name, with the following optional prefixes and suffixes:
+' @ prefix: The argument must be passed BYREF and its type must match exactly
+' ? suffix: The argument is optional
+'
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
 '  NOSYM: Prefix the token with a pipe "|" character in the htable, preventing it from clashing with other tokens.
+
 'Blank lines are ignored. Comments may be given with # on their own line. Special characters are (); and must
 'not appear outside of their described syntactic function.
 
@@ -51,7 +74,7 @@ redim shared args$(0)
 dim shared linenum
 
 print #3, "dim shared tok_direct(1 to TS_MAX)"
-print #3, "dim registration_entry as hentry_t"
+print #3, "dim re as hentry_t"
 do while not eof(1)
     linenum = linenum + 1
     line input #1, l$
@@ -76,48 +99,55 @@ do while not eof(1)
         if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
         toksym$ = chr$(34) + toksym$ + chr$(34)
     end if
+
     select case parts$(0)
     case "GENERIC"
         assertsize 2
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "GENERIC" then print #3, "registration_entry.typ = HE_GENERIC"
-        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+        if previous$(0) <> "GENERIC" then print #3, "re.typ = HE_GENERIC"
+        print #3, "htable_add_hentry " + toksym$ + ", re"
     case "FUNCTION"
         assertsize_range 3, 4
-        toknum = toknum + 1
+        if previous$(1) <> parts$(1) then
+            toknum = toknum + 1
+            print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
+        end if
         cur_toknum = toknum
-        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "FUNCTION" then print #3, "registration_entry.typ = HE_FUNCTION"
-        print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(2) + ")"
+        if previous$(0) <> "FUNCTION" then print #3, "re.typ = HE_FUNCTION"
+        process_return_type previous$(1), parts$(1), parts$(2)
         if ubound(parts$) = 3 then
             process_arg_list parts$(3)
         end if
-        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+        print #3, "htable_add_hentry " + toksym$ + ", re"
     case "PREFIX"
         assertsize 5
-        toknum = toknum + 1
+        if previous$(1) <> parts$(1) then
+            toknum = toknum + 1
+            print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
+        end if
         cur_toknum = toknum
-        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "PREFIX" then print #3, "registration_entry.typ = HE_PREFIX"
-        print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(3) + ")"
-        if previous$(2) <> parts$(2) then print #3, "registration_entry.v2 = "; parts$(2)
+        if previous$(0) <> "PREFIX" then print #3, "re.typ = HE_PREFIX"
+        if previous$(2) <> parts$(2) then print #3, "re.v2 = "; parts$(2)
+        process_return_type previous$(1), parts$(1), parts$(3)
         process_arg_list parts$(4)
-        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+        print #3, "htable_add_hentry " + toksym$ + ", re"
     case "INFIX"
         assertsize 6
-        toknum = toknum + 1
-        cur_toknum = toknum
-        print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "INFIX" then print #3, "registration_entry.typ = HE_INFIX"
-        print #3, "registration_entry.v1 = type_add_signature(TYPE_" + parts$(4) + ")"
-        if previous$(2) <> parts$(2) then print #3, "registration_entry.v2 = "; parts$(2)
-        if previous$(3) <> parts$(3) then
-            if parts$(3) = "RIGHT" then print #3, "registration_entry.v3 = 1" else print #3, "registration_entry.v3 = 0"
+        if previous$(1) <> parts$(1) then
+            toknum = toknum + 1
+            print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         end if
+        cur_toknum = toknum
+        if previous$(0) <> "INFIX" then print #3, "re.typ = HE_INFIX"
+        if previous$(2) <> parts$(2) then print #3, "re.v2 = "; parts$(2)
+        if previous$(3) <> parts$(3) then
+            if parts$(3) = "RIGHT" then print #3, "re.v3 = 1" else print #3, "re.v3 = 0"
+        end if
+        process_return_type previous$(1), parts$(1), parts$(4)
         process_arg_list parts$(5)
-        print #3, "htable_add_hentry " + toksym$ + ", registration_entry"
+        print #3, "htable_add_hentry " + toksym$ + ", re"
     case "LITERAL"
         assertsize 2
         literal_toknum = literal_toknum - 1
@@ -137,17 +167,30 @@ ehandler:
     print "Error"; err; _errorline
     system 1
 
+sub process_return_type(prev_name$, cur_name$, ret_type$)
+    if prev_name$ = cur_name$ then
+        print #3, "re.v1 = type_add_sig(re.v1, type_sig_create$(TYPE_" + ret_type$ + "))"
+    else
+        print #3, "re.v1 = type_add_sig(0, type_sig_create$(TYPE_" + ret_type$ + "))"
+    end if
+end sub
+
 sub process_arg_list(arglist$)
     split_args arglist$
+    const TYPE_REQUIRED = 1
+    const TYPE_BYREF = 2
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
-        if left$(args$(i), 1) = "?" then
-            args$(i) = mid$(args$(i), 2)
-            required = 0 
+        if right$(args$(i), 1) = "?" then
+            args$(i) = left$(args$(i), len(args$(i)) - 1)
         else
-            required = -1
+            flags = flags OR TYPE_REQUIRED
         end if
-        print #3, "type_chain_argument registration_entry.v1, TYPE_"; args$(i); ","; required
+        if left$(args$(i), 1) = "@" then
+            args$(i) = mid$(args$(i), 2)
+            flags = flags OR TYPE_BYREF
+        end if
+        print #3, "type_add_sig_arg re.v1, TYPE_"; args$(i); ","; flags
     next i
 end sub
 

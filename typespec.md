@@ -46,7 +46,7 @@ A function has 0 or more arguments and a return type (or a not-considered return
 ### Binary Operators
 The operators `\`, `AND`, `OR`, `EQV`, `IMP` and `XOR` behave as follows:
 * If both arguments are of type INTEGER, LONG or INTEGER64, the return type is the larger of the two arguments.
-* If one or both arguments are of type SINGLE, DOUBLE or QUAD, the arguments are cast to INTEGER64 and the return type is INTEGER64. Note that this has the potential to cause an Overflow error.
+* If one or both arguments are of type SINGLE, DOUBLE or QUAD, the arguments are cast to the smallest integral type that is lossless. Note that this has the potential to cause an Overflow error with QUAD values.
 
 The operators `/` and `^` behave as follows:
 * First, any arguments of type

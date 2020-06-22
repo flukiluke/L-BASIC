@@ -38,7 +38,7 @@ CONST HE_INFIX = 2
 'v2 -> binding power (controls precedence)
 CONST HE_PREFIX = 3
 'A variable.
-'v1 -> the data type as far as can be determined
+'v1 -> the data type
 CONST HE_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature

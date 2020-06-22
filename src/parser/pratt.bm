@@ -58,10 +58,11 @@ function nud(token, content$)
             node = ast_add_node(AST_CALL)
             ast_nodes(node).ref = token
             expr = pt_expr(he.v2)
-            type_return_sig token, sig
-            if type_next_sig(sig) = 0 then fatalerror "Prefix function is argumentless"
-            type_restrict_expr expr, sig.value
-            ast_attach node, expr
+            if ast_nodes(expr).typ = AST_VAR then candidate_flags = TYPE_BYREF
+            candidate$ = type_sig_add_arg$("", type_of_expr(expr), flags)
+            matching_sig = type_find_sig_match(token, candidate$)
+            if matching_sig = 0 then fatalerror "Cannot find matching type signature"
+            ast_attach node, ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
         case else
             fatalerror "Unexpected operator " + tok_human_readable$(token)
         end select
@@ -95,18 +96,19 @@ function led(token, content$, left_node)
     ast_nodes(node).ref = token
     select case he.typ
     case HE_INFIX
-        type_return_sig token, sig
-        if type_next_sig(sig) = 0 then fatalerror "Infix function is left-argumentless"
-        type_restrict_expr left_node, sig.value
-        ast_attach node, left_node
         if he.v3 = 0 then 'Left-associative
             right_node = pt_expr(he.v2)
         else 'right-associative
             right_node = pt_expr(he.v2 - 1)
         end if
-        if type_next_sig(sig) = 0 then fatalerror "Infix function is right-argumentless"
-        type_restrict_expr right_node, sig.value
-        ast_attach node, right_node
+        if ast_nodes(left_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
+        candidate$ = type_sig_add_arg$("", type_of_expr(left_node), flags)
+        if ast_nodes(right_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
+        candidate$ = type_sig_add_arg$(candidate$, type_of_expr(left_node), flags)
+        matching_sig = type_find_sig_match(token, candidate$)
+        if matching_sig = 0 then fatalerror "Cannot find matching type signature"
+        ast_attach node, ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
+        ast_attach node, ast_add_cast(right_node, type_sig_argtype(matching_sig, 2))
     case else
         fatalerror "Unexpected led " + tok_human_readable$(token)
     end select

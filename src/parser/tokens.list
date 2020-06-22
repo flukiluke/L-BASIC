@@ -5,24 +5,42 @@ generic comma   ; direct nosym
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).
 # Note -3^2 = -(3^2)
-#       name   precedence  assoc.   return  args
-prefix  not             2           number  number
-infix   and             2   left    number  number,number
-infix   or              2   left    number  number,number
-infix   xor             2   left    number  number,number
-infix   eqv             2   left    number  number,number
-infix   imp             2   left    number  number,number
-infix   =(equals)       3   left    number  number,number ; direct
-infix   <(cmp_lt)       3   left    number  number,number ; direct
-infix   >(cmp_gt)       3   left    number  number,number ; direct
-infix   >=(cmp_gteq)    3   left    number  number,number ; direct
-infix   <=(cmp_lteq)    3   left    number  number,number ; direct
-infix   +(plus)         4   left    number  number,number ; direct
-infix   -(dash)         4   left    number  number,number ; direct
-infix   *(star)         5   left    number  number,number ; direct
-infix   /(slash)        5   left    number  number,number ; direct
-prefix  negative        6           number  number
-infix   ^(power)        7   left    number  number        ; direct
+#       name   precedence  assoc.   return    args
+prefix  not             2           integer   integer 
+prefix  not             2           long      long
+prefix  not             2           integer64 integer64
+infix   and             2   left    integer   integer,integer
+infix   and             2   left    long      long,long
+infix   and             2   left    integer64 integer64,integer64
+infix   or              2   left    integer   integer,integer
+infix   or              2   left    long      long,long
+infix   or              2   left    integer64 integer64,integer64
+infix   xor             2   left    integer   integer,integer
+infix   xor             2   left    long      long,long
+infix   xor             2   left    integer64 integer64,integer64
+infix   eqv             2   left    integer   integer,integer
+infix   eqv             2   left    long      long,long
+infix   eqv             2   left    integer64 integer64,integer64
+infix   imp             2   left    integer   integer,integer
+infix   imp             2   left    long      long,long
+infix   imp             2   left    integer64 integer64,integer64
+infix   =(equals)       3   left    integer   integer,integer     ; direct
+infix   =(equals)       3   left    integer   long,long           ; direct
+infix   =(equals)       3   left    integer   integer64,integer64 ; direct
+infix   =(equals)       3   left    integer   single,single       ; direct
+infix   =(equals)       3   left    integer   double,double       ; direct
+infix   =(equals)       3   left    integer   quad,quad           ; direct
+infix   =(equals)       3   left    integer   string,string       ; direct
+#infix   <(cmp_lt)       3   left    number  number,number ; direct
+#infix   >(cmp_gt)       3   left    number  number,number ; direct
+#infix   >=(cmp_gteq)    3   left    number  number,number ; direct
+#infix   <=(cmp_lteq)    3   left    number  number,number ; direct
+#infix   +(plus)         4   left    number  number,number ; direct
+#infix   -(dash)         4   left    number  number,number ; direct
+#infix   *(star)         5   left    number  number,number ; direct
+#infix   /(slash)        5   left    number  number,number ; direct
+#prefix  negative        6           number  number
+#infix   ^(power)        7   left    number  number        ; direct
 
 # Parentheses don't have any real meaning, they only direct the parsing
 generic oparen ; direct nosym
@@ -41,11 +59,12 @@ literal string ; direct
 # Type symbols
 generic integer_sfx     ; direct nosym
 generic long_sfx        ; direct nosym
-generic biginteger_sfx  ; direct nosym
+generic integer64_sfx   ; direct nosym
 generic offset_sfx      ; direct nosym
 
 generic single_sfx      ; direct nosym
 generic double_sfx      ; direct nosym
+generic quad_sfx        ; direct nosym
 generic string_sfx      ; direct nosym
 
 # Basic language constructs
@@ -73,9 +92,20 @@ generic case
 # functions with return type none are subs
 function _autodisplay   none
 function beep           none
-function chr            string  ubyte
-function _copypalette   none    number,number
-function left           string  string,number
-function print          none    any
-function rgba           number  number,?number,?number,?number
-function int            integer number
+function chr            string  integer
+function _copypalette   none    long,long
+function left           string  string,integer64
+function print          none    integer
+function print          none    long
+function print          none    integer64
+function print          none    single
+function print          none    double
+function print          none    quad
+function print          none    string
+function rgba           long    integer,integer?,integer?,integer?
+function int            integer integer
+function int            integer long
+function int            integer integer64
+function int            integer single
+function int            integer double
+function int            integer quad

@@ -34,7 +34,12 @@ function sif_read(filename$)
     type_last_signature = header.num_signatures
     redim type_signatures(type_last_signature) as type_signature_t
     for i = 1 to type_last_signature
-        get #fh, , type_signatures(i)
+        get #fh, , l&
+        s$ = space$(l&)
+        get #fh, , s$
+        get #fh, , succ&
+        sig& = type_add_sig(0, s$)
+        type_signatures(sig&).succ = succ&
     next i
 
     close #fh
@@ -71,7 +76,10 @@ sub sif_write(filename$, root_node)
     next i
 
     for i = 1 to type_last_signature
-        put #fh, , type_signatures(i)
+        l& = len(type_signatures(i).sig)
+        put #fh, , l&
+        put #fh, , type_signatures(i).sig
+        put #fh, , type_signatures(i).succ
     next i
 
     close #fh

@@ -43,6 +43,17 @@ function ast_add_node(typ)
     ast_add_node = ast_last_node
 end function
 
+function ast_add_cast(expr, vartyp)
+    if vartype = type_of_expr(expr) then
+        ast_add_cast = expr
+        exit function
+    end if
+    cast_node = ast_add_node(AST_CAST)
+    ast_nodes(cast_node).ref = vartyp
+    ast_attach cast_node, expr
+    ast_add_cast = cast_node
+end function
+
 sub ast_attach(parent, child)
     ast_nodes(parent).num_children = ast_nodes(parent).num_children + 1
     ast_children(parent) = ast_children(parent) + mkl$(child)
@@ -55,6 +66,10 @@ end function
 function ast_get_child(node, index)
     ast_get_child = cvl(mid$(ast_children(node), len(dummy&) * (index - 1) + 1, len(dummy&)))
 end function
+
+sub ast_replace_child(node, index, new_child)
+    mid$(ast_children(node), len(dummy&) * (index - 1) + 1, len(dummy&)) = mkl$(new_child)
+end sub
 
 sub ast_expand_nodes_arrays()
     new_size = ubound(ast_nodes) * 2

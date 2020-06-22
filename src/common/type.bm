@@ -1,169 +1,10 @@
-'These first few functions type_is_* encode the type hierachy. In the tree shown, types below
-'are more specific than the types above. This means an object of a specific type can be used
-'anywhere a more generic type is expected.
-'The ANY, NUMERIC and NUMBER types allow us to declare objects that can later be restricted
-'in type to something more specific, and to write functions that seemingly take multiple types
-'of argument.
-'The tree of types:
-'          ANY
-'           | `
-'           |   `
-'        NUMERIC  STRING
-'           | `
-'           |   `
-'        NUMBER   OFFSET
-'       /      \
-'      /        \
-'  BIGINTEGER    DOUBLE
-'      \         /
-'       \       /
-'        INTEGER
-
-'is child below parent on the type tree?
-function type_is_instance(child, parent)
-    if child = parent then
-        type_is_instance = TRUE
-    elseif parent = TYPE_ANY then
-        'All types are child of ANY
-        type_is_instance = TRUE
-    elseif parent = TYPE_NUMBER then
-        type_is_instance = type_is_number(child)
-    elseif parent = TYPE_NUMERIC then
-        type_is_instance = type_is_numeric(child)
-    elseif child = TYPE_INTEGER then
-        'INTEGER is child of doubles and bigintegers
-        type_is_instance = (parent = TYPE_BIGINTEGER or parent = TYPE_DOUBLE)
-    else
-        type_is_instance = FALSE
-    end if
-end function
-
-function type_is_concrete(t)
-    select case t
-    case TYPE_ANY, TYPE_NUMERIC, TYPE_NUMBER
-        type_is_concrete = FALSE
-    case else
-        type_is_concrete = TRUE
-    end select
-end function
-
-function type_is_numeric(t)
-    select case t
-    case TYPE_INTEGER, TYPE_LONG, TYPE_BIGINTEGER, TYPE_SINGLE, TYPE_DOUBLE, TYPE_OFFSET, TYPE_NUMBER
-        type_is_numeric = TRUE
-    case else
-        type_is_numeric = FALSE
-    end select
-end function
-
-function type_is_number(t)
-    select case t
-    case TYPE_INTEGER, TYPE_LONG, TYPE_BIGINTEGER, TYPE_SINGLE, TYPE_DOUBLE
+function type_is_number(typ)
+    select case typ
+    case TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD
         type_is_number = TRUE
-    case else
-        type_is_number = FALSE
     end select
 end function
 
-'This function is incomplete!
-'It does not handle abstract types.
-function type_common_parent(a, b)
-    if type_is_instance(a, b) then
-        type_common_parent = b
-    elseif type_is_instance(b, a) then
-        type_common_parent = a
-    else
-        type_common_parent = TYPE_ANY
-    end if
-end function
-
-
-'Type signatures for functions are a linked list, handled by the next few functions.
-'The first element in the list is the return type, then any arguments are subsequent elements.
-
-'Create a new LL for a new function
-function type_add_signature(typ)
-    type_last_signature = type_last_signature + 1
-    if ubound(type_signatures) = type_last_signature then
-        redim _preserve type_signatures(type_last_signature * 2) as type_signature_t
-    end if
-    type_signatures(type_last_signature).value = typ
-    type_add_signature = type_last_signature
-end function
-
-'Add an element to an existing LL
-sub type_chain_argument(root, typ, required)
-    new = type_add_signature(typ)
-    type_signatures(new).flags = TYPE_REQUIRED and required
-    node = root
-    while type_signatures(node).succ <> 0
-        node = type_signatures(node).succ
-    wend
-    type_signatures(node).succ = new
-end sub
-
-'Get the return type of a function (the first element in the LL)
-sub type_return_sig(token, sig as type_signature_t)
-    sig = type_signatures(htable_entries(token).v1)
-end sub
-
-'Get next element in LL
-function type_next_sig(sig as type_signature_t)
-    if sig.succ = 0 then
-        type_next_sig = FALSE
-        exit function
-    end if
-    sig = type_signatures(sig.succ)
-    type_next_sig = TRUE
-end function
-
-'The type_restrict_* functions allow us to insist that an object has a specific type,
-'or something at least as specific as that. Attempting to restrict something to a type
-'that is not a descendant of it on the tree is an error.
-'Explicit type_restrict_* functions are pulled out of type_restrict_expr as needed.
-sub type_restrict_expr(expr, typ)
-    select case ast_nodes(expr).typ
-    case AST_CALL
-        'Don't actually do any restriction, just type check
-        if not type_is_instance(type_of_call(expr), typ) then
-            fatalerror "Cannot convert return type of function to expected type"
-        end if
-    case AST_CONSTANT
-        'Do something useful?
-        if not type_is_instance(type_of_constant(expr), typ) then
-            fatalerror "Constant is of unexpected type"
-        end if
-    case AST_VAR
-        type_restrict_var ast_nodes(expr).ref, typ
-    case else
-        fatalerror "Cannot restrict type of expression"
-    end select
-end sub
-
-sub type_restrict_var(variable, typ)
-$if DEBUG then    
-    print "Restrict "; htable_names(variable); " to "; type_human_readable$(typ)
-$endif    
-    current_type = htable_entries(variable).v1
-
-    'If the variable is already more specific than the requested restriction, do nothing
-    if type_is_instance(current_type, typ) then
-$if DEBUG then        
-        print "Restriction is impotent"
-$endif        
-        exit sub
-    end if
-
-    'Note the reversed arguments - we want to make sure the requested type is descendant
-    'of the type the variable currently has
-    if not type_is_instance(typ, current_type) then
-        fatalerror "Attempted type restriction conflicts with current restriction"
-    end if
-
-    htable_entries(variable).v1 = typ
-end sub
-
-'Straight-forward functions for getting the type of an object.
 function type_of_expr(root)
     select case ast_nodes(root).typ
     case AST_CONSTANT
@@ -172,6 +13,8 @@ function type_of_expr(root)
         type_of_expr = type_of_call(root)
     case AST_VAR
         type_of_expr = type_of_var(root)
+    case AST_CAST
+        type_of_expr = type_of_cast(root)
     case else
         fatalerror "Cannot determine type of expression"
     end select
@@ -182,38 +25,122 @@ function type_of_constant(node)
 end function
 
 function type_of_call(node)
-    dim sig as type_signature_t
-    type_return_sig ast_nodes(node).ref, sig
-    type_of_call = sig.value
+    type_of_call = type_sig_return(ast_nodes(node).ref2)
 end function
 
 function type_of_var(node)
     type_of_var = htable_entries(ast_nodes(node).ref).v1
 end function
 
-'Distinguish between INTEGER and BIGINTEGER constants
-function type_detect_numint_type(content$)
-    ' Currently hard-coded for 32-bit integers
-    if len(content$) < 10 then
-        type_detect_numint_type = TYPE_INTEGER
-    elseif len(content$) > 10 then
-        type_detect_numint_type = TYPE_BIGINTEGER
-    elseif _strcmp("2147483647", content$) = -1 then
-        type_detect_numint_type = TYPE_BIGINTEGER
-    else
-        type_detect_numint_type = TYPE_INTEGER
-    end if
+function type_of_cast(node)
+    type_of_cast = ast_nodes(root).ref
 end function
     
-'Conversions between things for parsing and display purposes
+function type_can_cast(a, b)
+    type_can_cast = (type_is_number(a) and type_is_number(b)) or a = b
+end function
+
+function type_sig_return(sig_index)
+    type_sig_return = cvl(left$(type_signatures(sig_index).sig, 4))
+end function
+
+function type_sig_numargs(sig_index)
+    type_sig_numargs = (len(type_signatures(sig_index).sig) - 4) / 8
+end function
+
+function type_sig_argtype(sig_index, arg_index)
+    type_sig_argtype = cvl(mid$(type_signatures(sig_index).sig, arg_index * 8 - 3, 4))
+end function
+
+function type_sig_argflags(sig_index, arg_index)
+    type_sig_argflags = cvl(mid$(type_signatures(sig_index).sig, arg_index * 8 + 1, 4))
+end function
+
+function type_add_sig(previous, sig$)
+    type_last_signature = type_last_signature + 1
+    if ubound(type_signatures) = type_last_signature then
+        redim _preserve type_signatures(type_last_signature * 2) as type_signature_t
+    end if
+    type_signatures(type_last_signature).sig = sig$
+    if previous then type_signatures(previous).succ = type_last_signature
+    type_add_signature = type_last_signature
+end function
+
+sub type_add_sig_arg(sig_index, typ, flags)
+    type_signatures(sig_index).sig = type_sig_add_arg$(type_signatures(sig_index).sig, typ, flags)
+end sub
+    
+function type_sig_create$(return_type)
+    type_sig_create$ = mkl$(return_type)
+end function
+
+function type_sig_add_arg$(old$, new_argtype, new_argflags)
+    type_sig_add_arg$ = old$ + mkl$(new_argtype) + mkl$(new_argflags)
+end function
+
+function type_find_sig_match(func, candidate$)
+    'Improved algorithm (to be implemented):
+    'Get all sigs M that match candidate
+    'If len(M) = 0, fail.
+    'If len(M) = 1, that single entry is the match.
+    'Otherwise, check each sig in M in sequence:
+    '  Check each arg that is numeric and not BYREF. If for all
+    '  these args the candidate type can be losslessly cast to the
+    '  declared arg type, that sig is the match.
+    'If no match has been found, the last sig in M is the match.
+$if DEBUG then
+    print "Candidate is "; type_human_sig$(mkl$(0) + candidate$)
+$end if
+    sig_index = htable_entries(func).v1
+    print "first sig_index"; sig_index
+    while sig_index <> 0
+        if type_sig_matches_candidate(sig_index, candidate$) then
+            type_find_sig_match = sig_index
+            exit function
+        end if
+    wend
+end function
+
+function type_sig_matches_candidate(sig_index, candidate$)
+$if DEBUG then
+    print "Comparing to "; type_human_sig$(type_signatures(sig_index).sig)
+$end if
+    s = 1
+    c = 1
+    do until c * 8 > len(candidate$)
+        sig_arg = type_sig_argtype(sig_index, s)
+        sig_flags = type_sig_argflags(sig_index, s)
+        c_arg = cvl(mid$(candidate$, 4 * c - 3, 4))
+        c_flags = cvl(mid$(candidate$, 4 * c + 1, 4))
+        if not type_sig_matches_arg(sig_arg, sig_flags, c_arg, c_flags) then exit function
+        s = s + 1
+        c = c + 1
+    loop
+    type_sig_matches_candidate = TRUE
+end function
+
+function type_sig_matches_arg(sig_arg, sig_flags, c_arg, c_flags)
+    if sig_flags and TYPE_BYREF then
+        type_sig_matches_arg = (c_flags and TYPE_BYREF) > 0 and sig_arg = c_arg
+    else
+        type_sig_matches_arg = type_can_cast(sig_arg, c_arg)
+    end if
+end function
+
 function type_sfx2type(sfx_token)
     select case sfx_token
-    case TOK_INTEGER_SFX, TOK_LONG_SFX
+    case TOK_INTEGER_SFX
         type_sfx2type = TYPE_INTEGER
-    case TOK_BIGINTEGER_SFX
-        type_sfx2type = TYPE_BIGINTEGER
-    case TOK_SINGLE_SFX, TOK_DOUBLE_SFX
+    case TOK_LONG_SFX
+        type_sfx2type = TYPE_LONG
+    case TOK_INTEGER64_SFX
+        type_sfx2type = TYPE_INTEGER64
+    case TOK_SINGLE_SFX
         type_sfx2type = TYPE_SINGLE
+    case TOK_DOUBLE_SFX
+        type_sfx2type = TYPE_DOUBLE
+    case TOK_QUAD_SFX
+        type_sfx2type = TYPE_QUAD
     case TOK_OFFSET_SFX
         type_sfx2type = TYPE_OFFSET
     case TOK_STRING_SFX
@@ -226,22 +153,47 @@ end function
 function type_human_readable$(typ)
     select case typ
     case TYPE_NONE
-        type_human_readable$ = "none"
-    case TYPE_ANY
-        type_human_readable$ = "any"
-    case TYPE_NUMERIC
-        type_human_readable$ = "numeric"
-    case TYPE_NUMBER
-        type_human_readable$ = "number"
-    case TYPE_INTEGER, TYPE_LONG
-        type_human_readable$ = "integer"
-    case TYPE_BIGINTEGER
-        type_human_readable$ = "biginteger"
-    case TYPE_SINGLE, TYPE_DOUBLE
-        type_human_readable$ = "double"
+        type_human_readable$ = "NONE"
+    case TYPE_INTEGER
+        type_human_readable$ = "INTEGER"
+    case TYPE_LONG
+        type_human_readable$ = "LONG"
+    case TYPE_INTEGER64
+        type_human_readable$ = "INTEGER64"
+    case TYPE_SINGLE
+        type_human_readable$ = "SINGLE"
+    case TYPE_DOUBLE
+        type_human_readable$ = "DOUBLE"
+    case TYPE_QUAD
+        type_human_readable$ = "QUAD"
     case TYPE_STRING
-        type_human_readable$ = "string"
+        type_human_readable$ = "STRING"
     case else
-        type_human_readable$ = "unknown"
+        type_human_readable$ = "UNKNOWN"
     end select
 end function
+
+function type_human_sig$(sig$)
+    o$ = type_human_readable$(cvl(left$(sig$, 4))) + "("
+    for p = 1 to (len(sig$) - 4) / 8
+        flags = cvl(mid$(sig$,p * 8 + 1, 4))
+        if flags and TYPE_BYVAL then o$ = o$ + "BYVAL "
+        if flags and TYPE_BYREF then o$ = o$ + "BYREF "
+        if flags and TYPE_REQUIRED = 0 then o$ = o$ + "OPTION "
+        o$ = o$ + type_human_readable$(cvl(mid$(sig$, p * 8 - 3, 4)))
+        if p < (len(sig$) - 4) / 8 then o$ = o$ + ", "
+    next p
+    type_human_sig$ = o$ + ")"
+end function
+ 
+'This function is incorrect!
+function type_detect_numint_type(content$)
+    if len(content$) < 10 then
+        type_detect_numint_type = TYPE_INTEGER
+    elseif len(content$) > 10 then
+        type_detect_numint_type = TYPE_LONG
+    elseif _strcmp("2147483647", content$) = -1 then
+        type_detect_numint_type = TYPE_LONG
+    end if
+end function
+
