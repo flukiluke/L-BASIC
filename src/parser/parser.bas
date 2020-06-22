@@ -430,7 +430,7 @@ $endif
     'Declare whether this expression would satisfy a BYREF argument
     if ast_nodes(expr).typ = AST_VAR then flags = TYPE_BYREF
     candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
-    ast_attach root, arg
+    ast_attach root, expr
 $if DEBUG then    
     print "Completed funcarg"
 $endif

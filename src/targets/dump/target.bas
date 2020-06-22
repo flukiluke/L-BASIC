@@ -53,7 +53,6 @@ sub htable_dump
 end sub
 
 sub ast_dump_pretty(root, indent_level)
-system
     indent$ = space$(indent_level * 4)
     if ast_nodes(root).typ = 0 then
         fatalerror "Node" + str$(root) + " is invalid"
@@ -113,6 +112,7 @@ system
     case AST_CALL
         print #1, "call(";
         print #1, htable_names(ast_nodes(root).ref);
+        print #1, " ["; type_human_sig$(type_signatures(ast_nodes(root).ref2).sig); "]";
         if len(ast_children(root)) then print #1, ", ";
         for i = 1 to ast_num_children(root)
             ast_dump_pretty ast_get_child(root, i), 0

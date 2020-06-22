@@ -1,2 +1,2 @@
-'print "Hello world"
-'print 23
+print "Hello world"
+print 23

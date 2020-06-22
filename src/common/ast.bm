@@ -59,6 +59,7 @@ sub ast_attach(parent, child)
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
 
+'Why does this function exist when there's a .num_children field on the node?
 function ast_num_children(node)
     ast_num_children = len(ast_children(node)) / len(dummy&)
 end function

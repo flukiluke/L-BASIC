@@ -16,7 +16,7 @@ function type_of_expr(root)
     case AST_CAST
         type_of_expr = type_of_cast(root)
     case else
-        fatalerror "Cannot determine type of expression"
+        fatalerror "Cannot determine type of expression " + str$(root)
     end select
 end function
 
@@ -89,15 +89,18 @@ function type_find_sig_match(func, candidate$)
     '  declared arg type, that sig is the match.
     'If no match has been found, the last sig in M is the match.
 $if DEBUG then
-    print "Candidate is "; type_human_sig$(mkl$(0) + candidate$)
+    print "Function resolution candidate is "; type_human_sig$(mkl$(0) + candidate$)
 $end if
     sig_index = htable_entries(func).v1
-    print "first sig_index"; sig_index
     while sig_index <> 0
         if type_sig_matches_candidate(sig_index, candidate$) then
             type_find_sig_match = sig_index
+$if DEBUG then
+            print "Match found."
+$end if
             exit function
         end if
+        sig_index = type_signatures(sig_index).succ
     wend
 end function
 
@@ -121,10 +124,11 @@ end function
 
 function type_sig_matches_arg(sig_arg, sig_flags, c_arg, c_flags)
     if sig_flags and TYPE_BYREF then
-        type_sig_matches_arg = (c_flags and TYPE_BYREF) > 0 and sig_arg = c_arg
+        result = (c_flags and TYPE_BYREF) > 0 and sig_arg = c_arg
     else
-        type_sig_matches_arg = type_can_cast(sig_arg, c_arg)
+        result = type_can_cast(sig_arg, c_arg)
     end if
+    type_sig_matches_arg = result
 end function
 
 function type_sfx2type(sfx_token)
