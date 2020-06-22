@@ -102,7 +102,7 @@ function led(token, content$, left_node)
         if ast_nodes(left_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
         candidate$ = type_sig_add_arg$("", type_of_expr(left_node), flags)
         if ast_nodes(right_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
-        candidate$ = type_sig_add_arg$(candidate$, type_of_expr(left_node), flags)
+        candidate$ = type_sig_add_arg$(candidate$, type_of_expr(right_node), flags)
         matching_sig = type_find_sig_match(token, candidate$)
         if matching_sig = 0 then fatalerror "Cannot find matching type signature"
         ast_attach node, ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
