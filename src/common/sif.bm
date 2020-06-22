@@ -38,8 +38,8 @@ function sif_read(filename$)
         s$ = space$(l&)
         get #fh, , s$
         get #fh, , succ&
-        sig& = type_add_sig(0, s$)
-        type_signatures(sig&).succ = succ&
+        type_signatures(i).sig = s$
+        type_signatures(i).succ = succ&
     next i
 
     close #fh
@@ -78,7 +78,9 @@ sub sif_write(filename$, root_node)
     for i = 1 to type_last_signature
         l& = len(type_signatures(i).sig)
         put #fh, , l&
-        put #fh, , type_signatures(i).sig
+        'Work around compiler bug
+        s$ = type_signatures(i).sig
+        put #fh, , s$ 'type_signatures(i).sig
         put #fh, , type_signatures(i).succ
     next i
 

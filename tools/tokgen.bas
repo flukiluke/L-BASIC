@@ -120,7 +120,7 @@ do while not eof(1)
         if ubound(parts$) = 3 then
             process_arg_list parts$(3)
         end if
-        print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(1) <> parts$(1) then print #3, "htable_add_hentry " + toksym$ + ", re"
     case "PREFIX"
         assertsize 5
         if previous$(1) <> parts$(1) then
@@ -132,7 +132,7 @@ do while not eof(1)
         if previous$(2) <> parts$(2) then print #3, "re.v2 = "; parts$(2)
         process_return_type previous$(1), parts$(1), parts$(3)
         process_arg_list parts$(4)
-        print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(1) <> parts$(1) then print #3, "htable_add_hentry " + toksym$ + ", re"
     case "INFIX"
         assertsize 6
         if previous$(1) <> parts$(1) then
@@ -147,7 +147,7 @@ do while not eof(1)
         end if
         process_return_type previous$(1), parts$(1), parts$(4)
         process_arg_list parts$(5)
-        print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(1) <> parts$(1) then print #3, "htable_add_hentry " + toksym$ + ", re"
     case "LITERAL"
         assertsize 2
         literal_toknum = literal_toknum - 1

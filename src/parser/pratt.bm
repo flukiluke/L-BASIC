@@ -21,7 +21,6 @@ sub pt_refresh
 end sub
 
 function nud(token, content$)
-    dim sig as type_signature_t
     select case token
     case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRING
         node = ast_add_node(AST_CONSTANT)
@@ -90,7 +89,6 @@ end function
 
 function led(token, content$, left_node)
     dim he as hentry_t
-    dim sig as type_signature_t
     he = htable_entries(token)
     node = ast_add_node(AST_CALL)
     ast_nodes(node).ref = token

@@ -33,7 +33,7 @@ function type_of_var(node)
 end function
 
 function type_of_cast(node)
-    type_of_cast = ast_nodes(root).ref
+    type_of_cast = ast_nodes(node).ref
 end function
     
 function type_can_cast(a, b)
@@ -63,7 +63,7 @@ function type_add_sig(previous, sig$)
     end if
     type_signatures(type_last_signature).sig = sig$
     if previous then type_signatures(previous).succ = type_last_signature
-    type_add_signature = type_last_signature
+    type_add_sig = type_last_signature
 end function
 
 sub type_add_sig_arg(sig_index, typ, flags)
