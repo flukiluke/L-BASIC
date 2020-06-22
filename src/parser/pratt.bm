@@ -62,6 +62,7 @@ function nud(token, content$)
             matching_sig = type_find_sig_match(token, candidate$)
             if matching_sig = 0 then fatalerror "Cannot find matching type signature"
             ast_attach node, ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
+            ast_nodes(node).ref2 = matching_sig
         case else
             fatalerror "Unexpected operator " + tok_human_readable$(token)
         end select
@@ -107,6 +108,7 @@ function led(token, content$, left_node)
         if matching_sig = 0 then fatalerror "Cannot find matching type signature"
         ast_attach node, ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
         ast_attach node, ast_add_cast(right_node, type_sig_argtype(matching_sig, 2))
+        ast_nodes(node).ref2 = matching_sig
     case else
         fatalerror "Unexpected led " + tok_human_readable$(token)
     end select
