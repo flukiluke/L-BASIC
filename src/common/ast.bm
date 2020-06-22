@@ -44,7 +44,7 @@ function ast_add_node(typ)
 end function
 
 function ast_add_cast(expr, vartyp)
-    if vartype = type_of_expr(expr) then
+    if vartyp = type_of_expr(expr) then
         ast_add_cast = expr
         exit function
     end if

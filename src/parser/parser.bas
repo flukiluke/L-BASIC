@@ -368,7 +368,8 @@ $if DEBUG then
 $endif    
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = func
-    dummy = ps_opt_sigil(type_of_call(root))
+    sigil = ps_opt_sigil(0)
+    'dummy = ps_opt_sigil(type_of_call(root))
     t = tok_next_token
     if t = TOK_OPAREN then
         ps_funcargs root
@@ -377,6 +378,7 @@ $endif
         'No arguments
         tok_please_repeat
     end if
+    if sigil > 0 and sigil <> type_of_call(root) then fatalerror "Function must have correct type suffix if present"
     ps_funccall = root
 $if DEBUG then    
     print "Completed function call"
