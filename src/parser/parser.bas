@@ -138,7 +138,7 @@ $endif
     t = tok_next_token
     if t = TOK_UNKNOWN then
         iterator = ps_variable(t, tok_content$)
-        iterator_type = type_of_var(iterator)
+        iterator_type = htable_entries(iterator).v1
         if not type_is_number(iterator_type) then fatalerror "FOR must have a numeric variable"
     else
         fatalerror "Expected new variable as iterator"
@@ -506,7 +506,6 @@ $endif
     else
         var = token
     end if
-
     'Check for type sigil
     sigil = ps_opt_sigil(0)
     if sigil then
