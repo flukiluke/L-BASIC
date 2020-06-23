@@ -40,6 +40,28 @@ function type_can_cast(a, b)
     type_can_cast = (type_is_number(a) and type_is_number(b)) or a = b
 end function
 
+function type_can_safely_cast(a, b)
+    if a = b then
+        type_can_safely_cast = TRUE
+        exit function
+    end if
+    if not type_can_cast(a, b) then exit function
+    select case a
+    case TYPE_INTEGER
+        type_can_safely_cast = TRUE
+    case TYPE_LONG
+        type_can_safely_cast = (b = TYPE_INTEGER64) or (b = TYPE_DOUBLE) or (b = TYPE_QUAD)
+    case TYPE_INTEGER64
+        type_can_safely_cast = b = TYPE_QUAD
+    case TYPE_SINGLE
+        type_can_safely_cast = (b = TYPE_DOUBLE) or (b = TYPE_QUAD)
+    case TYPE_DOUBLE
+        type_can_safely_cast = b = TYPE_QUAD
+    case TYPE_FLOAT
+        type_can_safely_cast = FALSE
+    end select
+end function
+
 function type_sig_return(sig_index)
     type_sig_return = cvl(left$(type_signatures(sig_index).sig, 4))
 end function
@@ -79,21 +101,12 @@ function type_sig_add_arg$(old$, new_argtype, new_argflags)
 end function
 
 function type_find_sig_match(func, candidate$)
-    'Improved algorithm (to be implemented):
-    'Get all sigs M that are compatible with candidate (i.e. can cast everything)
-    'If len(M) = 0, fail.
-    'If len(M) = 1, that single entry is the match.
-    'Otherwise, check each sig in M in sequence:
-    '  Check each arg that is numeric and not BYREF. If for all
-    '  these args the candidate type can be losslessly cast to the
-    '  declared arg type, that sig is the match.
-    'If no match has been found, the last sig in M is the match.
 $if DEBUG then
     print "Function resolution candidate is "; type_human_sig$(mkl$(0) + candidate$)
 $end if
     sig_index = htable_entries(func).v1
     while sig_index <> 0
-        if type_sig_is_compatible(sig_index, candidate$) then
+        if type_sig_is_compatible(sig_index, candidate$, 0) then
             compatibles$ = compatibles$ + mkl$(sig_index)
         end if
         sig_index = type_signatures(sig_index).succ
@@ -108,11 +121,28 @@ $end if
 end function
 
 function type_pick_best_compatible_sig(compatibles$, candidate$)
-    candidate$ = candidate$
-    type_pick_best_compatible_sig = cvl(left$(compatibles$, 4))
+    'Picks the first sig that has lossless casts, otherwise the last sig if
+    'no lossless casts are available.
+$if DEBUG then
+    print "Looking for a safe cast option"
+$end if
+    for i = 1 to len(compatibles$) / 4
+        sig_index = cvl(mid$(compatibles$, i * 4 - 3, 4))
+        if type_sig_is_compatible(sig_index, candidate$, 1) then
+            type_pick_best_compatible_sig = sig_index
+$if DEBUG then
+            print "Safe signature found."
+$end if
+            exit function
+        end if
+    next i
+$if DEBUG then
+    print "No safe signature found."
+$end if
+    type_pick_best_compatible_sig = cvl(right$(compatibles$, 4))
 end function
 
-function type_sig_is_compatible(sig_index, candidate$)
+function type_sig_is_compatible(sig_index, candidate$, checkmode)
 $if DEBUG then
     print "Comparing to "; type_human_sig$(type_signatures(sig_index).sig);
 $end if
@@ -123,7 +153,7 @@ $end if
         sig_flags = type_sig_argflags(sig_index, s)
         c_arg = cvl(mid$(candidate$, 8 * c - 7, 4))
         c_flags = cvl(mid$(candidate$, 8 * c - 3, 4))
-        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags) then
+        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
 $if DEBUG then
             print ": no, mismatch on arg"; c; "(candidate has "; type_human_readable$(c_arg); ")"
 $end if
@@ -138,11 +168,14 @@ $if DEBUG then
 $endif
 end function
 
-function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags)
+function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
+'checkmode = 0 for lossy casts, 1 for lossless casts only
     if sig_flags and TYPE_BYREF then
         result = (c_flags and TYPE_BYREF) > 0 and sig_arg = c_arg
-    else
-        result = type_can_cast(sig_arg, c_arg)
+    elseif checkmode = 0 then
+        result = type_can_cast(c_arg, sig_arg)
+    elseif checkmode = 1 then
+        result = type_can_safely_cast(c_arg, sig_arg)
     end if
     type_sig_compatible_arg = result
 end function

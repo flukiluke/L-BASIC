@@ -35,10 +35,18 @@ infix   =(equals)       3   left    integer   string,string       ; direct
 #infix   >(cmp_gt)       3   left    number  number,number ; direct
 #infix   >=(cmp_gteq)    3   left    number  number,number ; direct
 #infix   <=(cmp_lteq)    3   left    number  number,number ; direct
-#infix   +(plus)         4   left    number  number,number ; direct
+infix   +(plus)         4   left    integer  integer,integer ; direct
+infix   +(plus)         4   left    long long,long ; direct
+infix   +(plus)         4   left    integer64 integer64,integer64 ; direct
+infix   +(plus)         4   left    single single,single ; direct
+infix   +(plus)         4   left    double double,double ; direct
+infix   +(plus)         4   left    quad quad,quad ; direct
+infix   +(plus)         4   left    string string,string ; direct
 #infix   -(dash)         4   left    number  number,number ; direct
 #infix   *(star)         5   left    number  number,number ; direct
-#infix   /(slash)        5   left    number  number,number ; direct
+infix   /(slash)        5   left    single single,single ; direct
+infix   /(slash)        5   left    double double,double ; direct
+infix   /(slash)        5   left    quad quad,quad ; direct
 #prefix  negative        6           number  number
 #infix   ^(power)        7   left    number  number        ; direct
 
