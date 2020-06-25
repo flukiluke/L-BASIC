@@ -1,36 +1,16 @@
-'$include: '../../common/util.bi'
-'$include: '../../common/type.bi'
-'$include: '../../common/ast.bi'
-'$include: '../../common/htable.bi'
-'$include: '../../common/sif.bi'
-
-if _commandcount <> 2 then
-    print "Usage: " + command$(0) + " <input file> <output file>"
-    print "65 target backend: prints out program content is a human readable fashion."
-    print "In almost all cases you don't want to run this program directly; you want to run 65 instead"
-    system
-end if
-inputfile$ = command$(1)
-outputfile$ = command$(2)
-
-open outputfile$ for output as #1
-root = sif_read(inputfile$)
-print #1, "Table of identifiers:"
-htable_dump
-print #1,
-print #1, "Function type signatures:"
-type_dump_functions
-print #1,
-print #1, "Table of constants:"
-ast_dump_constants
-print #1,
-print #1, "Program:"
-ast_dump_pretty root, 0
-
-cleanup
-system
-
-'$include: '../../common/util.bm'
+sub dump_program(root)
+    print #1, "Table of identifiers:"
+    htable_dump
+    print #1,
+    print #1, "Function type signatures:"
+    type_dump_functions
+    print #1,
+    print #1, "Table of constants:"
+    ast_dump_constants
+    print #1,
+    print #1, "Program:"
+    ast_dump_pretty root, 0
+end sub
 
 sub type_dump_functions
     for i = 1 to htable.elements
@@ -146,8 +126,3 @@ sub ast_dump_constants
         print #1, using "###    &    &"; i; type_human_readable(ast_constant_types(i)); ast_constants(i)
     next i
 end sub
-
-'$include: '../../common/type.bm'
-'$include: '../../common/ast.bm'
-'$include: '../../common/htable.bm'
-'$include: '../../common/sif.bm'

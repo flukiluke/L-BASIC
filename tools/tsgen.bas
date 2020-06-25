@@ -17,9 +17,6 @@
 'literal character can be specified by defining a class consisting only of it. A backslash (\) followed
 'by two characters specifies an ASCII code in hexadecimal.
 '
-' %name myname
-'Set the base name of the output files to myname. The .bi and .bm extensions will be added to this.
-'
 'Rules:
 'A rule specifies what to do when a character or set of characters is seen in a particular state. The
 'full syntax for a rule is:
@@ -76,8 +73,8 @@ statenames$(0) = "Error"
 statenames$(1) = "Begin"
 tokennames$(1) = "SKIP"
 
-if _commandcount <> 1 then
-    print "Usage: "; command$(0); " "; "<input file>"
+if _commandcount <> 3 then
+    print "Usage: "; command$(0); " "; "<input file> <output header file> <output module file>"
     system 1
 end if
 
@@ -87,6 +84,8 @@ if not _fileexists(command$(1)) then
 end if
 
 open command$(1) for input as #1
+open command$(2) for output as #2
+open command$(3) for output as #3
 
 do while not eof(1)
     linenum = linenum + 1
@@ -105,14 +104,6 @@ do while not eof(1)
         end if
     end if
 loop
-
-if outfile$ = "" then
-    e$ = "No output file defined with %name"
-    gosub fatalerror
-end if
-
-open outfile$ + ".bi" for output as #2
-open outfile$ + ".bm" for output as #3
 
 for i& = 1 to ubound(tokennames$) - 1
     print #2, "CONST TS_"; tokennames$(i&); " ="; i&
@@ -146,8 +137,6 @@ directive:
             cname$ = ltrim$(rtrim$(mid$(l$, sp, equals - sp - 1)))
             cvalue$ = ltrim$(rtrim$(mid$(l$, equals + 1)))
             add_class cname$, cvalue$
-        case "name"
-            outfile$ = ltrim$(rtrim$(mid$(l$, sp + 1))) 
         case else
             e$ = "Unknown directive " + dir$
             gosub fatalerror

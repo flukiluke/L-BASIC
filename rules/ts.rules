@@ -8,9 +8,6 @@
 %class bang = !
 %class amp = &
 
-# Basename of output files
-%name ts_data
-
 Begin: $letter ~ Id
 Begin: $number ~ Linenum
 Begin: "' ~ Comment

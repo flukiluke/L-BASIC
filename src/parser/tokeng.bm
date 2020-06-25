@@ -131,4 +131,4 @@ function tok_next_ts$(text$, ts_type)
     ts_type = 0
 end function 
 
-'$include: '../../build/ts_data.bm'
+'$include: '../../rules/ts_data.bm'

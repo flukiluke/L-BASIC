@@ -1,55 +1,29 @@
 # This should point to your QB64 installation
 QB64 := /home/luke/comp/git_qb64/qb64 -v
+OUTPUT_BINARY := $(CURDIR)/65
 
-
-BUILD_DIR := $(CURDIR)/build
 SRC_DIR := $(CURDIR)/src
 TOOLS_DIR := $(CURDIR)/tools
-OUT_DIR := $(CURDIR)/out
+RULES_DIR := $(CURDIR)/rules
 
-$(shell mkdir -p $(OUT_DIR) $(BUILD_DIR) &> /dev/null)
+all: $(OUTPUT_BINARY)
 
-all: compiler
-
-compiler: $(OUT_DIR)/65 $(OUT_DIR)/parser $(OUT_DIR)/dump $(OUT_DIR)/run
-
-
-# Main user-called binary
-$(OUT_DIR)/65: $(SRC_DIR)/65.bas
-	$(QB64) -x $< -o $@
-
-# Compiler units
-TS_FILES := $(BUILD_DIR)/ts_data.bi $(BUILD_DIR)/ts_data.bm
-TOKEN_FILES := $(BUILD_DIR)/token_data.bi $(BUILD_DIR)/token_registrations.bm
-COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.bm) $(wildcard $(SRC_DIR)/common/*.bi)
-
-$(OUT_DIR)/dump: $(SRC_DIR)/targets/dump/target.bas \
-                 $(COMMON_SRC)
-	$(QB64) -x $(SRC_DIR)/targets/dump/target.bas -o $(OUT_DIR)/dump
-
-$(OUT_DIR)/run: $(SRC_DIR)/targets/run/target.bas \
-                 $(COMMON_SRC) \
-				 $(wildcard $(SRC_DIR)/targets/run/*.bm) \
-				 $(wildcard $(SRC_DIR)/targets/run/*.bi)
-	$(QB64) -x $(SRC_DIR)/targets/run/target.bas -o $(OUT_DIR)/run
-
-$(OUT_DIR)/parser: $(SRC_DIR)/parser/parser.bas \
-                   $(wildcard $(SRC_DIR)/parser/*.bm) \
-                   $(wildcard $(SRC_DIR)/parser/*.bi) \
-				   $(COMMON_SRC) \
-				   $(TS_FILES) \
-				   $(TOKEN_FILES)
-	$(QB64) -x $(SRC_DIR)/parser/parser.bas -o $(OUT_DIR)/parser
-
-$(TS_FILES): $(SRC_DIR)/parser/ts.rules $(BUILD_DIR)/tsgen.tool
-	$(BUILD_DIR)/tsgen.tool $(SRC_DIR)/parser/ts.rules
-
-$(TOKEN_FILES): $(SRC_DIR)/parser/tokens.list $(BUILD_DIR)/tokgen.tool
-	$(BUILD_DIR)/tokgen.tool $(SRC_DIR)/parser/tokens.list $(TOKEN_FILES)
-
-$(BUILD_DIR)/%.tool: $(TOOLS_DIR)/%.bas
+$(TOOLS_DIR)/%.tool: $(TOOLS_DIR)/%.bas
 	$(QB64) -x $< -o $@.tool
+
+TS_FILES := $(RULES_DIR)/ts_data.bi $(RULES_DIR)/ts_data.bm
+TOKEN_FILES := $(RULES_DIR)/token_data.bi $(RULES_DIR)/token_registrations.bm
+
+$(TS_FILES): $(RULES_DIR)/ts.rules $(TOOLS_DIR)/tsgen.tool
+	$(TOOLS_DIR)/tsgen.tool $(RULES_DIR)/ts.rules $(TS_FILES)
+
+$(TOKEN_FILES): $(RULES_DIR)/tokens.list $(TOOLS_DIR)/tokgen.tool
+	$(TOOLS_DIR)/tokgen.tool $(RULES_DIR)/tokens.list $(TOKEN_FILES)
+
+# Main binary
+$(OUTPUT_BINARY): $(SRC_DIR)/65.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi')
+	$(QB64) -x $< -o $@
 
 .PHONY: clean
 clean:
-	rm -r $(BUILD_DIR) $(OUT_DIR)
+	rm -r $(TS_FILES) $(TOKEN_FILES) $(TOOLS_DIR)/*.tool $(OUTPUT_BINARY) 2> /dev/null || true

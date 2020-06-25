@@ -1,62 +1,52 @@
-'$include: 'common/util.bi'
+'$include: 'common/start.bi'
+'$include: 'common/type.bi'
+'$include: 'common/htable.bi'
+'$include: 'common/ast.bi'
+'$include: 'parser/parser.bi'
 
-dim shared VERSION$
-VERSION$ = "initial dev. version"
-
-execdir$ = _cwd$ 'Programs to be executed relative to here
 basedir$ = _startdir$ 'Data files relative to here
 
 type options_t
     inputfile as string
     outputfile as string
-    target as string
-    keep_intermediates as integer
     verbose as integer
 end type
 
 dim shared options as options_t
 parse_cmd_line_args
 
+if instr(_os$, "[WINDOWS]") then
+    exe_suffix$ = ".exe"
+else
+    exe_suffix$ = ""
+end if
+
 'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
-if options.inputfile = "" then fatalerror "No input files"
-if options.outputfile = "" then options.outputfile = remove_ext$(options.inputfile) + exeSuffix$
-if options.target = "" then options.target = "dump"
+if options.inputfile = "" then fatalerror "No input file"
+if options.outputfile = "" then options.outputfile = remove_ext$(options.inputfile) + exe_suffix$
 
 'Relative paths should be relative to the basedir$
-if instr("\/", left$(options.inputfile, 1)) = 0 then options.inputfile = basedir$ + "/" + options.inputfile
-if instr("\/", left$(options.outputfile, 1)) = 0 then options.outputfile = basedir$ + "/" + options.outputfile
+if instr("/", left$(options.inputfile, 1)) = 0 then options.inputfile = basedir$ + "/" + options.inputfile
+if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = basedir$ + "/" + options.outputfile
 
 if options.verbose then
     show_version
     print "Input file: "; options.inputfile
     print "Output file: "; options.outputfile
-    print "Target: "; options.target
-    print "Temporary files will be stored in "; tmpdir$
 end if
 
-parser_output$ = mktemp$(tmpdir$)
-parser_cmd$ = execdir$ + "/parser" + exesuffix$ + " " + escape$(options.inputfile) + " " + escape$(parser_output$)
-if options.verbose then print "Executing "; parser_cmd$
-parser_ret = shell(parser_cmd$)
-if parser_ret <> 0 then
-    if options.verbose then print "Return code"; parser_ret; "; exiting"
-    cleanup
-    system 1
-end if
+ast_init
+open options.inputfile for input as #1
+root = ps_block
+close #1
 
-target_cmd$ = execdir$ + "/" + options.target + exesuffix$ + " " + escape$(parser_output$) + " " + escape$(options.outputfile)
-if options.verbose then print "Executing "; target_cmd$
-target_ret = shell(target_cmd$)
-if target_ret <> 0 then
-    if options.verbose then print "Return code"; target_ret; "; exiting"
-    cleanup
-    system 1
-end if
+open options.outputfile for output as #1
+dump_program root
+close #1
 
-cleanup
 system
 
-'$include: 'common/util.bm'
+'$include: 'common/error.bm'
 
 'Strip the .bas extension if present
 function remove_ext$(fullname$)
@@ -81,17 +71,7 @@ sub show_help
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
     print "  -o <file>, --output <file>       Place the output into <file>"
-    print "Advanced options:"
-    print "  --list-targets                   List all available runtime targets"
-    print "  -t <target>, --target <target>   Select a particular runtime target"
-    print "  -k, --keep-intermediates         Do not delete intermediate compilation files"
     print "  -v, --verbose                    Be descriptive about what is happening"
-end sub
-
-sub list_targets
-    print "Available targets:"
-    print "  dump - Render program data as plain text for debugging"
-    print "  run  - Run program immediately by interpreting the intermediate format"
 end sub
 
 sub parse_cmd_line_args()
@@ -108,15 +88,6 @@ sub parse_cmd_line_args()
                 if i = _commandcount then fatalerror arg$ + " requires argument"
                 options.outputfile = command$(i + 1)
                 i = i + 1
-            case "--list-targets"
-                list_targets
-                system
-            case "-t", "--target"
-                if i = _commandcount then fatalerror arg$ + " requires argument"
-                options.target = command$(i + 1)
-                i = i + 1
-            case "-k", "--keep-intermediates"
-                options.keep_intermediates = TRUE
             case "-v", "--verbose"
                 options.verbose = TRUE
             case else
@@ -126,4 +97,10 @@ sub parse_cmd_line_args()
         end select
     next i
 end sub
+
+'$include: 'common/ast.bm'
+'$include: 'common/htable.bm'
+'$include: 'common/type.bm'
+'$include: 'parser/parser.bm'
+'$include: 'emitters/dump/dump.bm'
 
