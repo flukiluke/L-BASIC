@@ -19,6 +19,7 @@ type sif_header_t
     root_node as long 'The AST node that is the root of the tree
     num_hentries as long 'As in htable entries
     num_signatures as long
+    num_vars as long
 end type
 
 const SIF_VERSION = 2

@@ -91,6 +91,7 @@ end sub
 sub list_targets
     print "Available targets:"
     print "  dump - Render program data as plain text for debugging"
+    print "  run  - Run program immediately by interpreting the intermediate format"
 end sub
 
 sub parse_cmd_line_args()

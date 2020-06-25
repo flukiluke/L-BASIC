@@ -1,4 +1,4 @@
-$let DEBUG = 1
+$let DEBUG = 0
 '$include: '../common/util.bi'
 '$include: '../common/type.bi'
 '$include: '../common/ast.bi'
@@ -503,6 +503,8 @@ $endif
         htable_add_hentry ucase$(content$), he
         var = htable_last_id
         htable_entries(var).v1 = TYPE_SINGLE
+        ast_last_var_index = ast_last_var_index + 1
+        htable_entries(var).v2 = ast_last_var_index
     else
         var = token
     end if

@@ -5,4 +5,6 @@ y% = 9 and x&
 print y% and q!
 print lo& + integ%
 print lo& + si!
-print si! / lo&
+for i& = 1 to 10
+    print si! / lo&
+next i
