@@ -48,7 +48,7 @@ close #1
 
 if options.immediate_mode then
     on error goto runtime_error
-    'imm_run root
+    imm_run root
 else
     open options.outputfile for output as #1
     dump_program root
