@@ -1,7 +1,16 @@
-'$include: 'common/start.bi'
-'$include: 'common/type.bi'
-'$include: 'common/htable.bi'
-'$include: 'common/ast.bi'
+'$dynamic
+$console:only
+_dest _console
+deflng a-z
+const FALSE = 0, TRUE = not FALSE
+on error goto generic_error
+
+dim shared VERSION$
+VERSION$ = "initial dev. version"
+
+'$include: 'type.bi'
+'$include: 'htable.bi'
+'$include: 'ast.bi'
 '$include: 'parser/parser.bi'
 '$include: 'emitters/immediate/immediate.bi'
 
@@ -126,9 +135,9 @@ sub parse_cmd_line_args()
     next i
 end sub
 
-'$include: 'common/type.bm'
-'$include: 'common/ast.bm'
-'$include: 'common/htable.bm'
+'$include: 'type.bm'
+'$include: 'ast.bm'
+'$include: 'htable.bm'
 '$include: 'parser/parser.bm'
 '$include: 'emitters/dump/dump.bm'
 '$include: 'emitters/immediate/immediate.bm'
