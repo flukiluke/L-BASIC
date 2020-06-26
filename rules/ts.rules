@@ -64,7 +64,7 @@ General: "\ ~ General ! BACKSLASH
 General: ": ~ General ! COLON
 General: "; ~ General ! SEMICOLON
 General: "" ~ String
-General: "' ~ Comment ! NEWLINE
+General: "' ~ Begin ! NEWLINE
 General: "< ~ LtPfx
 General: "> ~ GtPfx
 General: ", ~ General ! COMMA
