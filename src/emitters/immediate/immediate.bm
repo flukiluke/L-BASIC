@@ -1,3 +1,7 @@
+sub imm_init
+    redim imm_stack(ps_last_var_index) as imm_value_t
+end sub
+
 sub imm_run(node)
     dim dummy_result as imm_value_t
     imm_eval node, dummy_result
@@ -9,8 +13,7 @@ sub imm_eval(node, result as imm_value_t)
     case AST_ASSIGN
         imm_do_assign node
     case AST_IF
-        print "Conditional; assuming true"
-        imm_eval ast_get_child(node, 2), result
+        imm_do_conditional node
     case AST_DO_PRE
         print "DO WHILE; executing once"
         imm_eval ast_get_child(node, 2), result
@@ -37,6 +40,17 @@ sub imm_eval(node, result as imm_value_t)
     case AST_CAST
         imm_do_cast node, result
     end select
+end sub
+
+sub imm_do_conditional(node)
+    dim condition as imm_value_t
+    imm_eval ast_get_child(node, 1), condition
+    ?condition.n
+    if condition.n then
+        imm_run ast_get_child(node, 2)
+    elseif ast_num_children(node) > 2 then
+        imm_run ast_get_child(node, 3)
+    end if
 end sub
 
 sub imm_do_cast(node, result as imm_value_t)

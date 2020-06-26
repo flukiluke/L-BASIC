@@ -21,6 +21,7 @@ type options_t
     outputfile as string
     verbose as integer
     immediate_mode as integer
+    debug as integer
 end type
 
 dim shared options as options_t
@@ -57,6 +58,7 @@ close #1
 
 if options.immediate_mode then
     on error goto runtime_error
+    imm_init
     imm_run root
 else
     open options.outputfile for output as #1
@@ -80,6 +82,10 @@ generic_error:
 sub fatalerror (msg$)
     print "Error: " + msg$
     system 1
+end sub
+
+sub debuginfo (msg$)
+    if options.debug then print msg$
 end sub
 
 'Strip the .bas extension if present
@@ -107,6 +113,7 @@ sub show_help
     print "  -o <file>, --output <file>       Place the output into <file>"
     print "  -i, --immediate                  Generate no output file, run the program now."
     print "  -v, --verbose                    Be descriptive about what is happening"
+    print "  -d, --debug                      For debugging 65 itself"
 end sub
 
 sub parse_cmd_line_args()
@@ -125,6 +132,8 @@ sub parse_cmd_line_args()
                 i = i + 1
             case "-v", "--verbose"
                 options.verbose = TRUE
+            case "-d", "--debug"
+                options.debug = TRUE
             case "-i", "--immediate"
                 options.immediate_mode = TRUE
             case else

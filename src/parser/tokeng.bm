@@ -36,9 +36,7 @@ function tok_next_token
         end if
         tokeng_state.index = 1
         line input #1, in$
-$if DEBUG then        
-        print "> "; in$
-$endif        
+        debuginfo "Next Line: " + in$
         tokeng_state.has_data = TRUE
     end if
 
@@ -74,9 +72,7 @@ $endif
     tokeng_repeat_token = token
     tokeng_repeat_literal$ = ts_content$
     tok_next_token = token
-$if DEBUG then    
-    print "Token: "; tok_human_readable$(token)
-$endif    
+    debuginfo "tokeng: " + tok_human_readable$(token)
 end function
 
 sub tok_init

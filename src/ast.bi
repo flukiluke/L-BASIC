@@ -21,10 +21,6 @@ dim shared ast_constants(100) as string
 dim shared ast_constant_types(100) as long
 dim shared ast_last_constant as long
 
-'This is the number of local variables
-'Eventually this will need to be per-scope, but for now it's just going here
-dim shared ast_last_var_index as long
-
 const AST_NONE = 1
 const AST_FALSE = 2
 const AST_TRUE = 3

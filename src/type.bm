@@ -101,9 +101,7 @@ function type_sig_add_arg$(old$, new_argtype, new_argflags)
 end function
 
 function type_find_sig_match(func, candidate$)
-$if DEBUG then
-    print "Function resolution candidate is "; type_human_sig$(mkl$(0) + candidate$)
-$end if
+    debuginfo "Function resolution candidate is " + type_human_sig$(mkl$(0) + candidate$)
     sig_index = htable_entries(func).v1
     while sig_index <> 0
         if type_sig_is_compatible(sig_index, candidate$, 0) then
@@ -123,29 +121,21 @@ end function
 function type_pick_best_compatible_sig(compatibles$, candidate$)
     'Picks the first sig that has lossless casts, otherwise the last sig if
     'no lossless casts are available.
-$if DEBUG then
-    print "Looking for a safe cast option"
-$end if
+    debuginfo "Looking for a safe cast option"
     for i = 1 to len(compatibles$) / 4
         sig_index = cvl(mid$(compatibles$, i * 4 - 3, 4))
         if type_sig_is_compatible(sig_index, candidate$, 1) then
             type_pick_best_compatible_sig = sig_index
-$if DEBUG then
-            print "Safe signature found."
-$end if
+            debuginfo "Safe signature found."
             exit function
         end if
     next i
-$if DEBUG then
-    print "No safe signature found."
-$end if
+    debuginfo "No safe signature found."
     type_pick_best_compatible_sig = cvl(right$(compatibles$, 4))
 end function
 
 function type_sig_is_compatible(sig_index, candidate$, checkmode)
-$if DEBUG then
-    print "Comparing to "; type_human_sig$(type_signatures(sig_index).sig);
-$end if
+    debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig) + "..."
     s = 1
     c = 1
     do until c * 8 > len(candidate$)
@@ -154,18 +144,14 @@ $end if
         c_arg = cvl(mid$(candidate$, 8 * c - 7, 4))
         c_flags = cvl(mid$(candidate$, 8 * c - 3, 4))
         if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
-$if DEBUG then
-            print ": no, mismatch on arg"; c; "(candidate has "; type_human_readable$(c_arg); ")"
-$end if
+            debuginfo "No, mismatch on arg" + str$(c) + " (candidate has " + type_human_readable$(c_arg) + ")"
             exit function
         end if
         s = s + 1
         c = c + 1
     loop
     type_sig_is_compatible = TRUE
-$if DEBUG then
-    print ": compatible"
-$endif
+    debuginfo "Compatible"
 end function
 
 function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
