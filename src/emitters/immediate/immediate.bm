@@ -1,5 +1,10 @@
 sub imm_init
     redim imm_stack(ps_last_var_index) as imm_value_t
+    for i = 1 to ps_last_var_index
+        imm_stack(i).t = TYPE_NONE
+        imm_stack(i).s = ""
+        imm_stack(i).n = 0
+    next i
 end sub
 
 sub imm_run(node)
@@ -45,7 +50,6 @@ end sub
 sub imm_do_conditional(node)
     dim condition as imm_value_t
     imm_eval ast_get_child(node, 1), condition
-    ?condition.n
     if condition.n then
         imm_run ast_get_child(node, 2)
     elseif ast_num_children(node) > 2 then
