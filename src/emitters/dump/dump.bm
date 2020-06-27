@@ -55,6 +55,10 @@ sub ast_dump_pretty(root, indent_level)
             print #1, indent$; "END IF";
         else
             ast_dump_pretty ast_get_child(root, 2), 0
+            if ast_num_children(root) > 2 then
+                print #1, " ELSE ";
+                ast_dump_pretty ast_get_child(root, 3), 0
+            end if
         end if
     case AST_DO_PRE
         print #1, indent$; "DO WHILE ";

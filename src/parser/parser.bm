@@ -233,6 +233,7 @@ function ps_if
         ast_attach root, ps_block
         t = tok_next_token
         if t = TOK_ELSE then
+            'Point of contention! QB45 insists on this newline, QB64 doesn't.
             ps_assert_token tok_next_token, TOK_NEWLINE
             ast_attach root, ps_block
             t = tok_next_token
@@ -242,7 +243,8 @@ function ps_if
     else
         tok_please_repeat
         ast_attach root, ps_stmt
-        ps_assert_token tok_next_token, TOK_NEWLINE
+        t = tok_next_token
+        if t = TOK_ELSE then ast_attach root, ps_stmt
     end if
     ps_if = root
     debuginfo "Completed conditional"
@@ -311,7 +313,7 @@ sub ps_funcargs(root)
     do
         t = tok_next_token
         select case t
-        case TOK_CPAREN, TOK_NEWLINE
+        case TOK_CPAREN, TOK_ELSE, TOK_NEWLINE
             'End of the argument list
             tok_please_repeat
             exit do
