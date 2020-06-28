@@ -13,16 +13,16 @@ sub ast_init
     ast_last_constant = 4
 end sub
 
-function ast_add_constant(token, content$)
+function ast_add_constant(token, content$, force_type)
     if ast_last_constant = ubound(ast_constants) then ast_expand_constants_array
     ast_last_constant = ast_last_constant + 1
     select case token
     case TOK_NUMINT
         ast_constants(ast_last_constant) = content$
-        ast_constant_types(ast_last_constant) = type_detect_numint_type(content$)
+        detected_type = type_detect_numint_type(content$)
     case TOK_NUMDEC
         ast_constants(ast_last_constant) = content$
-        ast_constant_types(ast_last_constant) = TYPE_DOUBLE
+        ast_constant_types(ast_last_constant) = TYPE_QUAD
     case TOK_NUMBASE
         ast_constants(ast_last_constant) = ltrim$(str$(val(content$)))
         ast_constant_types(ast_last_constant) = type_detect_numint_type(ast_constants(ast_last_constant))
@@ -33,6 +33,8 @@ function ast_add_constant(token, content$)
         ast_constants(ast_last_constant) = mid$(content$, 2, len(content$) - 2)
         ast_constant_types(ast_last_constant) = TYPE_STRING
     end select
+    if force_type > 0 and not type_can_safely_cast(detected_type, force_type) then fatalerror "Cannot retype constant"
+    ast_constant_types(ast_last_constant) = detected_type
     ast_add_constant = ast_last_constant
 end function
     

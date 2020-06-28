@@ -1,4 +1,5 @@
 generic unknown ; nosym
+generic eof     ; nosym
 generic newline ; direct nosym
 generic comma   ; direct nosym
 

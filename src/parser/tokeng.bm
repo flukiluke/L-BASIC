@@ -1,82 +1,7 @@
 deflng a-z
-function tok_human_readable$(token)
-    if token > 0 then
-        tok_human_readable$ = htable_names$(token)
-    else
-        tok_human_readable$ = "LITERAL_" + mid$(str$(token), 2)
-    end if
-end function
 
-sub tok_please_repeat
-    tokeng_state.prefill = TRUE
-end sub
-
-function tok_content$
-    ' Despite the name, this variable does indeed hold the current token data
-    ' (the idea being tok_next_token loads the token and then you call this function
-    ' to get more detail on it).
-    tok_content$ = tokeng_repeat_literal$
-end function
-
-function tok_next_token
-    if tokeng_state.prefill then
-        tokeng_state.prefill = FALSE
-        literal$ = tokeng_repeat_literal$
-        tok_next_token = tokeng_repeat_token
-        exit function
-    end if
-
-    static in$
-
-    if not tokeng_state.has_data then
-        if eof(1) then
-            tokeng_repeat_token = TOK_EOF
-            tok_next_token = TOK_EOF
-            exit function
-        end if
-        tokeng_state.index = 1
-        line input #1, in$
-        debuginfo "Next Line: " + in$
-        tokeng_state.has_data = TRUE
-    end if
-
-    ts_content$ = tok_next_ts$(in$ + chr$(10), ts_type)
-
-    select case ts_type
-        case 0 'Out of data (an error)
-            fatalerror "Unexpected end of line"
-
-        case TS_ID
-            id = htable_get_id(ucase$(ts_content$))
-            if id = 0 then
-                token = TOK_UNKNOWN
-            else
-                token = id
-            end if
-            tokeng_state.linestart = FALSE
-
-        case TS_NEWLINE
-            tokeng_state.has_data = FALSE
-            tokeng_state.linestart = TRUE
-            token = TOK_NEWLINE
-
-        case else
-            if tok_direct(ts_type) then
-                token = tok_direct(ts_type)
-            else
-                fatalerror "Unhandled TS" + str$(ts_type)
-            end if
-            tokeng_state.linestart = FALSE
-    end select
-
-    tokeng_repeat_token = token
-    tokeng_repeat_literal$ = ts_content$
-    tok_next_token = token
-    debuginfo "tokeng: " + tok_human_readable$(token)
-end function
-
-sub tok_init
-    'read in arrays and set default values for some control variables
+sub tok_init(file_handle)
+    'Read in the state machine
     for s = 1 to ubound(t_states~%, 2)
         read t_statenames$(s)
         for b = 1 to 127
@@ -88,8 +13,61 @@ sub tok_init
     tokeng_state.curstate = 1
     tokeng_state.has_data = FALSE
     tokeng_state.linestart = TRUE
-    tokeng_state.prefill = FALSE
+    tokeng_state.file_handle = file_handle
+    'Fill the 'next' buffer and propagate to tok_token
+    tok_read_next_token
+    tok_advance
 end sub
+
+sub tok_advance
+    tok_token = tok_next_token
+    tok_content$ = tok_next_content$
+    tok_read_next_token
+end sub
+
+sub tok_read_next_token
+    static in$
+
+    if not tokeng_state.has_data then
+        if eof(tokeng_state.file_handle) then
+            tok_next_token = TOK_EOF
+            exit function
+        end if
+        tokeng_state.index = 1
+        line input #tokeng_state.file_handle, in$
+        debuginfo "Next Line: " + in$
+        tokeng_state.has_data = TRUE
+    end if
+
+    tok_next_content$ = tok_next_ts$(in$ + chr$(10), ts_type)
+
+    select case ts_type
+        case 0 'Out of data (an error)
+            fatalerror "Unexpected end of line"
+
+        case TS_ID
+            id = htable_get_id(ucase$(tok_next_content$))
+            if id = 0 then
+                tok_next_token = TOK_UNKNOWN
+            else
+                tok_next_token = id
+            end if
+            tokeng_state.linestart = FALSE
+
+        case TS_NEWLINE
+            tokeng_state.has_data = FALSE
+            tokeng_state.linestart = TRUE
+            tok_next_token = TOK_NEWLINE
+
+        case else
+            if tok_direct(ts_type) then
+                tok_next_token = tok_direct(ts_type)
+            else
+                fatalerror "Unhandled TS" + str$(ts_type)
+            end if
+            tokeng_state.linestart = FALSE
+    end select
+end function
 
 function tok_next_ts$(text$, ts_type)
     if tokeng_state.index > len(text$) then
@@ -126,5 +104,13 @@ function tok_next_ts$(text$, ts_type)
     next i
     ts_type = 0
 end function 
+
+function tok_human_readable$(token)
+    if token > 0 then
+        tok_human_readable$ = htable_names$(token)
+    else
+        tok_human_readable$ = "LITERAL_" + mid$(str$(token), 2)
+    end if
+end function
 
 '$include: '../../rules/ts_data.bm'

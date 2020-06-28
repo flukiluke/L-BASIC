@@ -51,8 +51,9 @@ if options.verbose then
     end if
 end if
 
-ast_init
 open options.inputfile for input as #1
+ast_init
+tok_init 1
 root = ps_block
 close #1
 

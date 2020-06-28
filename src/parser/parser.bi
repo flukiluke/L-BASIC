@@ -1,5 +1,4 @@
 '$include: 'tokeng.bi'
-'$include: 'pratt.bi'
 '$include: '../../rules/token_registrations.bm'
 
 'This is the number of local variables

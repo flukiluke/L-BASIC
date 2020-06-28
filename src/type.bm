@@ -40,6 +40,7 @@ function type_can_cast(a, b)
     type_can_cast = (type_is_number(a) and type_is_number(b)) or a = b
 end function
 
+'Can we can from a to b without loss of data?
 function type_can_safely_cast(a, b)
     if a = b then
         type_can_safely_cast = TRUE
@@ -225,14 +226,39 @@ function type_human_sig$(sig$)
     type_human_sig$ = o$ + ")"
 end function
  
-'This function is incorrect!
 function type_detect_numint_type(content$)
-    if len(content$) < 10 then
+    '2^15-1 = 32767
+    '2^31-1 = 2147483647
+    '2^63-1 = 18446744073709551615
+    select case len(content$)
+    case is < 5
         type_detect_numint_type = TYPE_INTEGER
-    elseif len(content$) > 10 then
+    case 5
+        if _strcmp("32767", content$) = -1 then
+            type_detect_numint_type = TYPE_LONG
+        else
+            type_detect_numint_type = TYPE_INTEGER
+        end if
+    case is < 10
         type_detect_numint_type = TYPE_LONG
-    elseif _strcmp("2147483647", content$) = -1 then
-        type_detect_numint_type = TYPE_LONG
-    end if
+    case 10
+        if _strcmp("2147483647", content$) = -1 then
+            type_detect_numint_type = TYPE_INTEGER64
+        else
+            type_detect_numint_type = TYPE_LONG
+        end if
+    case is < 20
+        type_detect_numint_type = TYPE_INTEGER64
+    case 20
+        if _strcmp("18446744073709551615", content$) = -1 then
+            'Should we be checking for overflow here?
+            type_detect_numint_type = TYPE_QUAD
+        else
+            type_detect_numint_type = TYPE_INTEGER64
+        end if
+    case > 20
+        'Again, should maybe check for overflow here
+        type_detect_numint_type = TYPE_QUAD
+    end select
 end function
 
