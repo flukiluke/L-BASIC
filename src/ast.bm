@@ -2,6 +2,11 @@ deflng a-z
 
 ' Initialise a clean AST
 sub ast_init
+    redim ast_nodes(10) as ast_node_t
+    redim ast_children(10) as string
+    ast_last_node = 0
+    redim ast_constants(10) as string
+    redim ast_constant_types(10) as long
     ast_constants(AST_NONE) = "None"
     ast_constant_types(AST_NONE) = TYPE_ANY
     ast_constants(AST_FALSE) = "0"

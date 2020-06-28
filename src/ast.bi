@@ -9,20 +9,16 @@ type ast_node_t
 end type
 
 'The nodes themselves
-'Why 100? No particular reason.
-dim shared ast_nodes(100) as ast_node_t
+dim shared ast_nodes(0) as ast_node_t
 'The children of a given node as a mkl$-encoded string
-dim shared ast_children(100) as string
+dim shared ast_children(0) as string
 'The id of the last node registered
 dim shared ast_last_node as long
 
 'Every number and string appearing in the program gets an entry here
-dim shared ast_constants(100) as string
-dim shared ast_constant_types(100) as long
+dim shared ast_constants(0) as string
+dim shared ast_constant_types(0) as long
 dim shared ast_last_constant as long
-
-'actual as opposed to any explicit old-timey line numbers/labels in the program
-dim shared ast_actual_linenum as long
 
 const AST_NONE = 1
 const AST_FALSE = 2

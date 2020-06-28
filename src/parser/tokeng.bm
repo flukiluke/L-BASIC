@@ -22,17 +22,26 @@ end sub
 sub tok_advance
     tok_token = tok_next_token
     tok_content$ = tok_next_content$
+    ?">>"; tok_human_readable$(tok_token)
     tok_read_next_token
 end sub
 
 sub tok_read_next_token
     if not tokeng_state.has_data then
-        if eof(tokeng_state.file_handle) then
-            tok_next_token = TOK_EOF
-            exit function
+        if tokeng_state.file_handle > -1 then
+            if eof(tokeng_state.file_handle) then
+                tok_next_token = TOK_EOF
+                exit function
+            end if
         end if
         tokeng_state.index = 1
-        line input #tokeng_state.file_handle, tokeng_state.raw_line_in
+        if tokeng_state.file_handle = -1 then
+            print "> ";
+            line input tokeng_state.raw_line_in
+            tokeng_state.raw_line_in = tokeng_state.raw_line_in
+        else
+            line input #tokeng_state.file_handle, tokeng_state.raw_line_in
+        end if
         tokeng_state.has_data = TRUE
     end if
 

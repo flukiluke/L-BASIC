@@ -19,8 +19,8 @@ basedir$ = _startdir$ 'Data files relative to here
 type options_t
     inputfile as string
     outputfile as string
-    verbose as integer
-    immediate_mode as integer
+    run_mode as integer
+    interactive_mode as integer
     debug as integer
 end type
 
@@ -34,37 +34,31 @@ else
 end if
 
 'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
-if options.inputfile = "" then fatalerror "No input file"
 if options.outputfile = "" then options.outputfile = remove_ext$(options.inputfile) + exe_suffix$
 
 'Relative paths should be relative to the basedir$
 if instr("/", left$(options.inputfile, 1)) = 0 then options.inputfile = basedir$ + "/" + options.inputfile
 if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = basedir$ + "/" + options.outputfile
 
-if options.verbose then
-    show_version
-    print "Input file: "; options.inputfile
-    if options.immediate_mode then
-        print "Immediate mode"
-    else
-        print "Output file: "; options.outputfile
-    end if
-end if
-
-open options.inputfile for input as #1
-ast_init
-tok_init 1
-root = ps_block
-close #1
-
-if options.immediate_mode then
-    on error goto runtime_error
-    imm_init
-    imm_run root
+if options.interactive_mode then
+    interactive_mode
 else
-    open options.outputfile for output as #1
-    dump_program root
-    close #1
+    ast_init
+    if options.inputfile = "" then fatalerror "No input file"
+    infh = freefile
+    open options.inputfile for input as #infh
+    tok_init infh
+    root = ps_block
+    close #infh
+    if options.run_mode then
+        on error goto runtime_error
+        imm_init
+        imm_run root
+    else
+        open options.outputfile for output as #1
+        dump_program root
+        close #1
+    end if
 end if
 
 system
@@ -87,6 +81,17 @@ end sub
 
 sub debuginfo (msg$)
     if options.debug then print msg$
+end sub
+
+sub interactive_mode
+    ast_init
+    tok_init -1
+    open "SCRN:" for output as #1
+    do
+        node = ps_stmt
+        ast_dump_pretty node, 0
+        print #1,
+    loop
 end sub
 
 'Strip the .bas extension if present
@@ -112,8 +117,8 @@ sub show_help
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
     print "  -o <file>, --output <file>       Place the output into <file>"
-    print "  -i, --immediate                  Generate no output file, run the program now."
-    print "  -v, --verbose                    Be descriptive about what is happening"
+    print "  -i, --interactive                Interactive mode, read commands from console."
+    print "  -r, --run                        Generate no output file, run the program now."
     print "  -d, --debug                      For debugging 65 itself"
 end sub
 
@@ -131,12 +136,12 @@ sub parse_cmd_line_args()
                 if i = _commandcount then fatalerror arg$ + " requires argument"
                 options.outputfile = command$(i + 1)
                 i = i + 1
-            case "-v", "--verbose"
-                options.verbose = TRUE
             case "-d", "--debug"
                 options.debug = TRUE
-            case "-i", "--immediate"
-                options.immediate_mode = TRUE
+            case "-r", "--run"
+                options.run_mode = TRUE
+            case "-i", "--interactive"
+                options.interactive_mode = TRUE
             case else
                 if left$(arg$, 1) = "-" then fatalerror "Unknown option " + arg$
                 if options.inputfile <> "" then fatalerror "Unexpected argument " + arg$

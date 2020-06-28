@@ -2,7 +2,7 @@
 '$include: '../../rules/token_data.bi'
 
 type tokeniser_state_t
-    file_handle as long
+    file_handle as long 'Set to -1 to read from console
     index as long
     curstate as long
     has_data as long
