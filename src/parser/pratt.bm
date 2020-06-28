@@ -27,14 +27,14 @@ function nud(token, content$)
         ps_consume TOK_CPAREN
     case TOK_DASH
         'Hardcoded hack to change TOK_DASH into TOK_NEGATIVE
-        node = ast_add_node(AST_CALL)
-        ast_nodes(node).ref = TOK_NEGATIVE
-        ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v2)
+        token = TOK_NEGATIVE
+        goto negative_hack
     case TOK_UNKNOWN
         'Implicit variable definitions
         node = ast_add_node(AST_VAR)
         ast_nodes(node).ref = ps_variable_p(token, content$)
     case else
+        negative_hack:
         dim he as hentry_t
         he = htable_entries(token)
         select case he.typ

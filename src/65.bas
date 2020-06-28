@@ -1,6 +1,6 @@
 '$dynamic
-$console:only
-_dest _console
+$console
+$screenhide
 deflng a-z
 const FALSE = 0, TRUE = not FALSE
 on error goto generic_error
@@ -21,6 +21,7 @@ type options_t
     outputfile as string
     run_mode as integer
     interactive_mode as integer
+    terminal_mode as integer
     debug as integer
 end type
 
@@ -39,6 +40,12 @@ if options.outputfile = "" then options.outputfile = remove_ext$(options.inputfi
 'Relative paths should be relative to the basedir$
 if instr("/", left$(options.inputfile, 1)) = 0 then options.inputfile = basedir$ + "/" + options.inputfile
 if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = basedir$ + "/" + options.outputfile
+
+if options.terminal_mode then
+    _dest _console
+else
+    _screenshow
+end if
 
 if options.interactive_mode then
     interactive_mode
@@ -61,7 +68,7 @@ else
     end if
 end if
 
-system
+end
 
 'Used by immediate mode
 runtime_error:
@@ -76,7 +83,7 @@ generic_error:
 
 sub fatalerror (msg$)
     print "Error on line" + str$(ps_actual_linenum) + ": " + msg$
-    system 1
+    end 1
 end sub
 
 sub debuginfo (msg$)
@@ -90,8 +97,8 @@ sub interactive_mode
     do
         ast_init 'Clear the tree each time
         node = ps_stmt
-        'ast_dump_pretty node, 0
-        'print #1,
+        ast_dump_pretty node, 0
+        print #1,
         imm_reinit
         imm_run node
         ps_consume TOK_NEWLINE
@@ -121,7 +128,7 @@ sub show_help
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
     print "  -o <file>, --output <file>       Place the output into <file>"
-    print "  -i, --interactive                Interactive mode, read commands from console."
+    print "  -t, --terminal                   Run in terminal mode (no graphical window)."
     print "  -r, --run                        Generate no output file, run the program now."
     print "  -d, --debug                      For debugging 65 itself"
 end sub
@@ -144,14 +151,15 @@ sub parse_cmd_line_args()
                 options.debug = TRUE
             case "-r", "--run"
                 options.run_mode = TRUE
-            case "-i", "--interactive"
-                options.interactive_mode = TRUE
+            case "-t", "--terminal"
+                options.terminal_mode = TRUE
             case else
                 if left$(arg$, 1) = "-" then fatalerror "Unknown option " + arg$
                 if options.inputfile <> "" then fatalerror "Unexpected argument " + arg$
                 options.inputfile = arg$
         end select
     next i
+    if options.inputfile = "" then options.interactive_mode = TRUE
 end sub
 
 '$include: 'type.bm'
