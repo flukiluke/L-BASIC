@@ -75,9 +75,9 @@ runtime_error:
 'Error handler for everything else
 generic_error:
     if _inclerrorline then
-        fatalerror command$(0) + ": Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
+        fatalerror "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
     else
-        fatalerror command$(0) + ": Internal error" + str$(err) + " on line" + str$(_errorline)
+        fatalerror "Internal error" + str$(err) + " on line" + str$(_errorline)
     end if
 
 sub fatalerror (msg$)

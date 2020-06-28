@@ -6,8 +6,10 @@ function pt_expr(rbp)
     tok_advance
     left_node = nud(t, content$)
     while rbp < lbp(tok_token, tok_content$)
+        t = tok_token
+        content$ = tok_content$
         tok_advance
-        left_node = led(tok_token, tok_content$, left_node)
+        left_node = led(t, content$, left_node)
     wend
     pt_expr = left_node
 end function
@@ -24,7 +26,7 @@ function nud(token, content$)
         node = pt_expr(0)
         ps_consume TOK_CPAREN
     case TOK_DASH
-        ' Hardcoded hack to change TOK_DASH into TOK_NEGATIVE
+        'Hardcoded hack to change TOK_DASH into TOK_NEGATIVE
         node = ast_add_node(AST_CALL)
         ast_nodes(node).ref = TOK_NEGATIVE
         ast_attach node, pt_expr(htable_entries(TOK_NEGATIVE).v2)
