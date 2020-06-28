@@ -1,5 +1,8 @@
 generic unknown ; nosym
 generic eof     ; nosym
+# End Of Input - used to signify the end of a user's input in interactive
+# mode (can't use newline because we're always looking one token ahead).
+generic eoi     ; nosym
 generic newline ; direct nosym
 generic comma   ; direct nosym
 

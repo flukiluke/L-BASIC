@@ -91,6 +91,7 @@ sub interactive_mode
         node = ps_stmt
         ast_dump_pretty node, 0
         print #1,
+        ps_consume TOK_NEWLINE
     loop
 end sub
 

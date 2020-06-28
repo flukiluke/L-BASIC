@@ -22,8 +22,23 @@ end sub
 sub tok_advance
     tok_token = tok_next_token
     tok_content$ = tok_next_content$
+    if tokeng_state.file_handle <> -1 then
+        tok_read_next_token
+    else
+        'Hacks for interactive mode
+        if tok_token = TOK_NEWLINE then
+            'All lines end with TOK_EOI
+            tok_next_token = TOK_EOI
+        elseif tok_token = TOK_EOI then
+            'No line starts with TOK_NEWLINE
+            do
+                tok_read_next_token
+            loop while tok_next_token = TOK_NEWLINE
+        else
+            tok_read_next_token
+        end if
+    end if
     ?">>"; tok_human_readable$(tok_token)
-    tok_read_next_token
 end sub
 
 sub tok_read_next_token

@@ -33,6 +33,10 @@ end function
 'Results: NEWLINE or block end marker
 function ps_stmt
     dim he as hentry_t
+
+    'This line only relevant for interactive mode
+    if tok_token = TOK_EOI then ps_consume TOK_EOI
+
     debuginfo "Start statement"
     select case tok_token
         case is < 0
