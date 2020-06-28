@@ -18,7 +18,7 @@ sub type_dump_functions
         if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
             sig_index = htable_entries(i).v1
             do
-                print #1, sig_index; htable_names(i); " "; type_human_sig$(type_signatures(sig_index).sig)
+                print #1, sig_index; " "; htable_names(i); " "; type_human_sig$(type_signatures(sig_index).sig)
                 sig_index = type_signatures(sig_index).succ
             loop while sig_index <> 0
         end if

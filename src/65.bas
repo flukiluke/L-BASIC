@@ -84,13 +84,16 @@ sub debuginfo (msg$)
 end sub
 
 sub interactive_mode
-    ast_init
     tok_init -1
+    imm_init
     open "SCRN:" for output as #1
     do
+        ast_init 'Clear the tree each time
         node = ps_stmt
-        ast_dump_pretty node, 0
-        print #1,
+        'ast_dump_pretty node, 0
+        'print #1,
+        imm_reinit
+        imm_run node
         ps_consume TOK_NEWLINE
     loop
 end sub
