@@ -26,20 +26,17 @@ sub tok_advance
 end sub
 
 sub tok_read_next_token
-    static in$
-
     if not tokeng_state.has_data then
         if eof(tokeng_state.file_handle) then
             tok_next_token = TOK_EOF
             exit function
         end if
         tokeng_state.index = 1
-        line input #tokeng_state.file_handle, in$
-        debuginfo "Next Line: " + in$
+        line input #tokeng_state.file_handle, tokeng_state.raw_line_in
         tokeng_state.has_data = TRUE
     end if
 
-    tok_next_content$ = tok_next_ts$(in$ + chr$(10), ts_type)
+    tok_next_content$ = tok_next_ts$(tokeng_state.raw_line_in + chr$(10), ts_type)
 
     select case ts_type
         case 0 'Out of data (an error)

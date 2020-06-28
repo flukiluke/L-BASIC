@@ -21,6 +21,9 @@ dim shared ast_constants(100) as string
 dim shared ast_constant_types(100) as long
 dim shared ast_last_constant as long
 
+'actual as opposed to any explicit old-timey line numbers/labels in the program
+dim shared ast_actual_linenum as long
+
 const AST_NONE = 1
 const AST_FALSE = 2
 const AST_TRUE = 3

@@ -81,7 +81,7 @@ generic_error:
     end if
 
 sub fatalerror (msg$)
-    print "Error: " + msg$
+    print "Error on line" + str$(ps_actual_linenum) + ": " + msg$
     system 1
 end sub
 

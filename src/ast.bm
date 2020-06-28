@@ -32,6 +32,7 @@ function ast_add_constant(token, content$, force_type)
         'Strip quotes
         ast_constants(ast_last_constant) = mid$(content$, 2, len(content$) - 2)
         ast_constant_types(ast_last_constant) = TYPE_STRING
+        detected_type = TYPE_STRING
     end select
     if force_type > 0 and not type_can_safely_cast(detected_type, force_type) then fatalerror "Cannot retype constant"
     ast_constant_types(ast_last_constant) = detected_type
