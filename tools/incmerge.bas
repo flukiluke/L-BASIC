@@ -23,8 +23,6 @@ ehandler:
 
 sub process (filename$)
     fh = freefile
-    print "Now in "; _cwd$
-    print "Processing {"; filename$; "}"
     open filename$ for binary as #fh
     olddir$ = _cwd$
     chdir dirname$(filename$)
