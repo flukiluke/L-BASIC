@@ -117,7 +117,7 @@ NumBase: $hexchar ~ NumBase
 
 LtPfx: * ~ General & CMP_LT
 LtPfx: "= ~ General ! CMP_LTEQ
-LtPfx: "> ~ General ! CMP_NE
+LtPfx: "> ~ General ! CMP_NEQ
 
 GtPfx: * ~ General & CMP_GT
 GtPfx: "= ~ General ! CMP_GTEQ

@@ -1,6 +1,7 @@
 '$dynamic
 $console
 $screenhide
+_dest _console
 deflng a-z
 const FALSE = 0, TRUE = not FALSE
 on error goto generic_error
@@ -41,10 +42,9 @@ if options.outputfile = "" then options.outputfile = remove_ext$(options.inputfi
 if instr("/", left$(options.inputfile, 1)) = 0 then options.inputfile = basedir$ + "/" + options.inputfile
 if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = basedir$ + "/" + options.outputfile
 
-if options.terminal_mode then
-    _dest _console
-else
+if not options.terminal_mode then
     _screenshow
+    _dest 0
 end if
 
 if options.interactive_mode then
@@ -97,8 +97,10 @@ sub interactive_mode
     do
         ast_init 'Clear the tree each time
         node = ps_stmt
-        ast_dump_pretty node, 0
-        print #1,
+        if options.debug then
+            ast_dump_pretty node, 0
+            print #1,
+        end if
         imm_reinit
         imm_run node
         ps_consume TOK_NEWLINE

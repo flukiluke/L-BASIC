@@ -35,6 +35,13 @@ infix   =(equals)       3   left    integer   single,single       ; direct
 infix   =(equals)       3   left    integer   double,double       ; direct
 infix   =(equals)       3   left    integer   quad,quad           ; direct
 infix   =(equals)       3   left    integer   string,string       ; direct
+infix   <>(cmp_neq)     3   left    integer   integer,integer     ; direct
+infix   <>(cmp_neq)     3   left    integer   long,long           ; direct
+infix   <>(cmp_neq)     3   left    integer   integer64,integer64 ; direct
+infix   <>(cmp_neq)     3   left    integer   single,single       ; direct
+infix   <>(cmp_neq)     3   left    integer   double,double       ; direct
+infix   <>(cmp_neq)     3   left    integer   quad,quad           ; direct
+infix   <>(cmp_neq)     3   left    integer   string,string       ; direct
 infix   <(cmp_lt)       3   left    integer   integer,integer     ; direct
 infix   <(cmp_lt)       3   left    integer   long,long           ; direct
 infix   <(cmp_lt)       3   left    integer   integer64,integer64 ; direct
