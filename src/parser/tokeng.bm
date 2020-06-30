@@ -66,6 +66,7 @@ sub tok_read_next_token
             ps_error "Unexpected end of line"
 
         case TS_ID
+            if tok_next_content$ = "?" then tok_next_content$ = "PRINT"
             id = htable_get_id(ucase$(tok_next_content$))
             if id = 0 then
                 tok_next_token = TOK_UNKNOWN
