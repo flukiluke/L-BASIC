@@ -41,7 +41,7 @@ function ast_add_constant(token, content$, force_type)
     end select
     if force_type > 0 then
         'If you've used D or E, don't try and use # or ! as well!
-        if token = TOK_NUMEXP or not type_can_safely_cast(detected_type, force_type) then fatalerror "Cannot retype constant"
+        if token = TOK_NUMEXP or not type_can_safely_cast(detected_type, force_type) then ps_error "Cannot retype constant"
         ast_constant_types(ast_last_constant) = force_type
     else
         ast_constant_types(ast_last_constant) = detected_type

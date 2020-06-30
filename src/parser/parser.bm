@@ -6,7 +6,7 @@ end sub
 
 sub ps_assert(expected)
     if tok_token <> expected then
-        fatalerror "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
+        ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
     else
         debuginfo "Assert " + tok_human_readable(expected)
     end if
@@ -40,7 +40,7 @@ function ps_stmt
     debuginfo "Start statement"
     select case tok_token
         case is < 0
-            fatalerror "Unexpected literal " + tok_content$
+            ps_error "Unexpected literal " + tok_content$
         case TOK_IF
             ps_stmt = ps_if
         case TOK_DO
@@ -65,7 +65,7 @@ function ps_stmt
             case HE_FUNCTION
                 ps_stmt = ps_stmtreg
             case else
-                fatalerror tok_human_readable$(tok_token) + " (" + tok_content$ + ") doesn't belong here"
+                ps_error tok_human_readable$(tok_token) + " (" + tok_content$ + ") doesn't belong here"
             end select
     end select
     debuginfo "Completed statement"
@@ -79,7 +79,7 @@ function ps_if
     tok_advance
 
     condition = ps_expr
-    if not type_is_number(type_of_expr(condition)) then fatalerror "IF condition must be a numeric expression"
+    if not type_is_number(type_of_expr(condition)) then ps_error "IF condition must be a numeric expression"
     ast_attach root, condition
     ps_consume TOK_THEN
 
@@ -118,7 +118,7 @@ function ps_assignment
     expr = ps_expr
     lvalue_type = htable_entries(ref).v1
     rvalue_type = type_of_expr(expr)
-    if not type_can_cast(lvalue_type, rvalue_type) then fatalerror "Type of variable in assignment does not match value being assigned"
+    if not type_can_cast(lvalue_type, rvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
     expr = ast_add_cast(expr, lvalue_type)
     ast_attach root, expr
 
@@ -158,7 +158,7 @@ function ps_variable_p(token, content$)
     'Check for type sigil
     sigil = ps_opt_sigil
     if sigil then
-        if token <> TOK_UNKNOWN and sigil <> htable_entries(var).v1 then fatalerror "Type suffix does not match existing variable type"
+        if token <> TOK_UNKNOWN and sigil <> htable_entries(var).v1 then ps_error "Type suffix does not match existing variable type"
         'Otherwise it's a new variable; set its type
         htable_entries(var).v1 = sigil
     end if
@@ -223,7 +223,7 @@ function ps_funccall_p(func)
         ps_funcargs root
         ps_consume TOK_CPAREN
     end if
-    if sigil > 0 and sigil <> type_of_call(root) then fatalerror "Function must have correct type suffix if present"
+    if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
     ps_funccall_p = root
     debuginfo "Completed function call"
 end function
@@ -245,7 +245,7 @@ sub ps_funcargs(root)
     loop
     'Now we need to find a signature of func that matches candidate$.
     matching_sig = type_find_sig_match(func, candidate$)
-    if matching_sig = 0 then fatalerror "Cannot find matching type signature"
+    if matching_sig = 0 then ps_error "Cannot find matching type signature"
     ast_nodes(root).ref2 = matching_sig
     'Modify argument nodes to add in casts where needed
     for i = 1 to ast_num_children(root)
@@ -269,6 +269,11 @@ sub ps_funcarg(root, candidate$)
     candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
     ast_attach root, expr
     debuginfo "Completed funcarg"
+end sub
+
+sub ps_error(msg$)
+    Error_message$ = msg$
+    error 254
 end sub
 
 '$include: 'pratt.bm'

@@ -16,7 +16,7 @@ function type_of_expr(root)
     case AST_CAST
         type_of_expr = type_of_cast(root)
     case else
-        fatalerror "Cannot determine type of expression " + str$(root)
+        ps_error "Cannot determine type of expression " + str$(root)
     end select
 end function
 

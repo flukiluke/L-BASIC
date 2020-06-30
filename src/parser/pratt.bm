@@ -50,11 +50,11 @@ function nud(token, content$)
             if ast_nodes(expr).typ = AST_VAR then candidate_flags = TYPE_BYREF
             candidate$ = type_sig_add_arg$("", type_of_expr(expr), flags)
             matching_sig = type_find_sig_match(token, candidate$)
-            if matching_sig = 0 then fatalerror "Cannot find matching type signature"
+            if matching_sig = 0 then ps_error "Cannot find matching type signature"
             ast_attach node, ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
             ast_nodes(node).ref2 = matching_sig
         case else
-            fatalerror "Unexpected operator " + tok_human_readable$(token)
+            ps_error "Unexpected operator " + tok_human_readable$(token)
         end select
     end select
     nud = node
@@ -63,7 +63,7 @@ end function
 function lbp(token, content$)
     select case token
     case is < 0
-        fatalerror "Unexpected literal " + content$
+        ps_error "Unexpected literal " + content$
     case TOK_CPAREN
         lbp = 0
     case else
@@ -97,12 +97,12 @@ function led(token, content$, left_node)
         if ast_nodes(right_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
         candidate$ = type_sig_add_arg$(candidate$, type_of_expr(right_node), flags)
         matching_sig = type_find_sig_match(token, candidate$)
-        if matching_sig = 0 then fatalerror "Cannot find matching type signature"
+        if matching_sig = 0 then ps_error "Cannot find matching type signature"
         ast_attach node, ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
         ast_attach node, ast_add_cast(right_node, type_sig_argtype(matching_sig, 2))
         ast_nodes(node).ref2 = matching_sig
     case else
-        fatalerror "Unexpected led " + tok_human_readable$(token)
+        ps_error "Unexpected led " + tok_human_readable$(token)
     end select
     led = node
 end function

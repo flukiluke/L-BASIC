@@ -35,7 +35,7 @@ end sub
 sub ast_dump_pretty(root, indent_level)
     indent$ = space$(indent_level * 4)
     if ast_nodes(root).typ = 0 then
-        fatalerror "Node" + str$(root) + " is invalid"
+        Error_message$ = "Node" + str$(root) + " is invalid": error 101
     end if
     select case ast_nodes(root).typ
     case AST_ASSIGN

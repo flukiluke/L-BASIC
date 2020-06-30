@@ -63,7 +63,7 @@ sub tok_read_next_token
 
     select case ts_type
         case 0 'Out of data (an error)
-            fatalerror "Unexpected end of line"
+            ps_error "Unexpected end of line"
 
         case TS_ID
             id = htable_get_id(ucase$(tok_next_content$))
@@ -83,7 +83,7 @@ sub tok_read_next_token
             if tok_direct(ts_type) then
                 tok_next_token = tok_direct(ts_type)
             else
-                fatalerror "Unhandled TS" + str$(ts_type)
+                ps_error "Unhandled TS" + str$(ts_type)
             end if
             tokeng_state.linestart = FALSE
     end select
@@ -98,10 +98,10 @@ function tok_next_ts$(text$, ts_type)
     for i = tokeng_state.index to len(text$)
         c = asc(text$, i)
         'No utf-8 support for now
-        if c > 127 then fatalerror "Character outside character set (" + ltrim$(str$(c)) + ")"
+        if c > 127 then ps_error "Character outside character set (" + ltrim$(str$(c)) + ")"
         command = t_states~%(c, tokeng_state.curstate)
         'Rules of the form "A: B ~ Error" encode to 0
-        if command = 0 then fatalerror chr$(34) + chr$(c) + chr$(34) + " from " + t_statenames$(tokeng_state.curstate) + " illegal"
+        if command = 0 then ps_error chr$(34) + chr$(c) + chr$(34) + " from " + t_statenames$(tokeng_state.curstate) + " illegal"
         'High byte is next state, low byte is token, high bit of low byte is pushback flag
         ts_type_internal = command and 127
         pushback = command and 128
