@@ -262,3 +262,25 @@ function type_detect_numint_type(content$)
     end select
 end function
 
+function type_detect_numdec_type(content$)
+    '<= 7 digits -> single, <= 16 digits -> double
+    select case len(content$) - 1 '-1 because there's a decimal point
+    case is <= 7
+        type_detect_numdec_type = TYPE_SINGLE
+    case is <= 16
+        type_detect_numdec_type = TYPE_DOUBLE
+    case else
+        type_detect_numdec_type = TYPE_QUAD
+    end select
+end function
+
+function type_detect_numexp_type(content$)
+    'e -> single, d -> double, (q -> quad ?)
+    for i = 1 to len(content$)
+        if asc(content$, i) = 68 or asc(content$, i) = 100 then 'd or D
+            type_detect_numexp_type = TYPE_DOUBLE
+            exit function
+        end if
+    next i
+    type_detect_numexp_type = TYPE_SINGLE
+end function

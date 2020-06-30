@@ -27,20 +27,21 @@ function ast_add_constant(token, content$, force_type)
         detected_type = type_detect_numint_type(content$)
     case TOK_NUMDEC
         ast_constants(ast_last_constant) = content$
-        'TODO: Actually detect the type of the number
-        detected_type = TYPE_QUAD
+        detected_type = type_detect_numdec_type(ast_constants(ast_last_constant))
     case TOK_NUMBASE
         ast_constants(ast_last_constant) = ltrim$(str$(val(content$)))
         detected_type = type_detect_numint_type(ast_constants(ast_last_constant))
     case TOK_NUMEXP
-        fatalerror "No support for numbers with exponents"
+        ast_constants(ast_last_constant) = content$
+        detected_type = type_detect_numexp_type(ast_constants(ast_last_constant))
     case TOK_STRING
         'Strip quotes
         ast_constants(ast_last_constant) = mid$(content$, 2, len(content$) - 2)
         detected_type = TYPE_STRING
     end select
     if force_type > 0 then
-        if not type_can_safely_cast(detected_type, force_type) then fatalerror "Cannot retype constant"
+        'If you've used D or E, don't try and use # or ! as well!
+        if token = TOK_NUMEXP or not type_can_safely_cast(detected_type, force_type) then fatalerror "Cannot retype constant"
         ast_constant_types(ast_last_constant) = force_type
     else
         ast_constant_types(ast_last_constant) = detected_type
