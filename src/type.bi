@@ -35,6 +35,6 @@ const TYPE_QUAD = 7
 const TYPE_STRING = 8
 
 'Flags for type signature flags
-const TYPE_REQUIRED = 1
+const TYPE_OPTIONAL = 1
 const TYPE_BYREF = 2
 const TYPE_BYVAL = 4

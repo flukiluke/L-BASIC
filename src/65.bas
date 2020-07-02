@@ -64,20 +64,23 @@ else
     compile_mode
 end if
 
-end
+if options.terminal_mode then system else end
 
 error_handler:
     select case Error_context
-    case 0, 3 'Unknown or dump mode
-        if _inclerrorline then
-            print "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
-        else
-            print "Internal error" + str$(err) + " on line" + str$(_errorline)
-        end if
+    case 3 'Dump mode
+        print "Dump: ";
+        if err <> 101 then goto internal_error
+        print Error_message$
     case 1 'Parsing code
+        print "Parser: ";
+        if err <> 101 then goto internal_error
         print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
     case 2 'Immediate mode
-        print "Runtime error" + str$(err)
+        'We have no good way of distinguishing between user program errors and internal errors
+        print "Runtime error: " + str$(err)
+    case else
+        internal_error:
         if _inclerrorline then
             print "Internal error" + str$(err) + " on line" + str$(_inclerrorline) + " of " + _inclerrorfile$ + " (called from line" + str$(_errorline) + ")"
         else
@@ -149,9 +152,16 @@ end sub
 sub command_mode
     ast_init
     tok_init
+    open "SCRN:" for output as #1
     Error_context = 1
     root = ps_block
     Error_context = 0
+    if options.debug then
+        Error_context = 3
+        ast_dump_pretty root, 0
+        Error_context = 0
+        print #1,
+    end if
     imm_init
     Error_context = 2
     imm_run root

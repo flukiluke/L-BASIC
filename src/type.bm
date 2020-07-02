@@ -119,6 +119,38 @@ function type_find_sig_match(func, candidate$)
     end if
 end function
 
+function type_sig_is_compatible(sig_index, candidate$, checkmode)
+    debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig) + "..."
+    s = 1
+    c = 1
+    do until c * 8 > len(candidate$)
+        if s > type_sig_numargs(sig_index) then
+            'Cannot possibly match, candidate has more args than sig can accept
+            debuginfo "No, candidate has too many arguments"
+            exit function
+        end if
+        sig_arg = type_sig_argtype(sig_index, s)
+        sig_flags = type_sig_argflags(sig_index, s)
+        c_arg = cvl(mid$(candidate$, 8 * c - 7, 4))
+        c_flags = cvl(mid$(candidate$, 8 * c - 3, 4))
+        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
+            debuginfo "No, mismatch on arg" + str$(c) + " (candidate has " + type_human_readable$(c_arg) + ")"
+            exit function
+        end if
+        s = s + 1
+        c = c + 1
+    loop
+    for i = s to type_sig_numargs(sig_index)
+        'sig has more args; they had better be optional
+        if type_sig_argflags(sig_index, i) AND TYPE_OPTIONAL = 0 then
+            debuginfo "No, required argument" + str$(i) + " not provided"
+            exit function
+        end if
+    next i
+    type_sig_is_compatible = TRUE
+    debuginfo "Compatible"
+end function
+
 function type_pick_best_compatible_sig(compatibles$, candidate$)
     'Picks the first sig that has lossless casts, otherwise the last sig if
     'no lossless casts are available.
@@ -133,26 +165,6 @@ function type_pick_best_compatible_sig(compatibles$, candidate$)
     next i
     debuginfo "No safe signature found."
     type_pick_best_compatible_sig = cvl(right$(compatibles$, 4))
-end function
-
-function type_sig_is_compatible(sig_index, candidate$, checkmode)
-    debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig) + "..."
-    s = 1
-    c = 1
-    do until c * 8 > len(candidate$)
-        sig_arg = type_sig_argtype(sig_index, s)
-        sig_flags = type_sig_argflags(sig_index, s)
-        c_arg = cvl(mid$(candidate$, 8 * c - 7, 4))
-        c_flags = cvl(mid$(candidate$, 8 * c - 3, 4))
-        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
-            debuginfo "No, mismatch on arg" + str$(c) + " (candidate has " + type_human_readable$(c_arg) + ")"
-            exit function
-        end if
-        s = s + 1
-        c = c + 1
-    loop
-    type_sig_is_compatible = TRUE
-    debuginfo "Compatible"
 end function
 
 function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
@@ -219,7 +231,7 @@ function type_human_sig$(sig$)
         flags = cvl(mid$(sig$,p * 8 + 1, 4))
         if flags and TYPE_BYVAL then o$ = o$ + "BYVAL "
         if flags and TYPE_BYREF then o$ = o$ + "BYREF "
-        if flags and TYPE_REQUIRED = 0 then o$ = o$ + "OPTION "
+        if flags and TYPE_OPTIONAL then o$ = o$ + "OPTION "
         o$ = o$ + type_human_readable$(cvl(mid$(sig$, p * 8 - 3, 4)))
         if p < (len(sig$) - 4) / 8 then o$ = o$ + ", "
     next p

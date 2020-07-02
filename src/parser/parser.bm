@@ -220,6 +220,7 @@ function ps_funccall_p(func)
     ast_nodes(root).ref = func
     sigil = ps_opt_sigil
     if tok_token = TOK_OPAREN then
+        ps_consume TOK_OPAREN
         ps_funcargs root
         ps_consume TOK_CPAREN
     end if
@@ -239,10 +240,14 @@ sub ps_funcargs(root)
         case TOK_CPAREN, TOK_ELSE, TOK_NEWLINE
             'End of the argument list
             exit do
+        case TOK_COMMA
+            ps_consume TOK_COMMA
+            ps_funcarg root, candidate$
         case else
             ps_funcarg root, candidate$
         end select
     loop
+
     'Now we need to find a signature of func that matches candidate$.
     matching_sig = type_find_sig_match(func, candidate$)
     if matching_sig = 0 then ps_error "Cannot find matching type signature"
@@ -273,7 +278,7 @@ end sub
 
 sub ps_error(msg$)
     Error_message$ = msg$
-    error 254
+    error 101
 end sub
 
 '$include: 'pratt.bm'

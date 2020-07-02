@@ -177,14 +177,14 @@ end sub
 
 sub process_arg_list(arglist$)
     split_args arglist$
-    const TYPE_REQUIRED = 1
+    const TYPE_OPTIONAL = 1
     const TYPE_BYREF = 2
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
+        flags = 0
         if right$(args$(i), 1) = "?" then
             args$(i) = left$(args$(i), len(args$(i)) - 1)
-        else
-            flags = flags OR TYPE_REQUIRED
+            flags = flags OR TYPE_OPTIONAL
         end if
         if left$(args$(i), 1) = "@" then
             args$(i) = mid$(args$(i), 2)

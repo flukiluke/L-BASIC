@@ -28,55 +28,55 @@ infix   eqv             2   left    integer64 integer64,integer64
 infix   imp             2   left    integer   integer,integer
 infix   imp             2   left    long      long,long
 infix   imp             2   left    integer64 integer64,integer64
+infix   =(equals)       3   left    integer   string,string       ; direct
 infix   =(equals)       3   left    integer   integer,integer     ; direct
 infix   =(equals)       3   left    integer   long,long           ; direct
 infix   =(equals)       3   left    integer   integer64,integer64 ; direct
 infix   =(equals)       3   left    integer   single,single       ; direct
 infix   =(equals)       3   left    integer   double,double       ; direct
 infix   =(equals)       3   left    integer   quad,quad           ; direct
-infix   =(equals)       3   left    integer   string,string       ; direct
+infix   <>(cmp_neq)     3   left    integer   string,string       ; direct
 infix   <>(cmp_neq)     3   left    integer   integer,integer     ; direct
 infix   <>(cmp_neq)     3   left    integer   long,long           ; direct
 infix   <>(cmp_neq)     3   left    integer   integer64,integer64 ; direct
 infix   <>(cmp_neq)     3   left    integer   single,single       ; direct
 infix   <>(cmp_neq)     3   left    integer   double,double       ; direct
 infix   <>(cmp_neq)     3   left    integer   quad,quad           ; direct
-infix   <>(cmp_neq)     3   left    integer   string,string       ; direct
+infix   <(cmp_lt)       3   left    integer   string,string       ; direct
 infix   <(cmp_lt)       3   left    integer   integer,integer     ; direct
 infix   <(cmp_lt)       3   left    integer   long,long           ; direct
 infix   <(cmp_lt)       3   left    integer   integer64,integer64 ; direct
 infix   <(cmp_lt)       3   left    integer   single,single       ; direct
 infix   <(cmp_lt)       3   left    integer   double,double       ; direct
 infix   <(cmp_lt)       3   left    integer   quad,quad           ; direct
-infix   <(cmp_lt)       3   left    integer   string,string       ; direct
+infix   >(cmp_gt)       3   left    integer   string,string       ; direct
 infix   >(cmp_gt)       3   left    integer   integer,integer     ; direct
 infix   >(cmp_gt)       3   left    integer   long,long           ; direct
 infix   >(cmp_gt)       3   left    integer   integer64,integer64 ; direct
 infix   >(cmp_gt)       3   left    integer   single,single       ; direct
 infix   >(cmp_gt)       3   left    integer   double,double       ; direct
 infix   >(cmp_gt)       3   left    integer   quad,quad           ; direct
-infix   >(cmp_gt)       3   left    integer   string,string       ; direct
+infix   <=(cmp_lteq)    3   left    integer   string,string       ; direct
 infix   <=(cmp_lteq)    3   left    integer   integer,integer     ; direct
 infix   <=(cmp_lteq)    3   left    integer   long,long           ; direct
 infix   <=(cmp_lteq)    3   left    integer   integer64,integer64 ; direct
 infix   <=(cmp_lteq)    3   left    integer   single,single       ; direct
 infix   <=(cmp_lteq)    3   left    integer   double,double       ; direct
 infix   <=(cmp_lteq)    3   left    integer   quad,quad           ; direct
-infix   <=(cmp_lteq)    3   left    integer   string,string       ; direct
+infix   >=(cmp_gteq)    3   left    integer   string,string       ; direct
 infix   >=(cmp_gteq)    3   left    integer   integer,integer     ; direct
 infix   >=(cmp_gteq)    3   left    integer   long,long           ; direct
 infix   >=(cmp_gteq)    3   left    integer   integer64,integer64 ; direct
 infix   >=(cmp_gteq)    3   left    integer   single,single       ; direct
 infix   >=(cmp_gteq)    3   left    integer   double,double       ; direct
 infix   >=(cmp_gteq)    3   left    integer   quad,quad           ; direct
-infix   >=(cmp_gteq)    3   left    integer   string,string       ; direct
+infix   +(plus)         4   left    string    string,string       ; direct
 infix   +(plus)         4   left    integer   integer,integer     ; direct
 infix   +(plus)         4   left    long      long,long           ; direct
 infix   +(plus)         4   left    integer64 integer64,integer64 ; direct
 infix   +(plus)         4   left    single    single,single       ; direct
 infix   +(plus)         4   left    double    double,double       ; direct
 infix   +(plus)         4   left    quad      quad,quad           ; direct
-infix   +(plus)         4   left    string    string,string       ; direct
 infix   -(dash)         4   left    integer   integer,integer     ; direct
 infix   -(dash)         4   left    long      long,long           ; direct
 infix   -(dash)         4   left    integer64 integer64,integer64 ; direct
@@ -155,17 +155,17 @@ function beep           none
 function chr            string  integer
 function _copypalette   none    long,long
 function left           string  string,integer64
+function print          none    string?
 function print          none    integer
 function print          none    long
 function print          none    integer64
 function print          none    single
 function print          none    double
 function print          none    quad
-function print          none    string
-function rgba           long    integer,integer?,integer?,integer?
 function int            integer integer
 function int            integer long
 function int            integer integer64
 function int            integer single
 function int            integer double
 function int            integer quad
+function rgba           long    integer,integer?,integer?,integer?
