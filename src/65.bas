@@ -149,10 +149,10 @@ end sub
 sub command_mode
     ast_init
     tok_init
-    imm_init
-    open "SCRN:" for output as #1
     Error_context = 1
     root = ps_block
+    Error_context = 0
+    imm_init
     Error_context = 2
     imm_run root
     Error_context = 0
