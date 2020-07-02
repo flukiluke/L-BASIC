@@ -26,14 +26,15 @@ dim shared Error_message$
 '$include: 'parser/parser.bi'
 '$include: 'emitters/immediate/immediate.bi'
 
-basedir$ = _startdir$ 'Data files relative to here
+dim shared input_file_handle
 
 type options_t
-    inputfile as string
+    mainarg as string
     outputfile as string
     run_mode as integer
     interactive_mode as integer
     terminal_mode as integer
+    command_mode as integer
     debug as integer
 end type
 
@@ -46,13 +47,6 @@ else
     exe_suffix$ = ""
 end if
 
-'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
-if options.outputfile = "" then options.outputfile = remove_ext$(options.inputfile) + exe_suffix$
-
-'Relative paths should be relative to the basedir$
-if instr("/", left$(options.inputfile, 1)) = 0 then options.inputfile = basedir$ + "/" + options.inputfile
-if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = basedir$ + "/" + options.outputfile
-
 if not options.terminal_mode then
     _screenshow
     _dest 0
@@ -60,7 +54,13 @@ end if
 
 if options.interactive_mode then
     interactive_mode
+elseif options.command_mode then
+    command_mode
 else
+    'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
+    if options.outputfile = "" then options.outputfile = remove_ext$(options.mainarg) + exe_suffix$
+    if instr("/", left$(options.mainarg, 1)) = 0 then options.mainarg = _startdir$ + "/" + options.mainarg
+    if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = _startdir$ + "/" + options.outputfile
     compile_mode
 end if
 
@@ -96,8 +96,34 @@ sub debuginfo(msg$)
     if options.debug then print msg$
 end sub
 
+'This function and the next are called from tokeng.
+'They provide a uniform way of loading the next line.
+function general_next_line$
+    if options.interactive_mode then
+        print "> ";
+        line input s$
+    elseif options.command_mode then
+        s$ = options.mainarg
+        options.mainarg = ""
+    else
+        line input #input_file_handle, s$
+    end if
+    general_next_line$ = s$
+end function
+
+function general_eof
+    if options.interactive_mode then
+        'Hopefully one day we'll be able to handle ^D/^Z here
+        general_eof = FALSE
+    elseif options.command_mode then
+        general_eof = options.mainarg = ""
+    else
+        general_eof = eof(input_file_handle)
+    end if
+end function
+
 sub interactive_mode
-    tok_init -1
+    tok_init
     imm_init
     open "SCRN:" for output as #1
     do
@@ -120,16 +146,28 @@ sub interactive_mode
     loop
 end sub
 
+sub command_mode
+    ast_init
+    tok_init
+    imm_init
+    open "SCRN:" for output as #1
+    Error_context = 1
+    root = ps_block
+    Error_context = 2
+    imm_run root
+    Error_context = 0
+end sub
+    
 sub compile_mode
     ast_init
-    if options.inputfile = "" then fatalerror "No input file"
-    infh = freefile
-    open options.inputfile for input as #infh
-    tok_init infh
+    if options.mainarg = "" then fatalerror "No input file"
+    input_file_handle = freefile
+    open options.mainarg for input as #input_file_handle
+    tok_init
     Error_context = 1
     root = ps_block
     Error_context = 0
-    close #infh
+    close #input_file_handle
     if options.run_mode then
         imm_init
         Error_context = 2
@@ -169,6 +207,8 @@ sub show_help
     print "  -o <file>, --output <file>       Place the output into <file>"
     print "  -t, --terminal                   Run in terminal mode (no graphical window)."
     print "  -r, --run                        Generate no output file, run the program now."
+    print "  -c <cmd>, --command <cmd>        Execute the statement or statements <cmd>,"
+    print "                                   then exit."
     print "  -d, --debug                      For debugging 65 itself"
 end sub
 
@@ -197,19 +237,21 @@ sub parse_cmd_line_args()
                 options.run_mode = TRUE
             case "-t", "--terminal"
                 options.terminal_mode = TRUE
+            case "-c", "--command"
+                options.command_mode = TRUE
             case else
                 if left$(arg$, 1) = "-" then
                     options.terminal_mode = TRUE
                     fatalerror "Unknown option " + arg$
                 end if
-                if options.inputfile <> "" then
+                if options.mainarg <> "" then
                     options.terminal_mode = TRUE
                     fatalerror "Unexpected argument " + arg$
                 end if
-                options.inputfile = arg$
+                options.mainarg = arg$
         end select
     next i
-    if options.inputfile = "" then options.interactive_mode = TRUE
+    if options.mainarg = "" then options.interactive_mode = TRUE
 end sub
 
 '$include: 'type.bm'

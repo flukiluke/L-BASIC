@@ -1,6 +1,6 @@
 deflng a-z
 
-sub tok_init(file_handle)
+sub tok_init
     'Read in the state machine
     for s = 1 to ubound(t_states~%, 2)
         read t_statenames$(s)
@@ -13,7 +13,6 @@ sub tok_init(file_handle)
     tokeng_state.curstate = 1
     tokeng_state.has_data = FALSE
     tokeng_state.linestart = TRUE
-    tokeng_state.file_handle = file_handle
     'Fill the 'next' buffer and propagate to tok_token
     tok_read_next_token
     tok_advance
@@ -22,7 +21,7 @@ end sub
 sub tok_advance
     tok_token = tok_next_token
     tok_content$ = tok_next_content$
-    if tokeng_state.file_handle <> -1 then
+    if not options.interactive_mode then
         tok_read_next_token
     else
         'Hacks for interactive mode
@@ -42,20 +41,12 @@ end sub
 
 sub tok_read_next_token
     if not tokeng_state.has_data then
-        if tokeng_state.file_handle > -1 then
-            if eof(tokeng_state.file_handle) then
-                tok_next_token = TOK_EOF
-                exit function
-            end if
+        if general_eof then
+            tok_next_token = TOK_EOF
+            exit function
         end if
         tokeng_state.index = 1
-        if tokeng_state.file_handle = -1 then
-            print "> ";
-            line input tokeng_state.raw_line_in
-            tokeng_state.raw_line_in = tokeng_state.raw_line_in
-        else
-            line input #tokeng_state.file_handle, tokeng_state.raw_line_in
-        end if
+        tokeng_state.raw_line_in = general_next_line$
         tokeng_state.has_data = TRUE
     end if
 
