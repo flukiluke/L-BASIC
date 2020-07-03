@@ -2,21 +2,21 @@
 'Create TOK_ definitions and register them in the lookup table
 '
 'Nearly every element of the program can be expressed as a token, which is identified with the TOK_
-'constant ID. The htable system also has stores all tokens by name and can tell you their ID.
-'Once you have the ID you can access the extra data defined for that token in htable_entries(). See
-'htable.bi for an explanation of that data.
+'constant ID. The symtab also has stores all tokens by name and can tell you their ID.
+'Once you have the ID you can access the extra data defined for that token in symtab(). See
+'symtab.bi for an explanation of that data.
 '
-'Note that because the ID's are assigned by the htable functions in the order items are registered,
+'Note that because the ID's are assigned by the symtab functions in the order items are registered,
 'any manual edits to the registration code will likely cause it to be out of sync with the TOK_ definitions.
 'Re-run this generation program instead.
 '
 'The first element on the line is the type, which determines the format for the rest of the line.
 '
 'generic NAME ; FLAGS
-'Adds a htable entry with no extra information.
+'Adds a symtab entry with no extra information.
 
 'literal NAME ; FLAGS
-'Represent a literal. Does not generate a htable entry.
+'Represent a literal. Does not generate a symtab entry.
 '
 'prefix NAME PRECEDENCE RETURN ARGS ; FLAGS
 'A prefix operator.
@@ -44,7 +44,7 @@
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
-'  NOSYM: Prefix the token with a pipe "|" character in the htable, preventing it from clashing with other tokens.
+'  NOSYM: Prefix the token with a pipe "|" character in the symtab, preventing it from clashing with other tokens.
 
 'Blank lines are ignored. Comments may be given with # on their own line. Special characters are (); and must
 'not appear outside of their described syntactic function.
@@ -74,7 +74,7 @@ redim shared args$(0)
 dim shared linenum
 
 print #3, "dim shared tok_direct(1 to TS_MAX)"
-print #3, "dim re as hentry_t"
+print #3, "dim sym as symtab_entry_t"
 do while not eof(1)
     linenum = linenum + 1
     line input #1, l$
@@ -106,8 +106,9 @@ do while not eof(1)
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "GENERIC" then print #3, "re.typ = HE_GENERIC"
-        print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(0) <> "GENERIC" then print #3, "sym.typ = HE_GENERIC"
+        print #3, "sym.identifier = "; toksym$
+        print #3, "symtab_add_entry sym"
     case "FUNCTION"
         assertsize_range 3, 4
         if previous$(1) <> parts$(1) then
@@ -115,24 +116,30 @@ do while not eof(1)
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "FUNCTION" then print #3, "re.typ = HE_FUNCTION"
+        if previous$(0) <> "FUNCTION" then print #3, "sym.typ = HE_FUNCTION"
         process_return_type previous$(1), parts$(1), parts$(2)
         if ubound(parts$) = 3 then
             process_arg_list parts$(3)
         end if
-        if previous$(1) <> parts$(1) then print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(1) <> parts$(1) then
+            print #3, "sym.identifier = "; toksym$
+            print #3, "symtab_add_entry sym"
+        end if
     case "PREFIX"
         assertsize 5
         if previous$(1) <> parts$(1) then
             toknum = toknum + 1
-            print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
+            print #2, "CONST TOK_" + tokname$ + "=" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "PREFIX" then print #3, "re.typ = HE_PREFIX"
-        if previous$(2) <> parts$(2) then print #3, "re.v2 = "; parts$(2)
+        if previous$(0) <> "PREFIX" then print #3, "sym.typ = HE_PREFIX"
+        if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         process_return_type previous$(1), parts$(1), parts$(3)
         process_arg_list parts$(4)
-        if previous$(1) <> parts$(1) then print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(1) <> parts$(1) then
+            print #3, "sym.identifier = "; toksym$
+            print #3, "symtab_add_entry sym"
+        end if
     case "INFIX"
         assertsize 6
         if previous$(1) <> parts$(1) then
@@ -140,14 +147,17 @@ do while not eof(1)
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "INFIX" then print #3, "re.typ = HE_INFIX"
-        if previous$(2) <> parts$(2) then print #3, "re.v2 = "; parts$(2)
+        if previous$(0) <> "INFIX" then print #3, "sym.typ = HE_INFIX"
+        if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         if previous$(3) <> parts$(3) then
-            if parts$(3) = "RIGHT" then print #3, "re.v3 = 1" else print #3, "re.v3 = 0"
+            if parts$(3) = "RIGHT" then print #3, "sym.v3 = 1" else print #3, "sym.v3 = 0"
         end if
         process_return_type previous$(1), parts$(1), parts$(4)
         process_arg_list parts$(5)
-        if previous$(1) <> parts$(1) then print #3, "htable_add_hentry " + toksym$ + ", re"
+        if previous$(1) <> parts$(1) then
+            print #3, "sym.identifier = "; toksym$
+            print #3, "symtab_add_entry sym"
+        end if
     case "LITERAL"
         assertsize 2
         literal_toknum = literal_toknum - 1
@@ -169,9 +179,9 @@ ehandler:
 
 sub process_return_type(prev_name$, cur_name$, ret_type$)
     if prev_name$ = cur_name$ then
-        print #3, "re.v1 = type_add_sig(re.v1, type_sig_create$(TYPE_" + ret_type$ + "))"
+        print #3, "sym.v1 = type_add_sig(sym.v1, type_sig_create$(TYPE_" + ret_type$ + "))"
     else
-        print #3, "re.v1 = type_add_sig(0, type_sig_create$(TYPE_" + ret_type$ + "))"
+        print #3, "sym.v1 = type_add_sig(0, type_sig_create$(TYPE_" + ret_type$ + "))"
     end if
 end sub
 
@@ -190,7 +200,7 @@ sub process_arg_list(arglist$)
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_BYREF
         end if
-        print #3, "type_add_sig_arg re.v1, TYPE_"; args$(i); ","; flags
+        print #3, "type_add_sig_arg sym.v1, TYPE_"; args$(i); ","; flags
     next i
 end sub
 

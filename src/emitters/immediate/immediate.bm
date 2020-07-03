@@ -107,7 +107,7 @@ sub imm_enforce_type(result as imm_value_t)
 end sub
 
 function imm_var_stack_pos(var)
-    imm_var_stack_pos = htable_entries(var).v2
+    imm_var_stack_pos = symtab(var).v2
 end function
 
 sub imm_do_call(node, result as imm_value_t)

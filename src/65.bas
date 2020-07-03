@@ -21,7 +21,7 @@ dim shared Error_context
 dim shared Error_message$
 
 '$include: 'type.bi'
-'$include: 'htable.bi'
+'$include: 'symtab.bi'
 '$include: 'ast.bi'
 '$include: 'parser/parser.bi'
 '$include: 'emitters/immediate/immediate.bi'
@@ -266,7 +266,7 @@ end sub
 
 '$include: 'type.bm'
 '$include: 'ast.bm'
-'$include: 'htable.bm'
+'$include: 'symtab.bm'
 '$include: 'parser/parser.bm'
 '$include: 'emitters/dump/dump.bm'
 '$include: 'emitters/immediate/immediate.bm'

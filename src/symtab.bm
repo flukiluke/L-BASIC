@@ -1,0 +1,62 @@
+sub symtab_add_entry(entry as symtab_entry_t)
+    symtab_expand_if_needed
+    symtab_last_entry = symtab_last_entry + 1
+    symtab(symtab_last_entry) = entry
+    symtab_map_insert entry.identifier, symtab_last_entry
+end sub
+
+function symtab_get_id(identifier$)
+    h~& = symtab_hash~&(identifier$, ubound(symtab_map))
+    do
+        id = symtab_map(h~&)
+        if id = 0 then
+            exit function
+        end if
+        if symtab(id).identifier  = identifier$ then
+            symtab_get_id = id
+            exit function
+        endif
+        h~& = (h~& + 1) mod (ubound(symtab_map) + 1)
+    loop
+end function
+
+'Strictly internal functions below
+sub symtab_expand_if_needed
+    const SYMTAB_MAX_LOADING = 0.75
+    const SYMTAB_GROWTH_FACTOR = 2
+    if symtab_last_entry = ubound(symtab) then
+        redim _preserve symtab(ubound(symtab) * SYMTAB_GROWTH_FACTOR) as symtab_entry_t
+    end if
+
+    if symtab_last_entry / ubound(symtab_map) <= SYMTAB_MAX_LOADING then exit function
+    redim symtab_map(ubound(symtab_map) * SYMTAB_GROWTH_FACTOR)
+    for i = 1 to symtab_last_entry
+        symtab_map_insert symtab(i).identifier, i
+    next i
+end sub
+
+sub symtab_map_insert  (k$, v)
+    h~& = symtab_hash~&(k$, ubound(symtab_map))
+    do
+        if symtab_map(h~&) = 0 then exit do
+        h~& = (h~& + 1) mod (ubound(symtab_map) + 1)
+    loop
+    symtab_map(h~&) = v
+end sub
+
+'http://www.cse.yorku.ca/~oz/hash.html
+function symtab_hash~&(k$, max)
+    hash~& = 5381
+    FOR i = 1 TO LEN(k$)
+        hash~& = ((hash~& * 33) XOR ASC(k$, i)) MOD max
+    NEXT i
+    '0<=hash<=max-1, so 1<=hash+1<=max
+    symtab_hash~& = hash~& + 1
+END FUNCTION
+
+
+
+
+
+
+

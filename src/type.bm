@@ -29,7 +29,7 @@ function type_of_call(node)
 end function
 
 function type_of_var(node)
-    type_of_var = htable_entries(ast_nodes(node).ref).v1
+    type_of_var = symtab(ast_nodes(node).ref).v1
 end function
 
 function type_of_cast(node)
@@ -103,7 +103,7 @@ end function
 
 function type_find_sig_match(func, candidate$)
     debuginfo "Function resolution candidate is " + type_human_sig$(mkl$(0) + candidate$)
-    sig_index = htable_entries(func).v1
+    sig_index = symtab(func).v1
     while sig_index <> 0
         if type_sig_is_compatible(sig_index, candidate$, 0) then
             compatibles$ = compatibles$ + mkl$(sig_index)

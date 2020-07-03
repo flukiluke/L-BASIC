@@ -58,7 +58,7 @@ sub tok_read_next_token
 
         case TS_ID
             if tok_next_content$ = "?" then tok_next_content$ = "PRINT"
-            id = htable_get_id(ucase$(tok_next_content$))
+            id = symtab_get_id(ucase$(tok_next_content$))
             if id = 0 then
                 tok_next_token = TOK_UNKNOWN
             else
@@ -119,7 +119,7 @@ end function
 
 function tok_human_readable$(token)
     if token > 0 then
-        tok_human_readable$ = htable_names$(token)
+        tok_human_readable$ = symtab(token).identifier
     else
         tok_human_readable$ = "LITERAL_" + mid$(str$(token), 2)
     end if

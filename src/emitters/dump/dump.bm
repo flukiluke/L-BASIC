@@ -1,6 +1,6 @@
 sub dump_program(root)
     print #1, "Table of identifiers:"
-    htable_dump
+    symtab_dump
     print #1,
     print #1, "Function type signatures:"
     type_dump_functions
@@ -13,22 +13,22 @@ sub dump_program(root)
 end sub
 
 sub type_dump_functions
-    for i = 1 to htable.elements
-        typ = htable_entries(i).typ
+    for i = 1 to symtab_last_entry
+        typ = symtab(i).typ
         if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
-            sig_index = htable_entries(i).v1
+            sig_index = symtab(i).v1
             do
-                print #1, sig_index; " "; htable_names(i); " "; type_human_sig$(type_signatures(sig_index).sig)
+                print #1, sig_index; " "; symtab(i).identifier; " "; type_human_sig$(type_signatures(sig_index).sig)
                 sig_index = type_signatures(sig_index).succ
             loop while sig_index <> 0
         end if
     next i
 end sub
 
-sub htable_dump
+sub symtab_dump
     print #1, " ID          Name     Typ     v1     v2     v3"
-    for i = 1 to htable.elements
-        print #1, using "###    \            \ ###    ###    ###    ###"; i; htable_names(i); htable_entries(i).typ,htable_entries(i).v1; htable_entries(i).v2; htable_entries(i).v3
+    for i = 1 to symtab_last_entry
+        print #1, using "###    \            \ ###    ###    ###    ###"; i; symtab(i).identifier; symtab(i).typ,symtab(i).v1; symtab(i).v2; symtab(i).v3
     next i
 end sub
 
@@ -39,7 +39,7 @@ sub ast_dump_pretty(root, indent_level)
     end if
     select case ast_nodes(root).typ
     case AST_ASSIGN
-        print #1, htable_names(ast_nodes(root).ref); " = ";
+        print #1, symtab(ast_nodes(root).ref).identifier; " = ";
         ast_dump_pretty cvl(ast_children(root)), 0
     case AST_IF
         print #1, "IF ";
@@ -73,7 +73,7 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty ast_get_child(root, 1), 0
     case AST_FOR
         print #1, "FOR ";
-        print #1, htable_names(ast_nodes(root).ref); " = ";
+        print #1, symtab(ast_nodes(root).ref).identifier; " = ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, " TO ";
         ast_dump_pretty ast_get_child(root, 2), 0
@@ -81,7 +81,7 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty ast_get_child(root, 3), 0
         print #1,
         ast_dump_pretty ast_get_child(root,  4), indent_level + 1
-        print #1, indent$; "NEXT "; htable_names(ast_nodes(root).ref);
+        print #1, indent$; "NEXT "; symtab(ast_nodes(root).ref).identifier;
     case AST_SELECT
         print #1, indent$; "SELECT CASE ";
         ast_dump_pretty ast_get_child(root, 1), 0
@@ -95,7 +95,7 @@ sub ast_dump_pretty(root, indent_level)
         print #1, indent$; "END SELECT";
     case AST_CALL
         print #1, "call(";
-        print #1, htable_names(ast_nodes(root).ref);
+        print #1, symtab(ast_nodes(root).ref).identifier;
         print #1, " ["; type_human_sig$(type_signatures(ast_nodes(root).ref2).sig); "]";
         if len(ast_children(root)) then print #1, ", ";
         for i = 1 to ast_num_children(root)
@@ -116,7 +116,7 @@ sub ast_dump_pretty(root, indent_level)
             print #1,
         next i
     case AST_VAR
-        print #1, "var("; htable_names(ast_nodes(root).ref); ")";
+        print #1, "var("; symtab(ast_nodes(root).ref).identifier; ")";
     case AST_CAST
         print #1, "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_pretty ast_get_child(root, 1), 0

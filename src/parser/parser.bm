@@ -32,8 +32,6 @@ end function
 'Expects: first token of statement
 'Results: NEWLINE or block end marker
 function ps_stmt
-    dim he as hentry_t
-
     'This line only relevant for interactive mode
     if tok_token = TOK_EOI then ps_consume TOK_EOI
 
@@ -58,8 +56,7 @@ function ps_stmt
         case TOK_UNKNOWN
             ps_stmt = ps_assignment
         case else
-            he = htable_entries(tok_token)
-            select case he.typ
+            select case symtab(tok_token).typ
             case HE_VARIABLE
                 ps_stmt = ps_assignment
             case HE_FUNCTION
@@ -116,7 +113,7 @@ function ps_assignment
     ps_consume TOK_EQUALS
 
     expr = ps_expr
-    lvalue_type = htable_entries(ref).v1
+    lvalue_type = symtab(ref).v1
     rvalue_type = type_of_expr(expr)
     if not type_can_cast(lvalue_type, rvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
     expr = ast_add_cast(expr, lvalue_type)
@@ -139,18 +136,19 @@ end function
 'Results: post token
 function ps_variable_p(token, content$)
     debuginfo "Start variable"
-    dim he as hentry_t
+    dim sym as symtab_entry_t
     'Do array & udt element stuff here.
     'For now only support simple variables.
   
     'New variable?
     if token = TOK_UNKNOWN then
-        he.typ = HE_VARIABLE
-        htable_add_hentry ucase$(content$), he
-        var = htable_last_id
-        htable_entries(var).v1 = TYPE_SINGLE
+        sym.identifier = ucase$(content$)
+        sym.typ = HE_VARIABLE
+        sym.v1 = TYPE_SINGLE
         ps_last_var_index = ps_last_var_index + 1
-        htable_entries(var).v2 = ps_last_var_index
+        sym.v2 = ps_last_var_index
+        symtab_add_entry sym
+        var = symtab_last_entry
     else
         var = token
     end if
@@ -158,9 +156,9 @@ function ps_variable_p(token, content$)
     'Check for type sigil
     sigil = ps_opt_sigil
     if sigil then
-        if token <> TOK_UNKNOWN and sigil <> htable_entries(var).v1 then ps_error "Type suffix does not match existing variable type"
+        if token <> TOK_UNKNOWN and sigil <> symtab(var).v1 then ps_error "Type suffix does not match existing variable type"
         'Otherwise it's a new variable; set its type
-        htable_entries(var).v1 = sigil
+        symtab(var).v1 = sigil
     end if
     ps_variable_p = var
     debuginfo "Completed variable"
@@ -195,7 +193,7 @@ end function
 function ps_stmtreg
     debuginfo "Start stmtreg"
     root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = htable_entries(tok_token).id
+    ast_nodes(root).ref = tok_token
 
     tok_advance
     ps_funcargs root

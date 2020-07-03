@@ -35,9 +35,7 @@ function nud(token, content$)
         ast_nodes(node).ref = ps_variable_p(token, content$)
     case else
         negative_hack:
-        dim he as hentry_t
-        he = htable_entries(token)
-        select case he.typ
+        select case symtab(token).typ
         case HE_FUNCTION
             node = ps_funccall_p(token)
         case HE_VARIABLE
@@ -46,7 +44,7 @@ function nud(token, content$)
         case HE_PREFIX
             node = ast_add_node(AST_CALL)
             ast_nodes(node).ref = token
-            expr = pt_expr(he.v2)
+            expr = pt_expr(symtab(token).v2)
             if ast_nodes(expr).typ = AST_VAR then candidate_flags = TYPE_BYREF
             candidate$ = type_sig_add_arg$("", type_of_expr(expr), flags)
             matching_sig = type_find_sig_match(token, candidate$)
@@ -67,11 +65,9 @@ function lbp(token, content$)
     case TOK_CPAREN
         lbp = 0
     case else
-        dim he as hentry_t
-        he = htable_entries(token)
-        select case he.typ
+        select case symtab(token).typ
         case HE_INFIX
-            lbp = he.v2
+            lbp = symtab(token).v2
         case else
             'We've hit something that isn't part if the expression,
             'time to finish.
@@ -81,16 +77,14 @@ function lbp(token, content$)
 end function
 
 function led(token, content$, left_node)
-    dim he as hentry_t
-    he = htable_entries(token)
     node = ast_add_node(AST_CALL)
     ast_nodes(node).ref = token
-    select case he.typ
+    select case symtab(token).typ
     case HE_INFIX
-        if he.v3 = 0 then 'Left-associative
-            right_node = pt_expr(he.v2)
+        if symtab(token).v3 = 0 then 'Left-associative
+            right_node = pt_expr(symtab(token).v2)
         else 'right-associative
-            right_node = pt_expr(he.v2 - 1)
+            right_node = pt_expr(symtab(token).v2 - 1)
         end if
         if ast_nodes(left_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
         candidate$ = type_sig_add_arg$("", type_of_expr(left_node), flags)
