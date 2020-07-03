@@ -4,6 +4,13 @@ sub ps_consume(expected)
     tok_advance
 end sub
 
+function ps_consumed(expected)
+    if tok_token = expected then
+        tok_advance
+        ps_consumed = TRUE
+    end if
+end function
+
 sub ps_assert(expected)
     if tok_token <> expected then
         ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
@@ -49,6 +56,8 @@ function ps_stmt
             ps_stmt = ps_for
         case TOK_SELECT
             ps_stmt = ps_select
+        case TOK_INPUT
+            ps_stmt = ps_stmt_input
         case TOK_END, TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
             'These all end a block in some fashion. The block-specific
             ' code will assert the ending token.
@@ -57,9 +66,9 @@ function ps_stmt
             ps_stmt = ps_assignment
         case else
             select case symtab(tok_token).typ
-            case HE_VARIABLE
+            case SYM_VARIABLE
                 ps_stmt = ps_assignment
-            case HE_FUNCTION
+            case SYM_FUNCTION
                 ps_stmt = ps_stmtreg
             case else
                 ps_error tok_human_readable$(tok_token) + " (" + tok_content$ + ") doesn't belong here"
@@ -103,6 +112,48 @@ function ps_if
     debuginfo "Completed conditional"
 end function
     
+'Expects: TOK_INPUT
+'Results: token after input variables
+'Format: INPUT[;]["prompt"{;|,}]variablelist
+function ps_stmt_input
+    debuginfo "Start stmt input"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = TOK_INPUT
+    ast_nodes(root).ref2 = symtab(TOK_INPUT).v1
+    flags = ast_add_node(AST_FLAGS)
+    ast_attach root, flags
+    ps_consume TOK_INPUT
+
+    if tok_token = TOK_SEMICOLON then
+        ast_nodes(flags).ref = STMT_INPUT_NO_NEWLINE
+        ps_consume TOK_SEMICOLON
+    end if
+
+    'The prompt must be a literal string, no expressions. Crazy, right?
+    if tok_token = TOK_STRING then
+        prompt = ast_add_node(AST_CONSTANT)
+        ast_nodes(prompt).ref = ast_add_constant(tok_token, tok_content$, TYPE_STRING)
+        ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_PROMPT
+        ast_attach root, prompt
+        ps_consume TOK_STRING
+        if tok_token = TOK_COMMA then
+            ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_NO_QUESTION
+            ps_consume TOK_COMMA
+        else
+            ps_consume TOK_SEMICOLON
+        end if
+    end if
+
+    do
+        var = ast_add_node(AST_VAR)
+        ast_nodes(var).ref = ps_variable
+        ast_attach root, var
+    loop while ps_consumed(TOK_COMMA)
+
+    ps_stmt_input = root
+    debuginfo "Completed stmt input"
+end function
+ 
 'Expects: lvalue token
 'Results: token after rvalue
 function ps_assignment
@@ -143,7 +194,7 @@ function ps_variable_p(token, content$)
     'New variable?
     if token = TOK_UNKNOWN then
         sym.identifier = ucase$(content$)
-        sym.typ = HE_VARIABLE
+        sym.typ = SYM_VARIABLE
         sym.v1 = TYPE_SINGLE
         ps_last_var_index = ps_last_var_index + 1
         sym.v2 = ps_last_var_index

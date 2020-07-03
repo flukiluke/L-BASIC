@@ -20,6 +20,7 @@ dim shared Error_context
 'detailed explanation.
 dim shared Error_message$
 
+'$include: 'cmdflags.bi'
 '$include: 'type.bi'
 '$include: 'symtab.bi'
 '$include: 'ast.bi'
@@ -68,17 +69,18 @@ if options.terminal_mode then system else end
 
 error_handler:
     select case Error_context
-    case 3 'Dump mode
-        print "Dump: ";
-        if err <> 101 then goto internal_error
-        print Error_message$
     case 1 'Parsing code
         print "Parser: ";
         if err <> 101 then goto internal_error
         print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
     case 2 'Immediate mode
         'We have no good way of distinguishing between user program errors and internal errors
-        print "Runtime error: " + str$(err)
+        print "Runtime error:" + str$(err)
+        goto internal_error
+    case 3 'Dump mode
+        print "Dump: ";
+        if err <> 101 then goto internal_error
+        print Error_message$
     case else
         internal_error:
         if _inclerrorline then

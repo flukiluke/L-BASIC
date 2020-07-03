@@ -15,7 +15,7 @@ end sub
 sub type_dump_functions
     for i = 1 to symtab_last_entry
         typ = symtab(i).typ
-        if typ = HE_FUNCTION or typ = HE_INFIX or typ = HE_PREFIX then
+        if typ = SYM_FUNCTION or typ = SYM_INFIX or typ = SYM_PREFIX then
             sig_index = symtab(i).v1
             do
                 print #1, sig_index; " "; symtab(i).identifier; " "; type_human_sig$(type_signatures(sig_index).sig)
@@ -121,6 +121,8 @@ sub ast_dump_pretty(root, indent_level)
         print #1, "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, ")";
+    case AST_FLAGS
+        print #1, ast_nodes(root).ref;
     end select
 end sub
 

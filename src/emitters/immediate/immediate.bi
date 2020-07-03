@@ -1,5 +1,4 @@
 type imm_value_t
-    t as long
     n as _float
     s as string
 end type

@@ -106,7 +106,7 @@ do while not eof(1)
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "GENERIC" then print #3, "sym.typ = HE_GENERIC"
+        if previous$(0) <> "GENERIC" then print #3, "sym.typ = SYM_GENERIC"
         print #3, "sym.identifier = "; toksym$
         print #3, "symtab_add_entry sym"
     case "FUNCTION"
@@ -116,7 +116,7 @@ do while not eof(1)
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "FUNCTION" then print #3, "sym.typ = HE_FUNCTION"
+        if previous$(0) <> "FUNCTION" then print #3, "sym.typ = SYM_FUNCTION"
         process_return_type previous$(1), parts$(1), parts$(2)
         if ubound(parts$) = 3 then
             process_arg_list parts$(3)
@@ -132,7 +132,7 @@ do while not eof(1)
             print #2, "CONST TOK_" + tokname$ + "=" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "PREFIX" then print #3, "sym.typ = HE_PREFIX"
+        if previous$(0) <> "PREFIX" then print #3, "sym.typ = SYM_PREFIX"
         if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         process_return_type previous$(1), parts$(1), parts$(3)
         process_arg_list parts$(4)
@@ -147,7 +147,7 @@ do while not eof(1)
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "INFIX" then print #3, "sym.typ = HE_INFIX"
+        if previous$(0) <> "INFIX" then print #3, "sym.typ = SYM_INFIX"
         if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         if previous$(3) <> parts$(3) then
             if parts$(3) = "RIGHT" then print #3, "sym.v3 = 1" else print #3, "sym.v3 = 0"

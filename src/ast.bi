@@ -4,7 +4,7 @@
 type ast_node_t
     typ as long
     ref as long
-    ref2 as long 'It pains me to add this, but I needed to put type signature references somewhere and I don't want to make a new node for that
+    ref2 as long 'It pains me to add this, but I needed to put type signature references somewhere for dumping and I don't want to make a new node for that
     num_children as long
 end type
 
@@ -45,7 +45,9 @@ const AST_CALL = 7
 const AST_CONSTANT = 8
 '(assign | if | do_pre | do_post | for | select | call)*
 const AST_BLOCK = 9
-'ref is reference to htable
+'ref is reference to symtab
 const AST_VAR = 10
 'For now casts are first-class AST elements instead of just CALLs. We'll see if this is a good idea or not. ref is a type, child is a CALL, CONSTANT or VAR.
 const AST_CAST = 11
+'ref is an integer. Used to pass extra data to some functions that have behaviour set by syntax (e.g. INPUT)
+const AST_FLAGS = 12

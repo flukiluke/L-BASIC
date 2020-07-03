@@ -5,7 +5,6 @@ sub imm_init
     'properly. Probably something to do with the dynamic-length
     'string in a UDT.
     for i = 1 to ps_last_var_index
-        imm_stack(i).t = TYPE_NONE
         imm_stack(i).s = ""
         imm_stack(i).n = 0
     next i
@@ -15,7 +14,6 @@ sub imm_reinit
     u = ubound(imm_stack)
     redim _preserve imm_stack(ps_last_var_index) as imm_value_t
     for i = u + 1 to ps_last_var_index
-        imm_stack(i).t = TYPE_NONE
         imm_stack(i).s = ""
         imm_stack(i).n = 0
     next i
@@ -27,7 +25,6 @@ sub imm_run(node)
 end sub
 
 sub imm_eval(node, result as imm_value_t)
-    ref = ast_nodes(node).ref
     select case ast_nodes(node).typ
     case AST_ASSIGN
         imm_do_assign node
@@ -46,14 +43,17 @@ sub imm_eval(node, result as imm_value_t)
     case AST_CALL
         imm_do_call node, result
     case AST_CONSTANT
-        result.t = ast_constant_types(ref)
-        if result.t = TYPE_STRING then result.s = ast_constants(ref) else result.n = val(ast_constants(ref))
+        if type_of_constant(node) = TYPE_STRING then
+            result.s = ast_constants(ast_nodes(node).ref)
+        else
+            result.n = val(ast_constants(ast_nodes(node).ref))
+        end if
     case AST_BLOCK
         for i = 1 to ast_num_children(node)
             imm_eval ast_get_child(node, i), result
         next i
     case AST_VAR
-        sp = imm_var_stack_pos(ref)
+        sp = imm_var_stack_pos(node)
         result.s = imm_stack(sp).s
         result.n = imm_stack(sp).n
     case AST_CAST
@@ -73,15 +73,13 @@ end sub
 
 sub imm_do_cast(node, result as imm_value_t)
     imm_eval ast_get_child(node, 1), result
-    result.t = ast_nodes(node).ref
-    imm_enforce_type result
+    imm_enforce_type result, ast_nodes(node).ref
 end sub
 
 sub imm_do_assign(node)
     dim rvalue as imm_value_t
     imm_eval ast_get_child(node, 1), rvalue
-    sp = imm_var_stack_pos(ast_nodes(node).ref)
-    imm_stack(sp).t = type_of_var(node)
+    sp = imm_var_stack_pos(node)
     if type_of_var(node) = TYPE_STRING then
         imm_stack(sp).s = rvalue.s
     else
@@ -89,8 +87,8 @@ sub imm_do_assign(node)
     end if
 end sub
 
-sub imm_enforce_type(result as imm_value_t)
-    select case result.t
+sub imm_enforce_type(result as imm_value_t, typ)
+    select case typ
     case TYPE_INTEGER
         result.n = cint(result.n)
     case TYPE_LONG
@@ -107,21 +105,23 @@ sub imm_enforce_type(result as imm_value_t)
 end sub
 
 function imm_var_stack_pos(var)
-    imm_var_stack_pos = symtab(var).v2
+    imm_var_stack_pos = symtab(ast_nodes(var).ref).v2
 end function
 
 sub imm_do_call(node, result as imm_value_t)
     dim v1 as imm_value_t
     dim v2 as imm_value_t
-    result.t = type_of_call(node)
     select case ast_nodes(node).ref
     case TOK_PRINT
         if ast_num_children(node) > 0 then
-            imm_eval ast_get_child(node, 1), v1
-            if v1.t = TYPE_STRING then print v1.s else print v1.n
+            c = ast_get_child(node, 1)
+            imm_eval c, v1
+            if type_of_expr(c) = TYPE_STRING then print v1.s else print v1.n
         else
             print
         end if
+    case TOK_INPUT
+        imm_do_stmt_input node
     case TOK_CHR
         imm_eval ast_get_child(node, 1), v1
         result.s = chr$(v1.n)
@@ -131,7 +131,7 @@ sub imm_do_call(node, result as imm_value_t)
     case TOK_PLUS
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
-        if result.t = TYPE_STRING then result.s = v1.s + v2.s else result.n = v1.n + v2.n
+        if type_of_call(node) = TYPE_STRING then result.s = v1.s + v2.s else result.n = v1.n + v2.n
     case TOK_DASH
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
@@ -174,11 +174,11 @@ sub imm_do_call(node, result as imm_value_t)
     case TOK_EQUALS
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
-        if result.t = TYPE_STRING then result.n = v1.s = v2.s else result.n = v1.n = v2.n
+        if type_of_call(node) = TYPE_STRING then result.n = v1.s = v2.s else result.n = v1.n = v2.n
     case TOK_CMP_NEQ
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
-        if result.t = TYPE_STRING then result.n = v1.s <> v2.s else result.n = v1.n <> v2.n
+        if type_of_call(node) = TYPE_STRING then result.n = v1.s <> v2.s else result.n = v1.n <> v2.n
     case TOK_CMP_LT
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
@@ -196,5 +196,38 @@ sub imm_do_call(node, result as imm_value_t)
         imm_eval ast_get_child(node, 2), v2
         result.n = v1.n >= v2.n
     end select
-    imm_enforce_type result
+    imm_enforce_type result, type_of_call(node)
+end sub
+
+sub imm_do_stmt_input(node)
+    dim temp as imm_value_t
+    numvars = ast_num_children(node) - 1
+    first_var_offset = 1
+    flags = ast_nodes(ast_get_child(node, 1)).ref
+    if flags AND STMT_INPUT_PROMPT then
+        imm_eval ast_get_child(node, 2), temp
+        print temp.s;
+        numvars = numvars - 1
+        first_var_offset = 2
+    end if
+    if (flags AND STMT_INPUT_NO_QUESTION) = 0 then print "? ";
+    if flags AND STMT_INPUT_NO_NEWLINE then line input ; readline$ else line input readline$
+    'TODO: Better error handling
+    for i = 1 to numvars
+        comma = instr(readline$, ",")
+        if comma = 0 then comma = len(readline$) + 1
+        var = ast_get_child(node, first_var_offset + i)
+        sp = imm_var_stack_pos(var)
+        if nomoredata then
+            imm_stack(sp).s = ""
+            imm_stack(sp).n = 0
+        elseif type_of_var(var) = TYPE_STRING then
+            imm_stack(sp).s = left$(readline$, comma - 1)
+        else
+            imm_stack(sp).n = val(left$(readline$, comma - 1))
+        end if
+        imm_enforce_type imm_stack(sp), type_of_var(var)
+        readline$ = mid$(readline$, comma + 1)
+        if readline$ = "" then nomoredata = TRUE
+    next i
 end sub

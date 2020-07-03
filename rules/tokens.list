@@ -1,10 +1,11 @@
-generic unknown ; nosym
-generic eof     ; nosym
+generic unknown   ; nosym
+generic eof       ; nosym
 # End Of Input - used to signify the end of a user's input in interactive
 # mode (can't use newline because we're always looking one token ahead).
-generic eoi     ; nosym
-generic newline ; direct nosym
-generic comma   ; direct nosym
+generic eoi       ; nosym
+generic newline   ; direct nosym
+generic comma     ; direct nosym
+generic semicolon ; direct nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).
@@ -151,6 +152,7 @@ generic case
 
 # functions with return type none are subs
 function _autodisplay   none
+function input          none    flags,varlist
 function beep           none
 function chr            string  integer
 function _copypalette   none    long,long

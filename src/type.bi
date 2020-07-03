@@ -30,9 +30,13 @@ const TYPE_SINGLE = 5
 const TYPE_DOUBLE = 6
 'binary128 floating-point
 const TYPE_QUAD = 7
-
 'Everyone's favourite non-numeric type
 const TYPE_STRING = 8
+
+'Not a real type, just used to denote that a function takes a variable number of variables (looking at you, INPUT).
+const TYPE_VARLIST = 9
+'Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
+const TYPE_FLAGS = 10
 
 'Flags for type signature flags
 const TYPE_OPTIONAL = 1
