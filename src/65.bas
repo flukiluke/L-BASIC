@@ -52,6 +52,7 @@ type options_t
     interactive_mode as integer
     terminal_mode as integer
     command_mode as integer
+    compile_mode as integer
     debug as integer
 end type
 
@@ -73,12 +74,14 @@ if options.interactive_mode then
     interactive_mode
 elseif options.command_mode then
     command_mode
-else
+elseif options.compile_mode then
     'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
     if options.outputfile = "" then options.outputfile = remove_ext$(options.mainarg) + exe_suffix$
     if instr("/", left$(options.mainarg, 1)) = 0 then options.mainarg = _startdir$ + "/" + options.mainarg
     if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = _startdir$ + "/" + options.outputfile
     compile_mode
+else
+    run_mode
 end if
 
 if options.terminal_mode then system else end
@@ -199,18 +202,27 @@ sub compile_mode
     root = ps_block
     Error_context = 0
     close #input_file_handle
-    if options.run_mode then
-        imm_init
-        Error_context = 2
-        imm_run root
-        Error_context = 0
-    else
-        open options.outputfile for output as #1
-        Error_context = 3
-        dump_program root
-        Error_context = 0
-        close #1
-    end if
+    open options.outputfile for output as #1
+    Error_context = 3
+    dump_program root
+    Error_context = 0
+    close #1
+end sub
+
+sub run_mode
+    ast_init
+    if options.mainarg = "" then fatalerror "No input file"
+    input_file_handle = freefile
+    open options.mainarg for input as #input_file_handle
+    tok_init
+    Error_context = 1
+    root = ps_block
+    Error_context = 0
+    close #input_file_handle
+    imm_init
+    Error_context = 2
+    imm_run root
+    Error_context = 0
 end sub
 
 'Strip the .bas extension if present
@@ -230,17 +242,17 @@ end sub
 
 sub show_help
     print "The '65 compiler (" + VERSION$ + ")"
-    print "Usage: " + command$(0) + " <options> <inputfile>"
+    print "Usage: " + command$(0) + " [OPTIONS] [FILE]
+    print "Execute FILE if given, otherwise launch an interactive session."
     print '                                                                                '80 columns
-    print "Basic options:"
+    print "Options:"
+    print "  -t, --terminal                   Run in terminal mode (no graphical window)"
+    print "  -c FILE, --compile FILE          Compile FILE instead if executing"
+    print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
+    print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
+    print "  -d, --debug                      For debugging 65 itself"
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
-    print "  -o <file>, --output <file>       Place the output into <file>"
-    print "  -t, --terminal                   Run in terminal mode (no graphical window)."
-    print "  -r, --run                        Generate no output file, run the program now."
-    print "  -c <cmd>, --command <cmd>        Execute the statement or statements <cmd>,"
-    print "                                   then exit."
-    print "  -d, --debug                      For debugging 65 itself"
 end sub
 
 'The error handling here fakes terminal_mode on the assumption that if you're
@@ -264,11 +276,11 @@ sub parse_cmd_line_args()
                 i = i + 1
             case "-d", "--debug"
                 options.debug = TRUE
-            case "-r", "--run"
-                options.run_mode = TRUE
+            case "-c", "--compile"
+                options.compile_mode = TRUE
             case "-t", "--terminal"
                 options.terminal_mode = TRUE
-            case "-c", "--command"
+            case "-e", "--execute"
                 options.command_mode = TRUE
             case else
                 if left$(arg$, 1) = "-" then
