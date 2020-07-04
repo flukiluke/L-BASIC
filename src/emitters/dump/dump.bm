@@ -120,7 +120,10 @@ sub ast_dump_pretty(root, indent_level)
             print #1,
         next i
     case AST_VAR
-        print #1, "var("; symtab(ast_nodes(root).ref).identifier; ")";
+        print #1, "var(";
+        var = ast_nodes(root).ref
+        if symtab(var).v3 then print "CONST ";
+        print symtab(var).identifier; ")";
     case AST_CAST
         print #1, "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_pretty ast_get_child(root, 1), 0

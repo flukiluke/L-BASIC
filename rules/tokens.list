@@ -165,6 +165,7 @@ generic case
 
 generic dim
 generic as
+generic const
 
 # functions with return type none are subs
 function _autodisplay   none

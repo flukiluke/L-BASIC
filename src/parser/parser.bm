@@ -30,6 +30,10 @@ function ps_is_terminator(t)
     end select
 end function
 
+sub ps_assert_not_const(var)
+    if symtab(var).v3 then ps_error "Cannot modify CONST"
+end sub
+
 'Expects: first token in block
 'Results: block end marker or EOF
 function ps_block
@@ -73,6 +77,8 @@ function ps_stmt
             ps_stmt = ps_stmt_input
         case TOK_DIM
             ps_stmt = ps_dim
+        case TOK_CONST
+            ps_stmt = ps_const
         case TOK_END, TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
             'These all end a block in some fashion. The block-specific
             ' code will assert the ending token.
@@ -134,7 +140,7 @@ function ps_dim
     debuginfo "Start dim"
     ps_consume TOK_DIM
     do
-        dummy = ps_variable
+        ps_assert_not_const ps_variable
     loop while ps_consumed(TOK_COMMA)
     ps_dim = 0
     debuginfo "Completed dim"
@@ -214,6 +220,7 @@ function ps_stmt_input
     do
         var = ast_add_node(AST_VAR)
         ast_nodes(var).ref = ps_variable
+        ps_assert_not_const ast_nodes(var).ref
         ast_attach root, var
     loop while ps_consumed(TOK_COMMA)
 
@@ -221,11 +228,46 @@ function ps_stmt_input
     debuginfo "Completed stmt input"
 end function
  
+'Expects: TOK_CONST
+'Results: token after rvalue
+function ps_const
+    debuginfo "Start const"
+    ps_consume TOK_CONST
+    if tok_token <> TOK_UNKNOWN then ps_error "CONST already defined"
+    'Change default type because we want to infer it from the rvalue
+    prev_default = ps_default_type
+    ps_default_type = TYPE_NONE
+    ref = ps_variable
+    ps_default_type = prev_default
+    symtab(ref).v3 = TRUE 'Mark constant
+
+    root = ast_add_node(AST_ASSIGN)
+    ast_nodes(root).ref = ref
+    ps_consume TOK_EQUALS
+
+    expr = ps_expr
+    if symtab(ref).v1 = TYPE_NONE then
+        symtab(ref).v1 = type_of_expr(expr)
+        ast_attach root, expr
+    elseif type_can_cast(symtab(ref).v1, type_of_expr(expr)) then
+        cast = ast_add_node(AST_CAST)
+        ast_nodes(cast).ref = symtab(ref).v1
+        ast_attach cast, expr
+        ast_attach root, cast
+    else
+        ps_error "Type mismatch"
+    end if
+
+    ps_const = root
+    debuginfo "Completed const"
+end function
+
 'Expects: lvalue token
 'Results: token after rvalue
 function ps_assignment
     debuginfo "Start assignment"
     ref = ps_variable
+    ps_assert_not_const ref
     root = ast_add_node(AST_ASSIGN)
     ast_nodes(root).ref = ref
     ps_consume TOK_EQUALS
@@ -262,7 +304,7 @@ function ps_variable_p(token, content$)
     if token = TOK_UNKNOWN then
         sym.identifier = ucase$(content$)
         sym.typ = SYM_VARIABLE
-        sym.v1 = TYPE_SINGLE
+        sym.v1 = ps_default_type
         ps_last_var_index = ps_last_var_index + 1
         sym.v2 = ps_last_var_index
         symtab_add_entry sym
