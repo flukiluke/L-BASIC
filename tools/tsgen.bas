@@ -1,4 +1,6 @@
-'tsgen - Token Symbol Generator-generator
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'tsgen.bas - Token Symbol Generator-generator
 'Create datatables used by the tokenisation engine.
 '
 'A token symbol (refered to as TS) is the next level of parsing above characters in a file.

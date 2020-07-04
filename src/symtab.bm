@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'symtab.bm - Symbol Table
+
 sub symtab_add_entry(entry as symtab_entry_t)
     symtab_expand_if_needed
     symtab_last_entry = symtab_last_entry + 1
@@ -45,18 +49,12 @@ sub symtab_map_insert  (k$, v)
 end sub
 
 'http://www.cse.yorku.ca/~oz/hash.html
+'Attributed to D. J. Bernstein
 function symtab_hash~&(k$, max)
     hash~& = 5381
-    FOR i = 1 TO LEN(k$)
-        hash~& = ((hash~& * 33) XOR ASC(k$, i)) MOD max
-    NEXT i
+    for i = 1 to len(k$)
+        hash~& = ((hash~& * 33) xor asc(k$, i)) mod max
+    next i
     '0<=hash<=max-1, so 1<=hash+1<=max
     symtab_hash~& = hash~& + 1
-END FUNCTION
-
-
-
-
-
-
-
+end function

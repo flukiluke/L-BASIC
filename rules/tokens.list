@@ -1,3 +1,7 @@
+# Copyright 2020 Luke Ceddia
+# SPDX-License-Identifier: Apache-2.0
+# tokens.list - Description of parser tokens
+
 generic unknown   ; nosym
 generic eof       ; nosym
 # End Of Input - used to signify the end of a user's input in interactive

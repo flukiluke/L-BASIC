@@ -1,4 +1,6 @@
-'tokgen - Token Generator & Registerer
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'tokgen.bas - Token Generator & Registerer
 'Create TOK_ definitions and register them in the lookup table
 '
 'Nearly every element of the program can be expressed as a token, which is identified with the TOK_

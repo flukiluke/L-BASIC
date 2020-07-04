@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'parser.bi - Declarations for parser module
+
 '$include: 'tokeng.bi'
 '$include: '../../rules/token_registrations.bm'
 

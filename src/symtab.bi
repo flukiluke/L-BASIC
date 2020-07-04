@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'symtab.bi - Declarations for symbol table
+
 type symtab_entry_t
     identifier as string
     typ as long

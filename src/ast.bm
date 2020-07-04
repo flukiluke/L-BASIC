@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'ast.bm - Routines for Abstract Syntax Tree
+
 deflng a-z
 
 ' Initialise a clean AST

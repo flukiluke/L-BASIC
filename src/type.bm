@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'type.bm - Routines for type management
+
 function type_is_number(typ)
     select case typ
     case TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD

@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'dump.bm - Produce human readable representation of parsed program
+
 sub dump_program(root)
     print #1, "Table of identifiers:"
     symtab_dump

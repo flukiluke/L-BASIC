@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'tokeng.bi - Delcarations for tokeniser engine
+
 '$include: '../../rules/ts_data.bi'
 '$include: '../../rules/token_data.bi'
 

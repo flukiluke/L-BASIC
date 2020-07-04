@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'pratt.bm - Expression parser using the Pratt algorithm
+
 deflng a-z
 
 function pt_expr(rbp)

@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'type.bi - Declarations for type management routines
+
 'type_signatures() is a linked list.
 'A function token points to a single type_signature_t, and that element may point to alternative signatures for that function.
 'This allows us to support declaring a function multiple times with different signatures by chaining each declaration's signature together.

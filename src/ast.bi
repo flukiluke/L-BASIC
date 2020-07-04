@@ -1,5 +1,8 @@
-'This is a tree structure in a convoluted way
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'ast.bi - Declarations for Abstract Syntax Tree
 
+'This is a tree structure in a convoluted way
 'The node definition
 type ast_node_t
     typ as long

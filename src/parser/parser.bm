@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'parser.bm - Recursive Descent Parser
+
 sub ps_consume(expected)
     ps_assert expected
     if expected = TOK_NEWLINE then ps_actual_linenum = ps_actual_linenum + 1

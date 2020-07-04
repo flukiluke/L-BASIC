@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'tokeng.bm - Tokeniser Engine
+
 deflng a-z
 
 sub tok_init

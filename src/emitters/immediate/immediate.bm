@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'immediate.bm - Execute a parsed program
+
 sub imm_init
     redim imm_stack(ps_last_var_index) as imm_value_t
     'No, I'm not mad - this explicit initialisation is to

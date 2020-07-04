@@ -1,3 +1,7 @@
+# Copyright 2020 Luke Ceddia
+# SPDX-License-Identifier: Apache-2.0
+# Makefile for project
+
 # This should point to your QB64 installation
 QB64 := /home/luke/comp/git_qb64/qb64 -v
 OUTPUT_BINARY := $(CURDIR)/65

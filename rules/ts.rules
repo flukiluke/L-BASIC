@@ -1,3 +1,7 @@
+# Copyright 2020 Luke Ceddia
+# SPDX-License-Identifier: Apache-2.0
+# ts.rules - Token Symbol scanner rules
+
 %class letter = abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_
 %class number = 0123456789
 # The comment character (') is not in this list

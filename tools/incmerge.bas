@@ -1,4 +1,6 @@
-'incmerge - Include Merger
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'incmerge.bas - Include Merger
 'Merge a .bas file and all its $include files into one.
 
 $console:only
