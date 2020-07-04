@@ -10,6 +10,7 @@ generic eoi       ; nosym
 generic newline   ; direct nosym
 generic comma     ; direct nosym
 generic semicolon ; direct nosym
+generic rem
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).

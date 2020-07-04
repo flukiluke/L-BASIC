@@ -110,7 +110,9 @@ function ps_if
     ast_attach root, condition
     ps_consume TOK_THEN
 
-    if tok_token = TOK_NEWLINE then 'Multi-line if
+    rem_present = ucase$(tok_content$) = "REM"
+    if tok_token = TOK_NEWLINE and not rem_present then 'Multi-line if
+        debuginfo "Multi-line conditional"
         ps_actual_linenum = ps_actual_linenum + 1
         tok_advance
         ast_attach root, ps_block
@@ -123,10 +125,15 @@ function ps_if
         ps_consume TOK_END
         ps_consume TOK_IF
     else
-        ast_attach root, ps_stmt
-        if tok_token = TOK_ELSE then
-            tok_advance
+        debuginfo "Single-line conditional"
+        if rem_present then
+            ast_attach root, ast_add_node(AST_BLOCK)
+        else
             ast_attach root, ps_stmt
+            if tok_token = TOK_ELSE then
+                tok_advance
+                ast_attach root, ps_stmt
+            end if
         end if
     end if
     ps_if = root

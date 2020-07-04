@@ -28,7 +28,6 @@ sub tok_advance
     if not options.interactive_mode then
         tok_read_next_token
     else
-        'Hacks for interactive mode
         if tok_token = TOK_NEWLINE then
             'All lines end with TOK_EOI
             tok_next_token = TOK_EOI
@@ -41,6 +40,8 @@ sub tok_advance
             tok_read_next_token
         end if
     end if
+    debuginfo tok_human_readable$(tok_token) + " <- " + tok_human_readable$(tok_next_token)
+
 end sub
 
 sub tok_read_next_token
@@ -61,7 +62,13 @@ sub tok_read_next_token
             ps_error "Unexpected end of line"
 
         case TS_ID
-            if tok_next_content$ = "?" then tok_next_content$ = "PRINT"
+            'Special cases!
+            if tok_next_content$ = "?" then
+                tok_next_content$ = "PRINT"
+            elseif ucase$(tok_next_content$) = "REM" then
+                goto rem_hack
+            end if
+                
             id = symtab_get_id(ucase$(tok_next_content$))
             if id = 0 then
                 tok_next_token = TOK_UNKNOWN
@@ -71,6 +78,7 @@ sub tok_read_next_token
             tokeng_state.linestart = FALSE
 
         case TS_NEWLINE
+            rem_hack:
             tokeng_state.has_data = FALSE
             tokeng_state.linestart = TRUE
             tok_next_token = TOK_NEWLINE
