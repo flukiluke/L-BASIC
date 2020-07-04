@@ -209,7 +209,6 @@ sub imm_do_print(node)
             end if
         else
             imm_eval child, temp
-            temp.n = csng(temp.n)
             'Need to check type explicitly so we can explicitly give the correct C*() function
             select case type_of_expr(child)
             case TYPE_INTEGER
