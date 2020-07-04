@@ -47,7 +47,7 @@ Comment: * ~ Comment
 Comment: $nl ~ Begin ! NEWLINE
 
 String: * ~ String
-String: "" ~ General ! STRING
+String: "" ~ General ! STRINGLIT
 
 General: $letter ~ Id
 General: $number ~ Number

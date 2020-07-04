@@ -23,7 +23,7 @@ end function
 'to take their first token as an argument instead of from tok_token.
 function nud(token, content$)
     select case token
-    case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRING
+    case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRINGLIT
         node = ast_add_node(AST_CONSTANT)
         ast_nodes(node).ref = ast_add_constant(token, content$, ps_opt_sigil)
     case TOK_OPAREN

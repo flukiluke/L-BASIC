@@ -40,8 +40,8 @@ function ps_block
             ps_consume TOK_NEWLINE
         loop
         stmt = ps_stmt
-        if stmt = 0 then exit do 'use 0 to signal the end of a block
-        ast_attach root, stmt
+        if stmt = -1 then exit do 'use -1 to signal the end of a block
+        if stmt then ast_attach root, stmt '0 means that statement did not generate any ast nodes
     loop
     ps_block = root
     debuginfo "End block"
@@ -71,10 +71,12 @@ function ps_stmt
             ps_stmt = ps_print
         case TOK_INPUT
             ps_stmt = ps_stmt_input
+        case TOK_DIM
+            ps_stmt = ps_dim
         case TOK_END, TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
             'These all end a block in some fashion. The block-specific
             ' code will assert the ending token.
-            ps_stmt = 0
+            ps_stmt = -1
         case TOK_UNKNOWN
             ps_stmt = ps_assignment
         case else
@@ -125,6 +127,19 @@ function ps_if
     debuginfo "Completed conditional"
 end function
     
+'Expects: TOK_DIM
+'Results: token after last declaration
+'Format: DIM variablelist
+function ps_dim
+    debuginfo "Start dim"
+    ps_consume TOK_DIM
+    do
+        dummy = ps_variable
+    loop while ps_consumed(TOK_COMMA)
+    ps_dim = 0
+    debuginfo "Completed dim"
+end function
+
 'Expects: TOK_PRINT
 'Results: token after last expression, comma or semicolon
 'Format: PRINT [expressionlist][{,|;}]
@@ -182,12 +197,12 @@ function ps_stmt_input
     end if
 
     'The prompt must be a literal string, no expressions. Crazy, right?
-    if tok_token = TOK_STRING then
+    if tok_token = TOK_STRINGLIT then
         prompt = ast_add_node(AST_CONSTANT)
-        ast_nodes(prompt).ref = ast_add_constant(tok_token, tok_content$, TYPE_STRING)
+        ast_nodes(prompt).ref = ast_add_constant(tok_token, tok_content$, TYPE_STRINGLIT)
         ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_PROMPT
         ast_attach root, prompt
-        ps_consume TOK_STRING
+        ps_consume TOK_STRINGLIT
         if tok_token = TOK_COMMA then
             ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_NO_QUESTION
             ps_consume TOK_COMMA
@@ -271,7 +286,8 @@ end function
 'Results: post token if sigil present, unchanged otherwise
 function ps_opt_sigil
     debuginfo "Start optional sigil"
-    typ = type_sfx2type(tok_token)
+    if tok_token = TOK_AS then ps_consume TOK_AS
+    typ = type_tok2type(tok_token)
     if typ then
         ps_opt_sigil = typ
         tok_advance

@@ -151,16 +151,19 @@ sub interactive_mode
         ast_init 'Clear the tree each time
         Error_context = 1
         node = ps_stmt
-        Error_context = 0
-        if options.debug then
-            Error_context = 3
-            ast_dump_pretty node, 0
+        'Could return 0 if statement does not generate ast nodes
+        if node then
             Error_context = 0
-            print #1,
+            if options.debug then
+                Error_context = 3
+                ast_dump_pretty node, 0
+                Error_context = 0
+                print #1,
+            end if
+            imm_reinit
+            Error_context = 2
+            imm_run node
         end if
-        imm_reinit
-        Error_context = 2
-        imm_run node
         Error_context = 1
         ps_consume TOK_NEWLINE
         Error_context = 0

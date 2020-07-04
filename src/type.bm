@@ -185,26 +185,26 @@ function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
     type_sig_compatible_arg = result
 end function
 
-function type_sfx2type(sfx_token)
+function type_tok2type(sfx_token)
     select case sfx_token
-    case TOK_INTEGER_SFX
-        type_sfx2type = TYPE_INTEGER
-    case TOK_LONG_SFX
-        type_sfx2type = TYPE_LONG
-    case TOK_INTEGER64_SFX
-        type_sfx2type = TYPE_INTEGER64
-    case TOK_SINGLE_SFX
-        type_sfx2type = TYPE_SINGLE
-    case TOK_DOUBLE_SFX
-        type_sfx2type = TYPE_DOUBLE
-    case TOK_QUAD_SFX
-        type_sfx2type = TYPE_QUAD
-    case TOK_OFFSET_SFX
-        type_sfx2type = TYPE_OFFSET
-    case TOK_STRING_SFX
-        type_sfx2type = TYPE_STRING
+    case TOK_INTEGER_SFX, TOK_INTEGER
+        type_tok2type = TYPE_INTEGER
+    case TOK_LONG_SFX, TOK_LONG
+        type_tok2type = TYPE_LONG
+    case TOK_INTEGER64_SFX, TOK_INTEGER64
+        type_tok2type = TYPE_INTEGER64
+    case TOK_SINGLE_SFX, TOK_SINGLE
+        type_tok2type = TYPE_SINGLE
+    case TOK_DOUBLE_SFX, TOK_DOUBLE
+        type_tok2type = TYPE_DOUBLE
+    case TOK_QUAD_SFX, TOK_QUAD
+        type_tok2type = TYPE_QUAD
+    case TOK_OFFSET_SFX, TOK_OFFSET
+        type_tok2type = TYPE_OFFSET
+    case TOK_STRING_SFX, TOK_STRING
+        type_tok2type = TYPE_STRING
     case else
-        type_sfx2type = 0
+        type_tok2type = 0
     end select
 end function
 

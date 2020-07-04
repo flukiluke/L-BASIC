@@ -38,7 +38,7 @@ function ast_add_constant(token, content$, force_type)
     case TOK_NUMEXP
         ast_constants(ast_last_constant) = content$
         detected_type = type_detect_numexp_type(ast_constants(ast_last_constant))
-    case TOK_STRING
+    case TOK_STRINGLIT
         'Strip quotes
         ast_constants(ast_last_constant) = mid$(content$, 2, len(content$) - 2)
         detected_type = TYPE_STRING

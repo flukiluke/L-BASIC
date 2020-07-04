@@ -119,18 +119,27 @@ literal numexp ; direct
 literal numbase ; direct
 
 # A string
-literal string ; direct
+literal stringlit ; direct
 
-# Type symbols
+# Type symbols and names
 generic integer_sfx     ; direct nosym
+generic integer
 generic long_sfx        ; direct nosym
+generic long
 generic integer64_sfx   ; direct nosym
+generic integer64
 generic offset_sfx      ; direct nosym
+generic offset
 
 generic single_sfx      ; direct nosym
+generic single
 generic double_sfx      ; direct nosym
+generic double
 generic quad_sfx        ; direct nosym
+generic quad
 generic string_sfx      ; direct nosym
+generic string
+
 
 # Basic language constructs
 generic if
@@ -153,6 +162,9 @@ generic next
 
 generic select
 generic case
+
+generic dim
+generic as
 
 # functions with return type none are subs
 function _autodisplay   none
