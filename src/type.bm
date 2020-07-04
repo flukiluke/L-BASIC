@@ -228,8 +228,8 @@ function type_human_readable$(typ)
         type_human_readable$ = "STRING"
     case TYPE_FLAGS
         type_human_readable$ = "FLAGS"
-    case TYPE_VARLIST
-        type_human_readable$ = "VARLIST"
+    case TYPE_LIST
+        type_human_readable$ = "LIST"
     case else
         type_human_readable$ = "UNKNOWN"
     end select

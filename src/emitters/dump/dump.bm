@@ -126,7 +126,7 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, ")";
     case AST_FLAGS
-        print #1, ast_nodes(root).ref;
+        print #1, "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
     end select
 end sub
 

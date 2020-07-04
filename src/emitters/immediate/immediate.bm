@@ -117,13 +117,7 @@ sub imm_do_call(node, result as imm_value_t)
     dim v2 as imm_value_t
     select case ast_nodes(node).ref
     case TOK_PRINT
-        if ast_num_children(node) > 0 then
-            c = ast_get_child(node, 1)
-            imm_eval c, v1
-            if type_of_expr(c) = TYPE_STRING then print v1.s else print v1.n
-        else
-            print
-        end if
+        imm_do_print node
     case TOK_INPUT
         imm_do_stmt_input node
     case TOK_CHR
@@ -201,6 +195,23 @@ sub imm_do_call(node, result as imm_value_t)
         result.n = v1.n >= v2.n
     end select
     imm_enforce_type result, type_of_call(node)
+end sub
+
+sub imm_do_print(node)
+    dim temp as imm_value_t
+    for i = 1 to ast_num_children(node)
+        child = ast_get_child(node, i)
+        if ast_nodes(child).typ = AST_FLAGS then
+            if ast_nodes(child).ref AND PRINT_NEXT_FIELD then
+                print ,
+            elseif ast_nodes(child).ref AND PRINT_NEWLINE then
+                print
+            end if
+        else
+            imm_eval child, temp
+            if type_of_expr(child) = TYPE_STRING then print temp.s; else print temp.n;
+        end if
+    next i
 end sub
 
 sub imm_do_stmt_input(node)

@@ -156,18 +156,12 @@ generic case
 
 # functions with return type none are subs
 function _autodisplay   none
-function input          none    flags,varlist
+function input          none    list
 function beep           none
 function chr            string  integer
 function _copypalette   none    long,long
 function left           string  string,integer64
-function print          none    string?
-function print          none    integer
-function print          none    long
-function print          none    integer64
-function print          none    single
-function print          none    double
-function print          none    quad
+function print          none    list
 function int            integer integer
 function int            integer long
 function int            integer integer64
