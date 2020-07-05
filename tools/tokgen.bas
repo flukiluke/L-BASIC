@@ -94,13 +94,8 @@ do while not eof(1)
         toksym$ = tokname$
     end if
 
-    if left$(toksym$, 1) = "\" then '"
-        toksym$ = "chr$(" + mid$(toksym$, 2) + ")"
-        if instr(parts$(-1), "NOSYM") then toksym$ = chr$(34) + "|" + chr$(34) + "+" + toksym$
-    else
-        if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
-        toksym$ = chr$(34) + toksym$ + chr$(34)
-    end if
+    if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
+    toksym$ = chr$(34) + toksym$ + chr$(34)
 
     select case parts$(0)
     case "GENERIC"
