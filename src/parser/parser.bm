@@ -98,6 +98,68 @@ function ps_stmt
     debuginfo "Completed statement"
 end function
 
+'Expects: FOR
+'Results: NEWLINE after NEXT or iterator variable
+function ps_for
+    debuginfo "Start FOR loop"
+    root = ast_add_node(AST_FOR)
+    ps_consume TOK_FOR
+    var = ps_variable
+    var_type = symtab(var).v1
+    if not type_is_number(var_type) then ps_error "FOR iterator variable must be numeric"
+    ast_nodes(root).ref = var
+    ps_consume TOK_EQUALS
+
+    start_val = ps_expr
+    if not type_is_number(type_of_expr(start_val)) then ps_error "FOR start value must be numeric"
+    if type_of_expr(start_val) <> var_type then
+        cast = ast_add_node(AST_CAST)
+        ast_nodes(cast).ref = var_type
+        ast_attach cast, start_val
+        start_val = cast
+    end if
+    ps_consume TOK_TO
+
+    end_val = ps_expr
+    if not type_is_number(type_of_expr(end_val)) then ps_error "FOR end value must be numeric"
+    if type_of_expr(end_val) <> var_type then
+        cast = ast_add_node(AST_CAST)
+        ast_nodes(cast).ref = var_type
+        ast_attach cast, end_val
+        end_val = cast
+    end if
+
+    if tok_token = TOK_STEP then
+        ps_consume TOK_STEP
+        step_val = ps_expr
+        if not type_is_number(type_of_expr(step_val)) then ps_error "FOR STEP value must be numeric"
+    else
+        step_val = ast_add_node(AST_CONSTANT)
+        ast_nodes(step_val).ref = AST_ONE
+    end if
+    if type_of_expr(step_val) <> var_type then
+        cast = ast_add_node(AST_CAST)
+        ast_nodes(cast).ref = var_type
+        ast_attach cast, step_val
+        step_val = cast
+    end if
+    ps_consume TOK_NEWLINE
+
+    ast_attach root, start_val
+    ast_attach root, end_val
+    ast_attach root, step_val
+    ast_attach root, ps_block
+
+    ps_consume TOK_NEXT
+    if tok_token <> TOK_NEWLINE then
+        check_var = ps_variable
+        if check_var <> var then ps_error "NEXT variable does not match FOR variable"
+    end if
+
+    ps_for = root
+    debuginfo "Completed FOR loop"
+end function
+
 'Expects: WHILE
 'Results: NEWLINE after WEND
 function ps_while

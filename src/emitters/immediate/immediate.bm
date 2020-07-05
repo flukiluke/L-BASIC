@@ -39,7 +39,7 @@ sub imm_eval(node, result as imm_value_t)
     case AST_DO_POST
         imm_do_do_post node
     case AST_FOR
-        print "FOR; skipping"
+        imm_do_for node
     case AST_SELECT
         print "SELECT; skipping"
     case AST_CALL
@@ -61,6 +61,27 @@ sub imm_eval(node, result as imm_value_t)
     case AST_CAST
         imm_do_cast node, result
     end select
+end sub
+
+sub imm_do_for(node)
+    dim start_val as imm_value_t
+    dim end_val as imm_value_t
+    dim step_val as imm_value_t
+
+    sp = imm_var_stack_pos(node)
+    imm_eval ast_get_child(node, 1), start_val
+    imm_stack(sp).n = start_val.n
+    imm_eval ast_get_child(node, 2), end_val
+    imm_eval ast_get_child(node, 3), step_val
+
+    direction = sgn(step_val.n)
+    if direction <> 0 and sgn(end_val.n - start_val.n) <> direction then exit sub
+
+    block = ast_get_child(node, 4)
+    do
+        imm_run block
+        imm_stack(sp).n = imm_stack(sp).n + step_val.n
+    loop while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n) or direction = 0
 end sub
 
 sub imm_do_do_pre(node)
