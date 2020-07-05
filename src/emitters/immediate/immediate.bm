@@ -107,11 +107,15 @@ end sub
     
 sub imm_do_conditional(node)
     dim condition as imm_value_t
-    imm_eval ast_get_child(node, 1), condition
-    if condition.n then
-        imm_run ast_get_child(node, 2)
-    elseif ast_num_children(node) > 2 then
-        imm_run ast_get_child(node, 3)
+    for clause = 1 to ast_num_children(node) \ 2
+        imm_eval ast_get_child(node, clause * 2 - 1), condition
+        if condition.n then
+            imm_run ast_get_child(node, clause * 2)
+            exit sub
+        end if
+    next clause
+    if ast_num_children(node) mod 2 then
+        imm_run ast_get_child(node, ast_num_children(node))
     end if
 end sub
 
