@@ -38,7 +38,9 @@ Metacmd2: $nl ~ Begin & METAPARAM
 Id: $letter ~ Id
 Id: $number ~ Id
 Id: $punc ~ General & ID
-Id: ": ~ General ! LINELABEL
+# We're just going to pretend line labels don't exist for
+# now so we can unambiguously call : a command separator
+# Id: ": ~ General ! LINELABEL
 Id: $sp ~ General & ID
 Id: "' ~ Comment
 Id: $nl ~ Begin & ID

@@ -28,14 +28,14 @@ sub tok_advance
     if not options.interactive_mode then
         tok_read_next_token
     else
-        if tok_token = TOK_NEWLINE then
+        if tok_token = TOK_NEWLINE and tok_content$ <> ":" then
             'All lines end with TOK_EOI
             tok_next_token = TOK_EOI
         elseif tok_token = TOK_EOI then
             'No line starts with TOK_NEWLINE
             do
                 tok_read_next_token
-            loop while tok_next_token = TOK_NEWLINE
+            loop while tok_next_token = TOK_NEWLINE and tok_content$ <> ":"
         else
             tok_read_next_token
         end if
@@ -76,6 +76,9 @@ sub tok_read_next_token
                 tok_next_token = id
             end if
             tokeng_state.linestart = FALSE
+
+        case TS_COLON
+            tok_next_token = TOK_NEWLINE
 
         case TS_NEWLINE
             rem_hack:

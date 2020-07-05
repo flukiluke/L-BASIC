@@ -2,9 +2,12 @@
 'SPDX-License-Identifier: Apache-2.0
 'parser.bm - Recursive Descent Parser
 
+function ps_is_linejoin
+    ps_is_linejoin = tok_token = TOK_NEWLINE and tok_content$ = ":"
+end function
+    
 sub ps_consume(expected)
     ps_assert expected
-    if expected = TOK_NEWLINE then ps_actual_linenum = ps_actual_linenum + 1
     tok_advance
 end sub
 
@@ -16,6 +19,7 @@ function ps_consumed(expected)
 end function
 
 sub ps_assert(expected)
+    if tok_token = TOK_NEWLINE and not ps_is_linejoin then ps_actual_linenum = ps_actual_linenum + 1
     if tok_token <> expected then
         ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
     else
@@ -79,7 +83,7 @@ function ps_stmt
             ps_stmt = ps_dim
         case TOK_CONST
             ps_stmt = ps_const
-        case TOK_END, TOK_ELSE, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
+        case TOK_END, TOK_ELSE, TOK_ELSEIF, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
             'These all end a block in some fashion. The block-specific
             ' code will assert the ending token.
             ps_stmt = -1
@@ -249,45 +253,72 @@ function ps_do_post
 end function
 
 'Expects: IF
-'Results: NEWLINE or post token for nested single-line IFs
+'Results: ???
 function ps_if
     debuginfo "Start conditional"
     root = ast_add_node(AST_IF)
-    tok_advance
+    ps_consume TOK_IF
 
     condition = ps_expr
-    if not type_is_number(type_of_expr(condition)) then ps_error "IF condition must be a numeric expression"
+    if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
     ast_attach root, condition
     ps_consume TOK_THEN
 
-    rem_present = ucase$(tok_content$) = "REM"
-    if tok_token = TOK_NEWLINE and not rem_present then 'Multi-line if
-        debuginfo "Multi-line conditional"
-        ps_actual_linenum = ps_actual_linenum + 1
-        tok_advance
-        ast_attach root, ps_block
+    'A REM after THEN acts as a command; we remain in single-line if mode
+    if ucase$(tok_content$) = "REM" then
+        block = ast_add_node(AST_BLOCK)
+        ast_attach root, block
+        ps_if = root
+        debuginfo "Completed conditional (single-line REM)"
+        exit function
+    end if
+
+    if tok_token <> TOK_NEWLINE or ps_is_linejoin then
+        debuginfo "Single-line IF"
+        ast_attach root, ps_if_stmts
         if tok_token = TOK_ELSE then
-            'Point of contention! QB45 insists on this newline, QB64 doesn't. We shall insist.
-            tok_advance
-            ps_consume TOK_NEWLINE
+            ps_consume TOK_ELSE
+            ast_attach root, ps_if_stmts
+        end if
+    else
+        debuginfo "Multi-line IF"
+        ast_attach root, ps_block
+        do while tok_token = TOK_ELSEIF
+            ps_consume TOK_ELSEIF
+            condition = ps_expr
+            if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
+            ast_attach root, condition
+            ps_consume TOK_THEN
             ast_attach root, ps_block
+        loop
+        if tok_token = TOK_ELSE then
+            ps_consume TOK_ELSE
+            ast_attach root, ps_block 
         end if
         ps_consume TOK_END
         ps_consume TOK_IF
-    else
-        debuginfo "Single-line conditional"
-        if rem_present then
-            ast_attach root, ast_add_node(AST_BLOCK)
-        else
-            ast_attach root, ps_stmt
-            if tok_token = TOK_ELSE then
-                tok_advance
-                ast_attach root, ps_stmt
-            end if
-        end if
     end if
+
     ps_if = root
     debuginfo "Completed conditional"
+end function
+
+'Expects: Start of a statement or :
+'Results: ELSE or NEWLINE
+'Note: This handles one or more statements joined by : and terminated by ELSE/NEWLINE
+function ps_if_stmts
+    block = ast_add_node(AST_BLOCK)
+    do
+        while ps_is_linejoin
+            ps_consume TOK_NEWLINE
+        wend
+        stmt = ps_stmt
+        ast_attach block, stmt
+        while ps_is_linejoin
+            ps_consume TOK_NEWLINE
+        wend
+    loop until ps_is_terminator(tok_token)
+    ps_if_stmts = block
 end function
     
 'Expects: TOK_DIM

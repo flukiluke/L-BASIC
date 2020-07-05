@@ -70,6 +70,10 @@ function ast_add_cast(expr, vartyp)
 end function
 
 sub ast_attach(parent, child)
+    if child = 0 or child = -1 then
+        debuginfo "Not adding child node because it is " + ltrim$(str$(child))
+        exit sub
+    end if
     ast_nodes(parent).num_children = ast_nodes(parent).num_children + 1
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub

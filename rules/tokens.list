@@ -152,6 +152,7 @@ generic string
 generic if
 generic then
 generic else
+generic elseif
 # end is special because it's both a command on its own and part of END IF.
 # It gets special treatment in the statement parser.
 generic end
