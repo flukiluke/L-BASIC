@@ -11,15 +11,13 @@ sub ast_init
     ast_last_node = 0
     redim ast_constants(10) as string
     redim ast_constant_types(10) as long
-    ast_constants(AST_NONE) = "None"
-    ast_constant_types(AST_NONE) = TYPE_ANY
     ast_constants(AST_FALSE) = "0"
-    ast_constant_types(AST_FALSE) = TYPE_NUMERIC
+    ast_constant_types(AST_FALSE) = TYPE_INTEGER
     ast_constants(AST_TRUE) = "-1"
-    ast_constant_types(AST_TRUE) = TYPE_NUMERIC
+    ast_constant_types(AST_TRUE) = TYPE_INTEGER
     ast_constants(AST_ONE) = "1"
-    ast_constant_types(AST_ONE) = TYPE_NUMERIC
-    ast_last_constant = 4
+    ast_constant_types(AST_ONE) = TYPE_INTEGER
+    ast_last_constant = 3
 end sub
 
 function ast_add_constant(token, content$, force_type)

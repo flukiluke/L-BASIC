@@ -98,6 +98,94 @@ function ps_stmt
     debuginfo "Completed statement"
 end function
 
+'Expects: WHILE
+'Results: NEWLINE after WEND
+function ps_while
+    debuginfo "Start WHILE loop"
+    root = ast_add_node(AST_DO_PRE)
+    ps_consume TOK_WHILE
+    ast_attach root, ps_expr
+    ps_consume TOK_NEWLINE
+
+    ast_attach root, ps_block
+    ps_consume TOK_WEND
+
+    ps_while = root
+    debuginfo "Completed WHILE loop"
+end function
+
+'Expects: DO
+'Results: NEWLINE after LOOP or condition
+function ps_do
+    debuginfo "Start DO loop"
+    ps_consume TOK_DO
+    if tok_token = TOK_WHILE or tok_token = TOK_UNTIL then ps_do = ps_do_pre else ps_do = ps_do_post
+    debuginfo "Completed DO loop"
+end function
+
+'Expects: WHILE or UNTIL
+'Results: NEWLINE after LOOP
+function ps_do_pre
+    debuginfo "Start DO-pre loop"
+    root = ast_add_node(AST_DO_PRE)
+    if tok_token = TOK_UNTIL then
+        ps_consume TOK_UNTIL
+        'Need to invert guard condition
+        guard = ast_add_node(AST_CALL)
+        ast_nodes(guard).ref = TOK_EQUALS
+        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, mkl$(TYPE_INTEGER) + mkl$(0) + mkl$(TYPE_INTEGER) + mkl$(0))
+        ast_attach guard, ps_expr
+        f = ast_add_node(AST_CONSTANT)
+        ast_nodes(f).ref = AST_FALSE
+        ast_attach guard, f
+    else
+        ps_consume TOK_WHILE
+        guard = ps_expr
+    end if
+    ast_attach root, guard
+    ps_consume TOK_NEWLINE
+
+    ast_attach root, ps_block
+    ps_consume TOK_LOOP
+
+    ps_do_pre = root
+    debuginfo "Completed DO-pre loop"
+end function
+
+'Expects: NEWLINE
+'Results: NEWLINE after loop guard condition
+function ps_do_post
+    debuginfo "Start DO-post loop"
+    ps_consume TOK_NEWLINE
+    root = ast_add_node(AST_DO_POST)
+    block = ps_block
+
+    ps_consume TOK_LOOP
+    if tok_token = TOK_UNTIL then
+        ps_consume TOK_UNTIL
+        'Need to invert guard condition
+        guard = ast_add_node(AST_CALL)
+        ast_nodes(guard).ref = TOK_EQUALS
+        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, mkl$(TYPE_INTEGER) + mkl$(0) + mkl$(TYPE_INTEGER) + mkl$(0))
+        ast_attach guard, ps_expr
+        f = ast_add_node(AST_CONSTANT)
+        ast_nodes(f).ref = AST_FALSE
+        ast_attach guard, f
+    elseif tok_token = TOK_WHILE then
+        ps_consume TOK_WHILE
+        guard = ps_expr
+    else
+        'Infinite loop
+        guard = ast_add_node(AST_CONSTANT)
+        ast_nodes(guard).ref = AST_TRUE
+    end if
+    ast_attach root, guard
+    ast_attach root, block
+
+    ps_do_post = root
+    debuginfo "Completed DO-post loop"
+end function
+
 'Expects: IF
 'Results: NEWLINE or post token for nested single-line IFs
 function ps_if

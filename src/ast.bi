@@ -23,10 +23,9 @@ dim shared ast_constants(0) as string
 dim shared ast_constant_types(0) as long
 dim shared ast_last_constant as long
 
-const AST_NONE = 1
-const AST_FALSE = 2
-const AST_TRUE = 3
-const AST_ONE = 4
+const AST_FALSE = 1
+const AST_TRUE = 2
+const AST_ONE = 3
 
 'The types of node. Note the regex-like notation with ? for optionality.
 

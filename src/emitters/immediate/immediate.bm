@@ -35,11 +35,9 @@ sub imm_eval(node, result as imm_value_t)
     case AST_IF
         imm_do_conditional node
     case AST_DO_PRE
-        print "DO WHILE; executing once"
-        imm_eval ast_get_child(node, 2), result
+        imm_do_do_pre node
     case AST_DO_POST
-        print "LOOP WHILE; executing once"
-        imm_eval ast_get_child(node, 2), result
+        imm_do_do_post node
     case AST_FOR
         print "FOR; skipping"
     case AST_SELECT
@@ -65,6 +63,27 @@ sub imm_eval(node, result as imm_value_t)
     end select
 end sub
 
+sub imm_do_do_pre(node)
+    dim temp as imm_value_t
+    guard = ast_get_child(node, 1)
+    block = ast_get_child(node, 2)
+    imm_eval guard, temp
+    do while temp.n
+        imm_run block
+        imm_eval guard, temp
+    loop
+end sub
+
+sub imm_do_do_post(node)
+    dim temp as imm_value_t
+    guard = ast_get_child(node, 1)
+    block = ast_get_child(node, 2)
+    do
+        imm_run block
+        imm_eval guard, temp
+    loop while temp.n
+end sub
+    
 sub imm_do_conditional(node)
     dim condition as imm_value_t
     imm_eval ast_get_child(node, 1), condition
