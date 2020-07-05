@@ -142,6 +142,14 @@ sub imm_do_call(node, result as imm_value_t)
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
         result.n = v1.n / v2.n
+    case TOK_BACKSLASH
+        imm_eval ast_get_child(node, 1), v1
+        imm_eval ast_get_child(node, 2), v2
+        result.n = v1.n \ v2.n
+    case TOK_MOD
+        imm_eval ast_get_child(node, 1), v1
+        imm_eval ast_get_child(node, 2), v2
+        result.n = v1.n mod v2.n
     case TOK_POWER
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
@@ -193,6 +201,8 @@ sub imm_do_call(node, result as imm_value_t)
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
         result.n = v1.n >= v2.n
+    case else
+        imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
     end select
     imm_enforce_type result, type_of_call(node)
 end sub
@@ -261,4 +271,9 @@ sub imm_do_stmt_input(node)
         readline$ = mid$(readline$, comma + 1)
         if readline$ = "" then nomoredata = TRUE
     next i
+end sub
+
+sub imm_error(msg$)
+    Error_message$ = msg$
+    error 101
 end sub

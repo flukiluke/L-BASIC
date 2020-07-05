@@ -10,9 +10,7 @@
 
 ## Definitions
 * The types INTEGER, LONG, INTEGER64, SINGLE, DOUBLE and QUAD are considered NUMBER types.
-* All types are considered ANY types.
-* ANY and NUMBER are abstract types; all other types are concrete types.
-* An expression is considered a function call or a constant.
+* An expression is something that can be evaluated to have a particular value.
 
 ## Casts
 The following functions cast from any NUMBER type:

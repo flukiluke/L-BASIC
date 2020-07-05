@@ -95,7 +95,8 @@ error_handler:
     case 2 'Immediate mode
         'We have no good way of distinguishing between user program errors and internal errors
         print "Runtime error:" + str$(err)
-        goto internal_error
+        if err <> 101 then goto internal_error
+        print Error_message$
     case 3 'Dump mode
         print "Dump: ";
         if err <> 101 then goto internal_error
