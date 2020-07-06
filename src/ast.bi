@@ -53,3 +53,5 @@ const AST_VAR = 10
 const AST_CAST = 11
 'ref is an integer. Used to pass extra data to some functions that have behaviour set by syntax (e.g. INPUT)
 const AST_FLAGS = 12
+'If the goto is resolved, ref is the node to jump to. If unresolved, the label symtab. A fully-parsed program will have no unresolved labels.
+const AST_GOTO = 13

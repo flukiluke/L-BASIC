@@ -36,6 +36,10 @@ sub symtab_dump
     next i
 end sub
 
+function dump_nn$(n)
+    dump_nn$ = "{" + ltrim$(rtrim$(str$(n))) + "}"
+end function
+
 sub ast_dump_pretty(root, indent_level)
     indent$ = space$(indent_level * 4)
     if ast_nodes(root).typ = 0 then
@@ -43,33 +47,33 @@ sub ast_dump_pretty(root, indent_level)
     end if
     select case ast_nodes(root).typ
     case AST_ASSIGN
-        print #1, symtab(ast_nodes(root).ref).identifier; " = ";
+        print #1, indent$; dump_nn$(root); symtab(ast_nodes(root).ref).identifier; " = ";
         ast_dump_pretty cvl(ast_children(root)), 0
     case AST_IF
         for clause = 1 to ast_num_children(root) \ 2
-            if clause = 1 then print #1, indent$; "IF "; else print #1, indent$; "ELSEIF ";
+            if clause = 1 then print #1, indent$; dump_nn$(root); "IF "; else print #1, indent$; "ELSEIF ";
             ast_dump_pretty ast_get_child(root, clause * 2 - 1), 0
             print #1, indent$; " THEN "
-            ast_dump_pretty ast_get_child(root, clause * 2), indent_level + 1
+            ast_dump_pretty ast_get_child(root, clause * 2), indent_level
         next clause
         if ast_num_children(root) mod 2 then
             print #1, indent$; "ELSE"
-            ast_dump_pretty ast_get_child(root, ast_num_children(root)), indent_level + 1
+            ast_dump_pretty ast_get_child(root, ast_num_children(root)), indent_level
         end if
         print #1, indent$; "END IF";
     case AST_DO_PRE
-        print #1, indent$; "DO WHILE ";
+        print #1, dump_nn$(root); indent$; "DO WHILE ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1,
-        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
+        ast_dump_pretty ast_get_child(root, 2), indent_level
         print #1, indent$; "LOOP";
     case AST_DO_POST
-        print #1, indent$; "DO"
-        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
-        print #1, indent$; "LOOP WHILE ";
+        print #1, indent$; dump_nn$(root); "DO"
+        ast_dump_pretty ast_get_child(root, 2), indent_level
+        print #1, indent$; dump_nn$(root); "LOOP WHILE ";
         ast_dump_pretty ast_get_child(root, 1), 0
     case AST_FOR
-        print #1, indent$; "FOR ";
+        print #1, indent$; dump_nn$(root); "FOR ";
         print #1, symtab(ast_nodes(root).ref).identifier; " = ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, " TO ";
@@ -77,10 +81,10 @@ sub ast_dump_pretty(root, indent_level)
         print #1, " STEP ";
         ast_dump_pretty ast_get_child(root, 3), 0
         print #1,
-        ast_dump_pretty ast_get_child(root,  4), indent_level + 1
+        ast_dump_pretty ast_get_child(root,  4), indent_level
         print #1, indent$; "NEXT "; symtab(ast_nodes(root).ref).identifier;
     case AST_SELECT
-        print #1, indent$; "SELECT CASE ";
+        print #1, indent$; dump_nn$(root); "SELECT CASE ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1,
         for i = 2 to ast_num_children(root) step 2
@@ -91,7 +95,7 @@ sub ast_dump_pretty(root, indent_level)
         next i
         print #1, indent$; "END SELECT";
     case AST_CALL
-        print #1, "call(";
+        print #1, dump_nn$(root); "call(";
         print #1, symtab(ast_nodes(root).ref).identifier;
         print #1, " ["; type_human_sig$(type_signatures(ast_nodes(root).ref2).sig); "]";
         if len(ast_children(root)) then print #1, ", ";
@@ -102,27 +106,30 @@ sub ast_dump_pretty(root, indent_level)
         print #1, ")";
     case AST_CONSTANT
         if type_of_constant(root) = TYPE_STRING then
-            print #1, chr$(34); ast_constants(ast_nodes(root).ref); chr$(34);
+            print #1, dump_nn$(root); chr$(34); ast_constants(ast_nodes(root).ref); chr$(34);
         else
-            print #1, ast_constants(ast_nodes(root).ref);
+            print #1, dump_nn$(root); ast_constants(ast_nodes(root).ref);
         end if
     case AST_BLOCK
+        print #1, "{"; dump_nn$(root); "}";
         for i = 1 to ast_num_children(root)
             print #1, indent$;
-            ast_dump_pretty ast_get_child(root, i), indent_level
+            ast_dump_pretty ast_get_child(root, i), indent_level + 1
             print #1,
         next i
     case AST_VAR
-        print #1, "var(";
+        print #1, dump_nn$(root); "var(";
         var = ast_nodes(root).ref
         if symtab(var).v3 then print #1, "CONST ";
         print #1, symtab(var).identifier; ")";
     case AST_CAST
-        print #1, "cast("; type_human_readable$(type_of_cast(root)); ", ";
+        print #1, dump_nn$(root); "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, ")";
     case AST_FLAGS
-        print #1, "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
+        print #1, dump_nn$(root); "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
+    case AST_GOTO
+        print #1, indent$; dump_nn$(root); "goto("; dump_nn$(ast_nodes(root).ref); ")";
     end select
 end sub
 

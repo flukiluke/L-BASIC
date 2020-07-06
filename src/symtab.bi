@@ -30,6 +30,10 @@ const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature
 const SYM_FUNCTION = 5
+'A line number or label. Labels have the : removed.
+'v1 -> AST node that is labelled.
+'v2 -> Label has been located (if false, label has only been referenced)
+const SYM_LABEL = 6
 
 dim shared symtab(1000) as symtab_entry_t
 dim shared symtab_last_entry

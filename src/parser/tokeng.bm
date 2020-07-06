@@ -77,8 +77,14 @@ sub tok_read_next_token
             end if
             tokeng_state.linestart = FALSE
 
+        case TS_LINENUM
+            if not tokeng_state.linestart then ps_error "Line number must be at start of line"
+            tok_next_token = TOK_LINENUM
+            tokeng_state.linestart = FALSE
+
         case TS_COLON
             tok_next_token = TOK_NEWLINE
+            tokeng_state.linestart = FALSE
 
         case TS_NEWLINE
             rem_hack:

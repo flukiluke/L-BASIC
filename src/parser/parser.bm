@@ -39,6 +39,36 @@ sub ps_assert_not_const(var)
     if symtab(var).v3 then ps_error "Cannot modify CONST"
 end sub
 
+sub ps_attach_labels(node)
+    if node > 0 then
+        for i = 1 to len(ps_unattached_labels$) step 4
+            label_id = cvl(mid$(ps_unattached_labels$, i, 4))
+            debuginfo "Attached label " + symtab(label_id).identifier
+            symtab(label_id).v1 = node
+            'Have we resolved an unresolved jump?
+            for j = 1 to len(ps_unresolved_jumps$) step 4
+                unres_node = cvl(mid$(ps_unresolved_jumps$, j, 4))
+                if ast_nodes(unres_node).ref = label_id then
+                    ast_nodes(unres_node).ref = node
+                else
+                    still_unres$ = still_unres$ + mkl$(unres_node)
+                end if
+            next j
+            ps_unresolved_jumps$ = still_unres$
+        next i
+        ps_unattached_labels$ = ""
+    end if
+end sub
+
+'Handles any labels not yet attached by the end of the program, because
+'they're trailing empty lines or trailing non-executable statements.
+sub ps_attach_dangling_labels(block)
+    if ps_unattached_labels$ = "" then exit sub
+    end_node = ast_add_node(AST_BLOCK)
+    ast_attach block, end_node
+    ps_attach_labels end_node
+end sub
+
 'Expects: first token in block
 'Results: block end marker or EOF
 function ps_block
@@ -62,45 +92,104 @@ function ps_stmt
     'This line only relevant for interactive mode
     if tok_token = TOK_EOI then ps_consume TOK_EOI
 
+    if tok_token = TOK_LINENUM then ps_label
+
     debuginfo "Start statement"
     select case tok_token
         case is < 0
             ps_error "Unexpected literal " + tok_content$
         case TOK_IF
-            ps_stmt = ps_if
+            stmt = ps_if
         case TOK_DO
-            ps_stmt = ps_do
+            stmt = ps_do
         case TOK_WHILE
-            ps_stmt = ps_while
+            stmt = ps_while
         case TOK_FOR
-            ps_stmt = ps_for
+            stmt = ps_for
         case TOK_SELECT
-            ps_stmt = ps_select
+            stmt = ps_select
         case TOK_PRINT
-            ps_stmt = ps_print
+            stmt = ps_print
         case TOK_INPUT
-            ps_stmt = ps_stmt_input
+            stmt = ps_stmt_input
         case TOK_DIM
-            ps_stmt = ps_dim
+            stmt = ps_dim
         case TOK_CONST
-            ps_stmt = ps_const
+            stmt = ps_const
+        case TOK_GOTO
+            stmt = ps_goto
         case TOK_END, TOK_ELSE, TOK_ELSEIF, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
             'These all end a block in some fashion. The block-specific
             ' code will assert the ending token.
-            ps_stmt = -1
+            stmt = -1
         case TOK_UNKNOWN
-            ps_stmt = ps_assignment
+            stmt = ps_assignment
         case else
             select case symtab(tok_token).typ
             case SYM_VARIABLE
-                ps_stmt = ps_assignment
+                stmt = ps_assignment
             case SYM_FUNCTION
-                ps_stmt = ps_stmtreg
+                stmt = ps_stmtreg
             case else
                 ps_error tok_human_readable$(tok_token) + " (" + tok_content$ + ") doesn't belong here"
             end select
     end select
+
+    ps_attach_labels stmt
+
+    ps_stmt = stmt
     debuginfo "Completed statement"
+end function
+
+'Expects: TOK_LINENUM
+'Results: next token
+'Note: this is for label definitions, not references
+sub ps_label
+    debuginfo "Start label"
+    id = symtab_get_id(tok_content$)
+    if id > 0 and symtab(id).typ <> SYM_LABEL then
+        ps_error "Label name conflicts with existing identifier"
+    elseif id > 0 and symtab(id).v2 = TRUE then
+        ps_error "Label already defined"
+    elseif id > 0 then
+        'Do nothing; this is a label that was only referenced until now
+    else
+        dim symtab_label as symtab_entry_t
+        symtab_label.identifier = tok_content$
+        symtab_label.typ = SYM_LABEL
+        symtab_label.v2 = TRUE
+        symtab_add_entry symtab_label
+        id = symtab_last_entry
+    end if
+    ps_unattached_labels$ = ps_unattached_labels$ + mkl$(id)
+    ps_consume TOK_LINENUM
+    debuginfo "Completed label"
+end sub
+
+'Expects: GOTO
+'Results: token after label
+function ps_goto
+    debuginfo "Start goto"
+    ps_consume TOK_GOTO
+    ps_assert TOK_NUMINT
+    root = ast_add_node(AST_GOTO)
+    id = symtab_get_id(tok_content$)
+    if id > 0 and symtab(id).v1 > 0 then
+        debuginfo "Goto resolves to" + str$(symtab(id).v1)
+        ast_nodes(root).ref = symtab(id).v1
+    else
+        debuginfo "Unresolved goto"
+        dim symtab_label as symtab_entry_t
+        symtab_label.identifier = tok_content$
+        symtab_label.typ = SYM_LABEL
+        symtab_add_entry symtab_label
+        'Unresolved, so point directly to the label
+        ast_nodes(root).ref = symtab_last_entry
+        ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
+    end if
+    ps_consume TOK_NUMINT
+    ps_goto = root
+    debuginfo "Completed goto"
 end function
 
 'Expects: FOR

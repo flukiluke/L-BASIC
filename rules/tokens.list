@@ -11,6 +11,7 @@ generic newline   ; direct nosym
 generic comma     ; direct nosym
 generic semicolon ; direct nosym
 generic rem
+generic linenum   ; nosym
 
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).
@@ -174,6 +175,7 @@ generic case
 generic dim
 generic as
 generic const
+generic goto
 
 # functions with return type none are subs
 function _autodisplay   none
