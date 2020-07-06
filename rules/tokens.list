@@ -104,12 +104,12 @@ infix   *(star)         12  left    quad      quad,quad           ; direct
 infix   /(slash)        12  left    single    single,single       ; direct
 infix   /(slash)        12  left    double    double,double       ; direct
 infix   /(slash)        12  left    quad      quad,quad           ; direct
-prefix  negative        13          integer   integer
-prefix  negative        13          long      long
-prefix  negative        13          integer64 integer64
-prefix  negative        13          single    single
-prefix  negative        13          double    double
-prefix  negative        13          quad      quad
+prefix  negative        13          integer   integer             ; nosym
+prefix  negative        13          long      long                ; nosym
+prefix  negative        13          integer64 integer64           ; nosym
+prefix  negative        13          single    single              ; nosym
+prefix  negative        13          double    double              ; nosym
+prefix  negative        13          quad      quad                ; nosym
 infix   ^(power)        14  left    single    single,single       ; direct
 infix   ^(power)        14  left    double    double,double       ; direct
 infix   ^(power)        14  left    quad      quad,quad           ; direct
