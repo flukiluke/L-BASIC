@@ -13,18 +13,19 @@ end sub
 
 function ps_consumed(expected)
     if tok_token = expected then
+        if tok_token = TOK_NEWLINE and not ps_is_linejoin then ps_actual_linenum = ps_actual_linenum + 1
         tok_advance
         ps_consumed = TRUE
     end if
 end function
 
 sub ps_assert(expected)
-    if tok_token = TOK_NEWLINE and not ps_is_linejoin then ps_actual_linenum = ps_actual_linenum + 1
     if tok_token <> expected then
         ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
     else
         debuginfo "Assert " + tok_human_readable(expected)
     end if
+    if tok_token = TOK_NEWLINE and not ps_is_linejoin then ps_actual_linenum = ps_actual_linenum + 1
 end sub
 
 function ps_is_terminator(t)

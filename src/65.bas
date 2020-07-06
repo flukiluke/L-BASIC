@@ -148,10 +148,12 @@ function general_eof
 end function
 
 sub interactive_mode
-    tok_init
-    imm_init
     open "SCRN:" for output as #1
+    imm_init
+    Error_context = 1
+    tok_init
     do
+        Error_context = 0
         ast_init 'Clear the tree each time
         Error_context = 1
         node = ps_stmt
@@ -170,15 +172,14 @@ sub interactive_mode
         end if
         Error_context = 1
         ps_consume TOK_NEWLINE
-        Error_context = 0
     loop
 end sub
 
 sub command_mode
-    ast_init
-    tok_init
     open "SCRN:" for output as #1
+    ast_init
     Error_context = 1
+    tok_init
     root = ps_block
     Error_context = 0
     if options.debug then
