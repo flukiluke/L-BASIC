@@ -31,7 +31,7 @@ const AST_ONE = 3
 
 'assign  expr => ref = expr
 const AST_ASSIGN = 1
-'if expr block1 block2 => IF expr THEN block1 ELSE block2
+'if expr1 block1 [expr2 block2 ...] [block-n] => IF expr1 THEN block1 ELSEIF expr2 THEN block2 ... ELSE block-n
 const AST_IF = 2
 'do expr block => DO WHILE expr: block: LOOP
 const AST_DO_PRE = 3
