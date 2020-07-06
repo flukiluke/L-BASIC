@@ -24,6 +24,29 @@ function symtab_get_id(identifier$)
     loop
 end function
 
+'I'd like to be able to use this code for recoverable errors when in interactive
+'mode (rollback if an invalid line was entered), but it's not clear how one does
+'recoverable error handling in the parser since we don't have proper exceptions.
+sub symtab_commit
+    symtab_last_commit_id = symtab_last_entry
+end sub
+
+sub symtab_rollback
+    'Would it be more efficient to do this in reverse order?
+    'Does anyone care about how fast it is?
+    for i = symtab_last_commit_id + 1 to symtab_last_entry
+        identifier$ = symtab(i).identifier
+        h~& = symtab_hash~&(identifier$, ubound(symtab_map))
+        do
+            id = symtab_map(h~&)
+            if symtab(id).identifier = identifier$ then exit do
+            h~& = (h~& + 1) mod (ubound(symtab_map) + 1)
+        loop
+        symtab_map(h~&) = 0
+    next i
+    symtab_last_entry = symtab_last_commit_id
+end sub
+
 'Strictly internal functions below
 sub symtab_expand_if_needed
     const SYMTAB_MAX_LOADING = 0.75

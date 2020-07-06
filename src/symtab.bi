@@ -34,3 +34,7 @@ const SYM_FUNCTION = 5
 dim shared symtab(1000) as symtab_entry_t
 dim shared symtab_last_entry
 dim shared symtab_map(1750)
+
+'The symtab optionally supports transactions; calling symtab_rollback will
+'remove all items added since the last call to symtab_commit.
+dim shared symtab_last_commit_id
