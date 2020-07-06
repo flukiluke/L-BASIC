@@ -490,13 +490,22 @@ function ps_variable_p(token, content$)
   
     'New variable?
     if token = TOK_UNKNOWN then
-        sym.identifier = ucase$(content$)
-        sym.typ = SYM_VARIABLE
-        sym.v1 = ps_default_type
-        ps_last_var_index = ps_last_var_index + 1
-        sym.v2 = ps_last_var_index
-        symtab_add_entry sym
-        var = symtab_last_entry
+        ucase_content$ = ucase$(content$)
+        s = symtab_get_id(ucase_content$)
+        if s then
+            'Slight hack: in the case of something like A = A + 1 where A is previously defined, tokeng will fail
+            'to identify the second A as an existing variable because it is looking ahead. So, we check again here
+            'to confirm it's a new variable.
+            var = s
+        else
+            sym.identifier = ucase_content$
+            sym.typ = SYM_VARIABLE
+            sym.v1 = ps_default_type
+            ps_last_var_index = ps_last_var_index + 1
+            sym.v2 = ps_last_var_index
+            symtab_add_entry sym
+            var = symtab_last_entry
+        end if
     else
         var = token
     end if
