@@ -143,6 +143,7 @@ sub imm_enforce_type(result as imm_value_t, typ)
         result.n = clng(result.n)
     case TYPE_INTEGER64
         result.n = _round(result.n)
+        if result.n < -2147483648 or result.n > 2147483647 then error 6
     case TYPE_SINGLE
         result.n = csng(result.n)
     case TYPE_DOUBLE
