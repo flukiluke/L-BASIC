@@ -74,14 +74,13 @@ sub imm_do_for(node)
     imm_eval ast_get_child(node, 2), end_val
     imm_eval ast_get_child(node, 3), step_val
 
-    direction = sgn(step_val.n)
-    if direction <> 0 and sgn(end_val.n - start_val.n) <> direction then exit sub
-
     block = ast_get_child(node, 4)
-    do
+    direction = sgn(step_val.n)
+    if direction = 0 then direction = 1
+    do while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n)
         imm_run block
         imm_stack(sp).n = imm_stack(sp).n + step_val.n
-    loop while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n) or direction = 0
+    loop
 end sub
 
 sub imm_do_do_pre(node)
