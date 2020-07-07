@@ -29,7 +29,7 @@ sub imm_run(node)
 end sub
 
 sub imm_eval(node, result as imm_value_t)
-    imm_jump_path$ = ""
+    imm_jump_path$ = "" 'This will need to be removed eventually to support entering blocks
     select case ast_nodes(node).typ
     case AST_ASSIGN
         imm_do_assign node
@@ -71,7 +71,7 @@ sub imm_eval(node, result as imm_value_t)
                     end if
                 else
                     'need to unwind further
-                    ?"More unwinding needed"
+                    ?"Unwinding"; node
                     exit function
                 end if
             end if
@@ -113,6 +113,7 @@ sub imm_do_for(node)
     if direction = 0 then direction = 1
     do while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n)
         imm_run block
+        if len(imm_jump_path$) then exit do
         imm_stack(sp).n = imm_stack(sp).n + step_val.n
     loop
 end sub
@@ -124,6 +125,7 @@ sub imm_do_do_pre(node)
     imm_eval guard, temp
     do while temp.n
         imm_run block
+        if len(imm_jump_path$) then exit do
         imm_eval guard, temp
     loop
 end sub
@@ -134,6 +136,7 @@ sub imm_do_do_post(node)
     block = ast_get_child(node, 2)
     do
         imm_run block
+        if len(imm_jump_path$) then exit do
         imm_eval guard, temp
     loop while temp.n
 end sub
