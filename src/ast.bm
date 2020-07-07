@@ -74,6 +74,8 @@ sub ast_attach(parent, child)
         debuginfo "Not adding child node because it is " + ltrim$(str$(child))
         exit sub
     end if
+    if ast_nodes(child).parent then debuginfo "Warning: changing node parent"
+    ast_nodes(child).parent = parent
     ast_nodes(parent).num_children = ast_nodes(parent).num_children + 1
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
@@ -102,3 +104,22 @@ sub ast_expand_constants_array()
     redim _preserve ast_constants(new_size) as string
     redim _preserve ast_constant_types(new_size) as long
 end sub
+
+'List of nodes beginning at common ancestor of src & dest, ending at dest
+function ast_path_from_ancestor$(src, dest)
+    src_path$ = ast_abs_path$(src)
+    dest_path$ = ast_abs_path$(dest)
+    for i = 1 to len(dest_path$) step 4
+        if mid$(src_path$, i, 4) <> mid$(dest_path$, i, 4) then exit for
+    next i
+    ast_path_from_ancestor$ = mid$(dest_path$, i - 4)
+end function
+
+function ast_abs_path$(node)
+    n = node
+    do
+        r$ = mkl$(n) + r$
+        n = ast_nodes(n).parent
+    loop while n
+    ast_abs_path$ = r$
+end function

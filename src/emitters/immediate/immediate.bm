@@ -4,7 +4,7 @@
 
 sub imm_init
     redim imm_stack(ps_last_var_index) as imm_value_t
-    'No, I'm not mad - this explicit initialisation is to
+    'No, I'm not crazy - this explicit initialisation is to
     'work around a QB64 bug where it doesn't set these values
     'properly. Probably something to do with the dynamic-length
     'string in a UDT.
@@ -29,6 +29,7 @@ sub imm_run(node)
 end sub
 
 sub imm_eval(node, result as imm_value_t)
+    imm_jump_path$ = ""
     select case ast_nodes(node).typ
     case AST_ASSIGN
         imm_do_assign node
@@ -53,6 +54,27 @@ sub imm_eval(node, result as imm_value_t)
     case AST_BLOCK
         for i = 1 to ast_num_children(node)
             imm_eval ast_get_child(node, i), result
+            if len(imm_jump_path$) then 'Are we GOTOing somewhere?
+                if cvl(left$(imm_jump_path$, 4)) = node then
+                    'Our path it somewhere in this block
+                    imm_jump_path$ = mid$(imm_jump_path$, 5) 'Remove block node from start
+                    '-1 in either case because top of FOR does +1
+                    if len(imm_jump_path$) then
+                        'Find index of child node that we should visit
+                        target = cvl(left$(imm_jump_path$, 4))
+                        for j = 1 to ast_num_children(node)
+                            if ast_get_child(node, j) = target then print "Index of"; target; "is"; j:exit for
+                        next j
+                        i = j - 1
+                    else
+                        i = 0
+                    end if
+                else
+                    'need to unwind further
+                    ?"More unwinding needed"
+                    exit function
+                end if
+            end if
         next i
     case AST_VAR
         sp = imm_var_stack_pos(node)
@@ -60,7 +82,19 @@ sub imm_eval(node, result as imm_value_t)
         result.n = imm_stack(sp).n
     case AST_CAST
         imm_do_cast node, result
+    case AST_GOTO
+        imm_do_goto node
     end select
+end sub
+
+sub imm_do_goto(node)
+    n = ast_nodes(node).ref
+    imm_jump_path$ = ast_path_from_ancestor$(node,  n)
+    ?"Jump path:";
+    for i = 1 to len(imm_jump_path$) step 4
+        ?cvl(mid$(imm_jump_path$, i, 4));
+    next i
+    ?
 end sub
 
 sub imm_do_for(node)

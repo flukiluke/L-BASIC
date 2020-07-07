@@ -5,6 +5,7 @@
 'This is a tree structure in a convoluted way
 'The node definition
 type ast_node_t
+    parent as long
     typ as long
     ref as long
     ref2 as long 'It pains me to add this, but I needed to put type signature references somewhere for dumping and I don't want to make a new node for that
