@@ -193,3 +193,5 @@ function int            integer single
 function int            integer double
 function int            integer quad
 function rgba           long    integer,integer?,integer?,integer?
+function system         none    integer
+
