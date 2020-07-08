@@ -89,11 +89,15 @@ end function
 'Expects: first token of statement
 'Results: NEWLINE or block end marker
 function ps_stmt
-    'This line only relevant for interactive mode
-    if tok_token = TOK_EOI then ps_consume TOK_EOI
+    'This part only relevant for interactive mode
+    do while tok_token = TOK_NEWLINE
+        ps_consume TOK_NEWLINE
+    loop
+    if tok_token = TOK_EOI then
+        ps_consume TOK_EOI
+    end if
 
     if tok_token = TOK_LINENUM then ps_label
-
     debuginfo "Start statement"
     select case tok_token
         case is < 0
@@ -397,6 +401,7 @@ end function
 'Results: ELSE or NEWLINE
 'Note: This handles one or more statements joined by : and terminated by ELSE/NEWLINE
 function ps_if_stmts
+    debuginfo "Start if stmts"
     block = ast_add_node(AST_BLOCK)
     do
         while ps_is_linejoin
@@ -409,6 +414,7 @@ function ps_if_stmts
         wend
     loop until ps_is_terminator(tok_token)
     ps_if_stmts = block
+    debuginfo "Completed if stmts"
 end function
     
 'Expects: TOK_DIM
