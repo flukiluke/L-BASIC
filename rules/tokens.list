@@ -182,6 +182,7 @@ function _autodisplay   none
 function input          none    list
 function beep           none
 function chr            string  integer
+function cls            none
 function _copypalette   none    long,long
 function left           string  string,integer64
 function print          none    list
