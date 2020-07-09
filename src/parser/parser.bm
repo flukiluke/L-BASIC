@@ -171,10 +171,16 @@ sub ps_label
 end sub
 
 'Expects: GOTO
-'Results: token after label
+'Results: token after line number
 function ps_goto
-    debuginfo "Start goto"
     ps_consume TOK_GOTO
+    ps_goto = ps_goto_p
+end function
+
+'Expects: line number
+'Results: token after line number
+function ps_goto_p
+    debuginfo "Start goto"
     ps_assert TOK_NUMINT
     root = ast_add_node(AST_GOTO)
     id = symtab_get_id(tok_content$)
@@ -192,10 +198,11 @@ function ps_goto
         ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
     end if
     ps_consume TOK_NUMINT
-    ps_goto = root
+    ps_goto_p = root
     debuginfo "Completed goto"
 end function
 
+    
 'Expects: FOR
 'Results: NEWLINE after NEXT or iterator variable
 function ps_for
@@ -347,7 +354,7 @@ function ps_do_post
 end function
 
 'Expects: IF
-'Results: ???
+'Results: newline
 function ps_if
     debuginfo "Start conditional"
     root = ast_add_node(AST_IF)
@@ -399,20 +406,24 @@ end function
 
 'Expects: Start of a statement or :
 'Results: ELSE or NEWLINE
-'Note: This handles one or more statements joined by : and terminated by ELSE/NEWLINE
+'Note: This handles one or more statements joined by : and terminated by ELSE/NEWLINE, or an implicit GOTO
 function ps_if_stmts
     debuginfo "Start if stmts"
     block = ast_add_node(AST_BLOCK)
-    do
-        while ps_is_linejoin
-            ps_consume TOK_NEWLINE
-        wend
-        stmt = ps_stmt
-        ast_attach block, stmt
-        while ps_is_linejoin
-            ps_consume TOK_NEWLINE
-        wend
-    loop until ps_is_terminator(tok_token)
+    if tok_token = TOK_NUMINT then
+        ast_attach block, ps_goto_p
+    else
+        do
+            while ps_is_linejoin
+                ps_consume TOK_NEWLINE
+            wend
+            stmt = ps_stmt
+            ast_attach block, stmt
+            while ps_is_linejoin
+                ps_consume TOK_NEWLINE
+            wend
+        loop until ps_is_terminator(tok_token)
+    end if
     ps_if_stmts = block
     debuginfo "Completed if stmts"
 end function
