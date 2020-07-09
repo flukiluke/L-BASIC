@@ -23,13 +23,22 @@ sub imm_reinit
     next i
 end sub
 
+function imm_next_jump
+    if len(imm_jump_path$) = 0 then exit function
+    imm_next_jump = cvl(left$(imm_jump_path$, 4))
+    ?"Next jump is"; imm_next_jump
+end function
+
+sub imm_trim_jump
+    imm_jump_path$ = mid$(imm_jump_path$, 5)
+end sub
+
 sub imm_run(node)
     dim dummy_result as imm_value_t
     imm_eval node, dummy_result
 end sub
 
 sub imm_eval(node, result as imm_value_t)
-    imm_jump_path$ = "" 'This will need to be removed eventually to support entering blocks
     select case ast_nodes(node).typ
     case AST_ASSIGN
         imm_do_assign node
@@ -52,30 +61,7 @@ sub imm_eval(node, result as imm_value_t)
             result.n = val(ast_constants(ast_nodes(node).ref))
         end if
     case AST_BLOCK
-        for i = 1 to ast_num_children(node)
-            imm_eval ast_get_child(node, i), result
-            if len(imm_jump_path$) then 'Are we GOTOing somewhere?
-                if cvl(left$(imm_jump_path$, 4)) = node then
-                    'Our path it somewhere in this block
-                    imm_jump_path$ = mid$(imm_jump_path$, 5) 'Remove block node from start
-                    '-1 in either case because top of FOR does +1
-                    if len(imm_jump_path$) then
-                        'Find index of child node that we should visit
-                        target = cvl(left$(imm_jump_path$, 4))
-                        for j = 1 to ast_num_children(node)
-                            if ast_get_child(node, j) = target then print "Index of"; target; "is"; j:exit for
-                        next j
-                        i = j - 1
-                    else
-                        i = 0
-                    end if
-                else
-                    'need to unwind further
-                    ?"Unwinding"; node
-                    exit function
-                end if
-            end if
-        next i
+        imm_do_block node, result
     case AST_VAR
         sp = imm_var_stack_pos(node)
         result.s = imm_stack(sp).s
@@ -85,6 +71,27 @@ sub imm_eval(node, result as imm_value_t)
     case AST_GOTO
         imm_do_goto node
     end select
+end sub
+
+sub imm_do_block(node, result as imm_value_t)
+    for i = 1 to ast_num_children(node)
+        imm_eval ast_get_child(node, i), result
+        if imm_next_jump then 'Are we GOTOing somewhere?
+            if imm_next_jump = node then
+                imm_trim_jump
+                'This node is on the jump path
+                'Note: labels never attach directly to a block
+                '-1 because the top of the loop does +1
+                i = ast_find_child(node, imm_next_jump) - 1
+                imm_trim_jump
+                ? "Jump into child"; i + 1
+            else
+                'Our target is in another block, unwind further
+                ? "Unwind from"; node 
+                exit function
+            end if
+        end if
+    next i
 end sub
 
 sub imm_do_goto(node)
@@ -113,7 +120,7 @@ sub imm_do_for(node)
     if direction = 0 then direction = 1
     do while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n)
         imm_run block
-        if len(imm_jump_path$) then exit do
+        if imm_next_jump then exit sub
         imm_stack(sp).n = imm_stack(sp).n + step_val.n
     loop
 end sub
@@ -125,7 +132,7 @@ sub imm_do_do_pre(node)
     imm_eval guard, temp
     do while temp.n
         imm_run block
-        if len(imm_jump_path$) then exit do
+        if imm_next_jump then exit sub
         imm_eval guard, temp
     loop
 end sub
@@ -136,7 +143,7 @@ sub imm_do_do_post(node)
     block = ast_get_child(node, 2)
     do
         imm_run block
-        if len(imm_jump_path$) then exit do
+        if imm_next_jump then exit sub
         imm_eval guard, temp
     loop while temp.n
 end sub

@@ -93,6 +93,16 @@ sub ast_replace_child(node, index, new_child)
     mid$(ast_children(node), len(dummy&) * (index - 1) + 1, len(dummy&)) = mkl$(new_child)
 end sub
 
+'Inverse of ast_get_child. node == ast_get_child(parent, ast_find_child(parent, node))
+function ast_find_child(parent, node)
+    for i = 1 to ast_num_children(parent)
+        if ast_get_child(parent, i) = node then
+            ast_find_child = i
+            exit function
+        end if
+    next i
+end function
+
 sub ast_expand_nodes_arrays()
     new_size = ubound(ast_nodes) * 2
     redim _preserve ast_nodes(new_size) as ast_node_t
