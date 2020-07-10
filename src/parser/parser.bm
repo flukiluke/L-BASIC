@@ -128,6 +128,9 @@ function ps_stmt
             stmt = -1
         case TOK_UNKNOWN
             stmt = ps_assignment
+        case TOK_NEWLINE
+            'Blank line; ignore it
+            stmt = 0
         case else
             select case symtab(tok_token).typ
             case SYM_VARIABLE
