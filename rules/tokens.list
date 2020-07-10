@@ -125,7 +125,6 @@ literal numint ; direct
 literal numdec ; direct
 literal numexp ; direct
 literal numbase ; direct
-
 # A string
 literal stringlit ; direct
 
@@ -150,6 +149,11 @@ generic string
 
 
 # Basic language constructs
+generic dim
+generic as
+generic const
+generic goto
+
 generic if
 generic then
 generic else
@@ -172,26 +176,21 @@ generic next
 generic select
 generic case
 
-generic dim
-generic as
-generic const
-generic goto
-
 # functions with return type none are subs
 function _autodisplay   none
-function input          none      list
 function beep           none
 function chr            string    integer
 function cls            none
 function _copypalette   none      long,long
-function left           string    string,integer64
-function print          none      list
+function input          none      list
 function int            single    single
 function int            double    double
 function int            quad      quad
 function fix            single    single
 function fix            double    double
 function fix            quad      quad
+function left           string    string,integer64
+function print          none      list
 function rgba           long      integer,integer?,integer?,integer?
 function system         none      integer
 

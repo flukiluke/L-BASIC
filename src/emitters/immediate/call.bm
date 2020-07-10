@@ -7,15 +7,23 @@ sub imm_do_call(node, result as imm_value_t)
     dim v1 as imm_value_t
     dim v2 as imm_value_t
     select case ast_nodes(node).ref
-    case TOK_PRINT
-        imm_do_print node
-    case TOK_INPUT
-        imm_do_stmt_input node
+
+    'Assorted functions and statements, alphabetical
     case TOK_CHR
         imm_eval ast_get_child(node, 1), v1
         result.s = chr$(v1.n)
     case TOK_CLS
         cls
+    case TOK_FIX
+        imm_eval ast_get_child(node, 1), v1
+        result.n = fix(v1.n)
+    case TOK_INPUT
+        imm_do_stmt_input node
+    case TOK_INT
+        imm_eval ast_get_child(node, 1), v1
+        result.n = int(v1.n)
+    case TOK_PRINT
+        imm_do_print node
     case TOK_SYSTEM
         if ast_num_children(node) = 1 then
             imm_eval ast_get_child(node, 1), v1
@@ -23,6 +31,8 @@ sub imm_do_call(node, result as imm_value_t)
         else
             system
         end if
+    
+    'Maths, logic and comparisons
     case TOK_NEGATIVE
         imm_eval ast_get_child(node, 1), v1
         result.n = -v1.n
@@ -101,12 +111,6 @@ sub imm_do_call(node, result as imm_value_t)
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
         result.n = v1.n >= v2.n
-    case TOK_INT
-        imm_eval ast_get_child(node, 1), v1
-        result.n = int(v1.n)
-    case TOK_FIX
-        imm_eval ast_get_child(node, 1), v1
-        result.n = fix(v1.n)
     case else
         imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
     end select
