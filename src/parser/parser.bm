@@ -159,7 +159,8 @@ sub ps_label
     elseif id > 0 and symtab(id).v2 = TRUE then
         ps_error "Label already defined"
     elseif id > 0 then
-        'Do nothing; this is a label that was only referenced until now
+        'This is a label that was only referenced until now; mark it found
+        symtab(id).v2 = TRUE
     else
         dim symtab_label as symtab_entry_t
         symtab_label.identifier = tok_content$
