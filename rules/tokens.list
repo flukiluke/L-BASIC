@@ -179,19 +179,19 @@ generic goto
 
 # functions with return type none are subs
 function _autodisplay   none
-function input          none    list
+function input          none      list
 function beep           none
-function chr            string  integer
+function chr            string    integer
 function cls            none
-function _copypalette   none    long,long
-function left           string  string,integer64
-function print          none    list
-function int            integer integer
-function int            integer long
-function int            integer integer64
-function int            integer single
-function int            integer double
-function int            integer quad
-function rgba           long    integer,integer?,integer?,integer?
-function system         none    integer
+function _copypalette   none      long,long
+function left           string    string,integer64
+function print          none      list
+function int            single    single
+function int            double    double
+function int            quad      quad
+function fix            single    single
+function fix            double    double
+function fix            quad      quad
+function rgba           long      integer,integer?,integer?,integer?
+function system         none      integer
 

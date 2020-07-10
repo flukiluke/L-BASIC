@@ -101,6 +101,12 @@ sub imm_do_call(node, result as imm_value_t)
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
         result.n = v1.n >= v2.n
+    case TOK_INT
+        imm_eval ast_get_child(node, 1), v1
+        result.n = int(v1.n)
+    case TOK_FIX
+        imm_eval ast_get_child(node, 1), v1
+        result.n = fix(v1.n)
     case else
         imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
     end select
