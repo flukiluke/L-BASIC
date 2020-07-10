@@ -1,0 +1,78 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'if.bm - Parse rules for IF statement
+
+'Expects: IF
+'Results: newline
+function ps_if
+    debuginfo "Start conditional"
+    root = ast_add_node(AST_IF)
+    ps_consume TOK_IF
+
+    condition = ps_expr
+    if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
+    ast_attach root, condition
+    ps_consume TOK_THEN
+
+    'A REM after THEN acts as a command; we remain in single-line if mode
+    if ucase$(tok_content$) = "REM" then
+        block = ast_add_node(AST_BLOCK)
+        ast_attach root, block
+        ps_if = root
+        debuginfo "Completed conditional (single-line REM)"
+        exit function
+    end if
+
+    if tok_token <> TOK_NEWLINE or ps_is_linejoin then
+        debuginfo "Single-line IF"
+        ast_attach root, ps_if_stmts
+        if tok_token = TOK_ELSE then
+            ps_consume TOK_ELSE
+            ast_attach root, ps_if_stmts
+        end if
+    else
+        debuginfo "Multi-line IF"
+        ast_attach root, ps_block
+        do while tok_token = TOK_ELSEIF
+            ps_consume TOK_ELSEIF
+            condition = ps_expr
+            if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
+            ast_attach root, condition
+            ps_consume TOK_THEN
+            ast_attach root, ps_block
+        loop
+        if tok_token = TOK_ELSE then
+            ps_consume TOK_ELSE
+            ast_attach root, ps_block 
+        end if
+        ps_consume TOK_END
+        ps_consume TOK_IF
+    end if
+
+    ps_if = root
+    debuginfo "Completed conditional"
+end function
+
+'Expects: Start of a statement or :
+'Results: ELSE or NEWLINE
+'Note: This handles one or more statements joined by : and terminated by ELSE/NEWLINE, or an implicit GOTO
+function ps_if_stmts
+    debuginfo "Start if stmts"
+    block = ast_add_node(AST_BLOCK)
+    if tok_token = TOK_NUMINT then
+        ast_attach block, ps_goto_p
+    else
+        do
+            while ps_is_linejoin
+                ps_consume TOK_NEWLINE
+            wend
+            stmt = ps_stmt
+            ast_attach block, stmt
+            while ps_is_linejoin
+                ps_consume TOK_NEWLINE
+            wend
+        loop until ps_is_terminator(tok_token)
+    end if
+    ps_if_stmts = block
+    debuginfo "Completed if stmts"
+end function

@@ -1,0 +1,38 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'eval.bm - Top level executor function
+
+sub imm_eval(node, result as imm_value_t)
+    select case ast_nodes(node).typ
+    case AST_ASSIGN
+        imm_do_assign node
+    case AST_IF
+        imm_do_conditional node
+    case AST_DO_PRE
+        imm_do_do_pre node
+    case AST_DO_POST
+        imm_do_do_post node
+    case AST_FOR
+        imm_do_for node
+    case AST_SELECT
+        print "SELECT; skipping"
+    case AST_CALL
+        imm_do_call node, result
+    case AST_CONSTANT
+        if type_of_constant(node) = TYPE_STRING then
+            result.s = ast_constants(ast_nodes(node).ref)
+        else
+            result.n = val(ast_constants(ast_nodes(node).ref))
+        end if
+    case AST_BLOCK
+        imm_do_block node, result
+    case AST_VAR
+        sp = imm_var_stack_pos(node)
+        result.s = imm_stack(sp).s
+        result.n = imm_stack(sp).n
+    case AST_CAST
+        imm_do_cast node, result
+    case AST_GOTO
+        imm_do_goto node
+    end select
+end sub

@@ -2,7 +2,15 @@
 'SPDX-License-Identifier: Apache-2.0
 'pratt.bm - Expression parser using the Pratt algorithm
 
-deflng a-z
+'Expects: first token of expr
+'Results: token after expression
+'Note: the expression parser is greedy; it will only stop when it encounters
+'      a token that cannot possibly be part of an expression.
+function ps_expr
+    debuginfo "Start expr"
+    ps_expr = pt_expr(0)
+    debuginfo "Completed expr"
+end function
 
 function pt_expr(rbp)
     t = tok_token

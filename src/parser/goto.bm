@@ -1,0 +1,41 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'goto.bm - Parse rules for GOTO statement
+
+'Expects: GOTO
+'Results: token after line number
+function ps_goto
+    ps_consume TOK_GOTO
+    ps_goto = ps_goto_p
+end function
+
+'Expects: line number
+'Results: token after line number
+function ps_goto_p
+    debuginfo "Start goto"
+    ps_assert TOK_NUMINT
+    root = ast_add_node(AST_GOTO)
+    id = symtab_get_id(tok_content$)
+    if id > 0 and symtab(id).v2 = TRUE and symtab(id).v1 > 0 then
+        'Label exists, is resolved and is attached
+        debuginfo "Goto resolves to" + str$(symtab(id).v1)
+        ast_nodes(root).ref = symtab(id).v1
+    elseif id > 0 then
+        'This case helps with things like "10 GOTO 10" (label resolved but not attached)
+        debuginfo "Reference to pre-existing unresolved or unattached label"
+        ast_nodes(root).ref = id
+        ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
+    else
+        debuginfo "Unresolved goto"
+        dim symtab_label as symtab_entry_t
+        symtab_label.identifier = tok_content$
+        symtab_label.typ = SYM_LABEL
+        symtab_add_entry symtab_label
+        'Unresolved, so point directly to the label
+        ast_nodes(root).ref = symtab_last_entry
+        ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
+    end if
+    ps_consume TOK_NUMINT
+    ps_goto_p = root
+    debuginfo "Completed goto"
+end function

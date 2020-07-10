@@ -1,0 +1,36 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'input.bm - Executor for INPUT statement
+
+sub imm_do_stmt_input(node)
+    dim temp as imm_value_t
+    numvars = ast_num_children(node) - 1
+    first_var_offset = 1
+    flags = ast_nodes(ast_get_child(node, 1)).ref
+    if flags AND STMT_INPUT_PROMPT then
+        imm_eval ast_get_child(node, 2), temp
+        print temp.s;
+        numvars = numvars - 1
+        first_var_offset = 2
+    end if
+    if (flags AND STMT_INPUT_NO_QUESTION) = 0 then print "? ";
+    if flags AND STMT_INPUT_NO_NEWLINE then line input ; readline$ else line input readline$
+    'TODO: Better error handling
+    for i = 1 to numvars
+        comma = instr(readline$, ",")
+        if comma = 0 then comma = len(readline$) + 1
+        var = ast_get_child(node, first_var_offset + i)
+        sp = imm_var_stack_pos(var)
+        if nomoredata then
+            imm_stack(sp).s = ""
+            imm_stack(sp).n = 0
+        elseif type_of_var(var) = TYPE_STRING then
+            imm_stack(sp).s = left$(readline$, comma - 1)
+        else
+            imm_stack(sp).n = val(left$(readline$, comma - 1))
+        end if
+        imm_enforce_type imm_stack(sp), type_of_var(var)
+        readline$ = mid$(readline$, comma + 1)
+        if readline$ = "" then nomoredata = TRUE
+    next i
+end sub

@@ -1,0 +1,14 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'assignment.bm - Executor for variable assignment
+
+sub imm_do_assign(node)
+    dim rvalue as imm_value_t
+    imm_eval ast_get_child(node, 1), rvalue
+    sp = imm_var_stack_pos(node)
+    if type_of_var(node) = TYPE_STRING then
+        imm_stack(sp).s = rvalue.s
+    else
+        imm_stack(sp).n = rvalue.n
+    end if
+end sub

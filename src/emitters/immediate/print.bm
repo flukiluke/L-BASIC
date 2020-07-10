@@ -1,0 +1,36 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'print.bm - Executor for PRINT statement
+
+sub imm_do_print(node)
+    dim temp as imm_value_t
+    for i = 1 to ast_num_children(node)
+        child = ast_get_child(node, i)
+        if ast_nodes(child).typ = AST_FLAGS then
+            if ast_nodes(child).ref AND PRINT_NEXT_FIELD then
+                print ,
+            elseif ast_nodes(child).ref AND PRINT_NEWLINE then
+                print
+            end if
+        else
+            imm_eval child, temp
+            'Need to check type explicitly so we can explicitly give the correct C*() function
+            select case type_of_expr(child)
+            case TYPE_INTEGER
+                print cint(temp.n);
+            case TYPE_LONG
+                print clng(temp.n);
+            case TYPE_INTEGER64
+                print _round(temp.n);
+            case TYPE_SINGLE
+                print csng(temp.n);
+            case TYPE_DOUBLE
+                print cdbl(temp.n);
+            case TYPE_QUAD
+                print temp.n;
+            case TYPE_STRING
+                print temp.s;
+            end select
+        end if
+    next i
+end sub

@@ -1,0 +1,74 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'function.bm - Parse rules for function calls
+
+'Expects: function token
+'Results: token after last argument
+function ps_funccall
+    token = tok_token
+    tok_advance
+    ps_funccall = ps_funccall_p(token)
+end function
+
+'Expects: token after function, function token as arg
+'Results: token after last argument
+function ps_funccall_p(func)
+    debuginfo "Start function call"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = func
+    sigil = ps_opt_sigil
+    if tok_token = TOK_OPAREN then
+        ps_consume TOK_OPAREN
+        ps_funcargs root
+        ps_consume TOK_CPAREN
+    end if
+    if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
+    ps_funccall_p = root
+    debuginfo "Completed function call"
+end function
+
+'Expects: first token after function name
+'Results: token after argument list
+sub ps_funcargs(root)
+    debuginfo "Start funcargs"
+    'This code first builds a candidate type signature, then tries to match that against an instance signature.
+    func = ast_nodes(root).ref
+    do
+        if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
+        select case tok_token
+        case TOK_COMMA
+            ps_consume TOK_COMMA
+            ps_funcarg root, candidate$
+        case else
+            ps_funcarg root, candidate$
+        end select
+    loop
+
+    'Now we need to find a signature of func that matches candidate$.
+    matching_sig = type_find_sig_match(func, candidate$)
+    if matching_sig = 0 then ps_error "Cannot find matching type signature"
+    ast_nodes(root).ref2 = matching_sig
+    'Modify argument nodes to add in casts where needed
+    for i = 1 to ast_num_children(root)
+        expr = ast_get_child(root, i)
+        expr_type = type_of_expr(expr)
+        arg_type = type_sig_argtype(matching_sig, i)
+        if expr_type <> arg_type then
+            ast_replace_child root, i, ast_add_cast(expr, arg_type)
+        end if
+    next i
+    debuginfo "Completed funcargs"
+end sub
+
+'Expects: start of expression
+'Results: token after expression
+sub ps_funcarg(root, candidate$)
+    debuginfo "Start funcarg"
+    expr = ps_expr
+    'Declare whether this expression would satisfy a BYREF argument
+    if ast_nodes(expr).typ = AST_VAR then flags = TYPE_BYREF
+    candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
+    ast_attach root, expr
+    debuginfo "Completed funcarg"
+end sub
+

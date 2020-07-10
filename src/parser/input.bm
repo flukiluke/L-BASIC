@@ -1,0 +1,46 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'input.bm - Parse rules for INPUT statement
+
+'Expects: TOK_INPUT
+'Results: token after input variables
+'Format: INPUT[;]["prompt"{;|,}]variablelist
+function ps_stmt_input
+    debuginfo "Start stmt input"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = TOK_INPUT
+    ast_nodes(root).ref2 = symtab(TOK_INPUT).v1
+    flags = ast_add_node(AST_FLAGS)
+    ast_attach root, flags
+    ps_consume TOK_INPUT
+
+    if tok_token = TOK_SEMICOLON then
+        ast_nodes(flags).ref = STMT_INPUT_NO_NEWLINE
+        ps_consume TOK_SEMICOLON
+    end if
+
+    'The prompt must be a literal string, no expressions. Crazy, right?
+    if tok_token = TOK_STRINGLIT then
+        prompt = ast_add_node(AST_CONSTANT)
+        ast_nodes(prompt).ref = ast_add_constant(tok_token, tok_content$, TYPE_STRINGLIT)
+        ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_PROMPT
+        ast_attach root, prompt
+        ps_consume TOK_STRINGLIT
+        if tok_token = TOK_COMMA then
+            ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_NO_QUESTION
+            ps_consume TOK_COMMA
+        else
+            ps_consume TOK_SEMICOLON
+        end if
+    end if
+
+    do
+        var = ast_add_node(AST_VAR)
+        ast_nodes(var).ref = ps_variable
+        ps_assert_not_const ast_nodes(var).ref
+        ast_attach root, var
+    loop while ps_consumed(TOK_COMMA)
+
+    ps_stmt_input = root
+    debuginfo "Completed stmt input"
+end function

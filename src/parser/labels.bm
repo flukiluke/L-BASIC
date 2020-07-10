@@ -1,0 +1,69 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'labels.bm - Parse rule for labels and utility functions for handling them
+
+'Expects: TOK_LINENUM
+'Results: next token
+'Note: this is for label definitions, not references
+sub ps_label
+    debuginfo "Start label"
+    id = symtab_get_id(tok_content$)
+    if id > 0 and symtab(id).typ <> SYM_LABEL then
+        ps_error "Label name conflicts with existing identifier"
+    elseif id > 0 and symtab(id).v2 = TRUE then
+        ps_error "Label already defined"
+    elseif id > 0 then
+        'This is a label that was only referenced until now; mark it found
+        symtab(id).v2 = TRUE
+    else
+        dim symtab_label as symtab_entry_t
+        symtab_label.identifier = tok_content$
+        symtab_label.typ = SYM_LABEL
+        symtab_label.v2 = TRUE
+        symtab_add_entry symtab_label
+        id = symtab_last_entry
+    end if
+    ps_unattached_labels$ = ps_unattached_labels$ + mkl$(id)
+    ps_consume TOK_LINENUM
+    debuginfo "Completed label"
+end sub
+
+sub ps_attach_labels(node)
+    if node > 0 then
+        for i = 1 to len(ps_unattached_labels$) step 4
+            label_id = cvl(mid$(ps_unattached_labels$, i, 4))
+            debuginfo "Attached label " + symtab(label_id).identifier
+            symtab(label_id).v1 = node
+            'Have we resolved an unresolved jump?
+            for j = 1 to len(ps_unresolved_jumps$) step 4
+                unres_node = cvl(mid$(ps_unresolved_jumps$, j, 4))
+                if ast_nodes(unres_node).ref = label_id then
+                    ast_nodes(unres_node).ref = node
+                else
+                    still_unres$ = still_unres$ + mkl$(unres_node)
+                end if
+            next j
+            ps_unresolved_jumps$ = still_unres$
+        next i
+        ps_unattached_labels$ = ""
+    end if
+end sub
+
+'Handles any labels not yet attached by the end of the program, because
+'they're trailing empty lines or trailing non-executable statements.
+'Also ensures all references point to an existent label.
+sub ps_finish_labels(block)
+    if len(ps_unattached_labels$) > 0 then
+        end_node = ast_add_node(AST_BLOCK)
+        ast_attach block, end_node
+        ps_attach_labels end_node
+    end if 
+    if len(ps_unresolved_jumps$) then
+        labels$ = symtab(ast_nodes(cvl(left$(ps_unresolved_jumps$, 4))).ref).identifier
+        for i = 5 to len(ps_unresolved_jumps$) step 4
+            labels$ = ", " + symtab(ast_nodes(cvl(mid$(ps_unresolved_jumps$, i, 4))).ref).identifier
+        next i
+        ps_error "Undefined label(s): " + labels$
+    end if
+end sub
+

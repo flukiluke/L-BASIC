@@ -1,0 +1,81 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'var.bm - Parse rules for DIM and variables
+
+'Expects: TOK_DIM
+'Results: token after last declaration
+'Format: DIM variablelist
+function ps_dim
+    debuginfo "Start dim"
+    ps_consume TOK_DIM
+    do
+        ps_assert_not_const ps_variable
+    loop while ps_consumed(TOK_COMMA)
+    ps_dim = 0
+    debuginfo "Completed dim"
+end function
+
+'Expects: variable token
+'Results: token after variable & sigil
+function ps_variable
+    token = tok_token
+    content$ = tok_content$
+    tok_advance
+    ps_variable = ps_variable_p(token, content$)
+end function
+
+'Expects: token after variable, variable token as arg
+'Results: post token
+function ps_variable_p(token, content$)
+    debuginfo "Start variable"
+    dim sym as symtab_entry_t
+    'Do array & udt element stuff here.
+    'For now only support simple variables.
+  
+    'New variable?
+    if token = TOK_UNKNOWN then
+        ucase_content$ = ucase$(content$)
+        s = symtab_get_id(ucase_content$)
+        if s then
+            'Slight hack: in the case of something like A = A + 1 where A is previously defined, tokeng will fail
+            'to identify the second A as an existing variable because it is looking ahead. So, we check again here
+            'to confirm it's a new variable.
+            var = s
+        else
+            sym.identifier = ucase_content$
+            sym.typ = SYM_VARIABLE
+            sym.v1 = ps_default_type
+            ps_last_var_index = ps_last_var_index + 1
+            sym.v2 = ps_last_var_index
+            symtab_add_entry sym
+            var = symtab_last_entry
+        end if
+    else
+        var = token
+    end if
+
+    'Check for type sigil
+    sigil = ps_opt_sigil
+    if sigil then
+        if token <> TOK_UNKNOWN and sigil <> symtab(var).v1 then ps_error "Type suffix does not match existing variable type"
+        'Otherwise it's a new variable; set its type
+        symtab(var).v1 = sigil
+    end if
+    ps_variable_p = var
+    debuginfo "Completed variable"
+end function
+
+'Expects: sigil or otherwise
+'Results: post token if sigil present, unchanged otherwise
+function ps_opt_sigil
+    debuginfo "Start optional sigil"
+    if tok_token = TOK_AS then ps_consume TOK_AS
+    typ = type_tok2type(tok_token)
+    if typ then
+        ps_opt_sigil = typ
+        tok_advance
+    else
+        ps_opt_sigil = 0
+    end if
+    debuginfo "Completed optional sigil"
+end function

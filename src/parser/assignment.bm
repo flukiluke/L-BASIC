@@ -1,0 +1,25 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'assignment.bm - Parse rules for variable assignment
+
+'Expects: lvalue token
+'Results: token after rvalue
+function ps_assignment
+    debuginfo "Start assignment"
+    ref = ps_variable
+    ps_assert_not_const ref
+    root = ast_add_node(AST_ASSIGN)
+    ast_nodes(root).ref = ref
+    ps_consume TOK_EQUALS
+
+    expr = ps_expr
+    lvalue_type = symtab(ref).v1
+    rvalue_type = type_of_expr(expr)
+    if not type_can_cast(lvalue_type, rvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
+    expr = ast_add_cast(expr, lvalue_type)
+    ast_attach root, expr
+
+    ps_assignment = root
+    debuginfo "Completed assignment"
+end function
+

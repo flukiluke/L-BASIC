@@ -1,0 +1,42 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'print.bm - Parse rules for PRINT statement
+
+'Expects: TOK_PRINT
+'Results: token after last expression, comma or semicolon
+'Format: PRINT [expressionlist][{,|;}]
+function ps_print
+    debuginfo "Start print"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = TOK_PRINT
+    ast_nodes(root).ref2 = symtab(TOK_PRINT).v1
+    ps_consume TOK_PRINT
+
+    newline = TRUE
+    do
+        if ps_is_terminator(tok_token) then exit do
+        select case tok_token
+        case TOK_COMMA
+            node = ast_add_node(AST_FLAGS)
+            ast_nodes(node).ref = PRINT_NEXT_FIELD
+            ast_attach root, node
+            ps_consume TOK_COMMA
+            newline = FALSE
+        case TOK_SEMICOLON
+            'No flags needed here
+            ps_consume TOK_SEMICOLON
+            newline = FALSE
+        case else
+            ast_attach root, ps_expr
+            newline = TRUE
+        end select
+    loop
+    if newline then
+        node = ast_add_node(AST_FLAGS)
+        ast_nodes(node).ref = PRINT_NEWLINE
+        ast_attach root, node
+    end if
+    
+    ps_print = root
+    debuginfo "Completed print"
+end function

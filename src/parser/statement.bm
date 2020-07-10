@@ -1,0 +1,80 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'statement.bm - Parse rules for statements
+
+'Expects: first token of statement
+'Results: NEWLINE or block end marker
+function ps_stmt
+    'This part only relevant for interactive mode
+    do while tok_token = TOK_NEWLINE
+        ps_consume TOK_NEWLINE
+    loop
+    if tok_token = TOK_EOI then
+        ps_consume TOK_EOI
+    end if
+
+    if tok_token = TOK_LINENUM then ps_label
+    debuginfo "Start statement"
+    select case tok_token
+        case is < 0
+            ps_error "Unexpected literal " + tok_content$
+        case TOK_IF
+            stmt = ps_if
+        case TOK_DO
+            stmt = ps_do
+        case TOK_WHILE
+            stmt = ps_while
+        case TOK_FOR
+            stmt = ps_for
+        case TOK_SELECT
+            stmt = ps_select
+        case TOK_PRINT
+            stmt = ps_print
+        case TOK_INPUT
+            stmt = ps_stmt_input
+        case TOK_DIM
+            stmt = ps_dim
+        case TOK_CONST
+            stmt = ps_const
+        case TOK_GOTO
+            stmt = ps_goto
+        case TOK_END, TOK_ELSE, TOK_ELSEIF, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
+            'These all end a block in some fashion. The block-specific
+            ' code will assert the ending token.
+            stmt = -1
+        case TOK_UNKNOWN
+            stmt = ps_assignment
+        case TOK_NEWLINE
+            'Blank line; ignore it
+            stmt = 0
+        case else
+            select case symtab(tok_token).typ
+            case SYM_VARIABLE
+                stmt = ps_assignment
+            case SYM_FUNCTION
+                stmt = ps_stmtreg
+            case else
+                ps_error tok_human_readable$(tok_token) + " (" + tok_content$ + ") doesn't belong here"
+            end select
+    end select
+
+    ps_attach_labels stmt
+
+    ps_stmt = stmt
+    debuginfo "Completed statement"
+end function
+
+
+'Expects: statement token
+'Results: token after last argument
+function ps_stmtreg
+    debuginfo "Start stmtreg"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = tok_token
+
+    tok_advance
+    ps_funcargs root
+
+    ps_stmtreg = root
+    debuginfo "Completed stmtreg"
+end function
