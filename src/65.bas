@@ -23,7 +23,7 @@ const FALSE = 0, TRUE = not FALSE
 on error goto error_handler
 
 dim shared VERSION$
-VERSION$ = "initial dev. version"
+VERSION$ = "0.0.1"
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
@@ -239,12 +239,11 @@ function remove_ext$(fullname$)
 end function
 
 sub show_version
-    print "The '65 compiler (" + VERSION$ + ")"
-    print "This version is still under heavy development!"
+    print "The 65 BASIC compiler version " + VERSION$
 end sub
 
 sub show_help
-    print "The '65 compiler (" + VERSION$ + ")"
+    print "The 65 BASIC compiler"
     print "Usage: " + command$(0) + " [OPTIONS] [FILE]
     print "Execute FILE if given, otherwise launch an interactive session."
     print '                                                                                '80 columns
