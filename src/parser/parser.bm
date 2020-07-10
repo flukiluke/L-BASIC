@@ -62,11 +62,20 @@ end sub
 
 'Handles any labels not yet attached by the end of the program, because
 'they're trailing empty lines or trailing non-executable statements.
-sub ps_attach_dangling_labels(block)
-    if ps_unattached_labels$ = "" then exit sub
-    end_node = ast_add_node(AST_BLOCK)
-    ast_attach block, end_node
-    ps_attach_labels end_node
+'Also ensures all references point to an existent label.
+sub ps_finish_labels(block)
+    if len(ps_unattached_labels$) > 0 then
+        end_node = ast_add_node(AST_BLOCK)
+        ast_attach block, end_node
+        ps_attach_labels end_node
+    end if 
+    if len(ps_unresolved_jumps$) then
+        labels$ = symtab(ast_nodes(cvl(left$(ps_unresolved_jumps$, 4))).ref).identifier
+        for i = 5 to len(ps_unresolved_jumps$) step 4
+            labels$ = ", " + symtab(ast_nodes(cvl(mid$(ps_unresolved_jumps$, i, 4))).ref).identifier
+        next i
+        ps_error "Label(s) " + labels$ + " not defined"
+    end if
 end sub
 
 'Expects: first token in block

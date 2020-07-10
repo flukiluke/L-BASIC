@@ -219,7 +219,7 @@ sub run_mode
     tok_init
     Error_context = 1
     root = ps_block
-    ps_attach_dangling_labels root
+    ps_finish_labels root
     Error_context = 0
     close #input_file_handle
     imm_init
