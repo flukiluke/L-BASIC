@@ -190,7 +190,9 @@ function fix            single    single
 function fix            double    double
 function fix            quad      quad
 function left           string    string,integer64
+function mid            string    string,integer64,integer64?
 function print          none      list
+function right          string    string,integer64
 function rgba           long      integer,integer?,integer?,integer?
 function system         none      integer
 
