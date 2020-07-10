@@ -6,9 +6,9 @@ sub dump_program(root)
     print #1, "Table of identifiers:"
     symtab_dump
     print #1,
-    print #1, "Function type signatures:"
-    type_dump_functions
-    print #1,
+    'print #1, "Function type signatures:"
+    'type_dump_functions
+    'print #1,
     print #1, "Table of constants:"
     ast_dump_constants
     print #1,

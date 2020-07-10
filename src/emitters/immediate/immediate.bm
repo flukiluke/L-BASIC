@@ -82,7 +82,11 @@ sub imm_do_block(node, result as imm_value_t)
     for i = start_at to ast_num_children(node)
         imm_eval ast_get_child(node, i), result
         if imm_next_jump then 'Are we GOTOing somewhere?
-            if imm_next_jump = node then
+            if imm_next_jump = ast_get_child(node, i) then
+                'Handle the crazy case of things like "10 GOTO 10"
+                imm_trim_jump
+                i = i - 1
+            elseif imm_next_jump = node then
                 imm_trim_jump
                 'This node is on the jump path
                 'Note: labels never attach directly to a block
@@ -91,6 +95,7 @@ sub imm_do_block(node, result as imm_value_t)
                 imm_trim_jump
             else
                 'Our target is in another block, unwind further
+                ?"Unwind"
                 exit function
             end if
         end if
@@ -99,7 +104,12 @@ end sub
 
 sub imm_do_goto(node)
     n = ast_nodes(node).ref
-    imm_jump_path$ = ast_path_from_ancestor$(node,  n)
+    imm_jump_path$ = ast_path_from_ancestor$(node, n)
+    ?"Jump path: ";
+    for i = 1 to len(imm_jump_path$) step 4
+        print cvl(mid$(imm_jump_path$, i, 4));
+    next i
+    ?
 end sub
 
 sub imm_do_for(node)
