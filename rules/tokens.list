@@ -184,6 +184,10 @@ function abs            single    single
 function abs            double    double
 function abs            quad      quad
 function asc            integer   string,integer64?
+function atn            single    single
+function atn            double    double
+function atn            quad      quad
+
 function beep           none
 function chr            string    integer
 function cls            none
