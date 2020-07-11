@@ -177,11 +177,9 @@ generic select
 generic case
 
 # functions with return type none are subs
-function _autodisplay   none
 function beep           none
 function chr            string    integer
 function cls            none
-function _copypalette   none      long,long
 function input          none      list
 function int            single    single
 function int            double    double
@@ -191,8 +189,9 @@ function fix            double    double
 function fix            quad      quad
 function left           string    string,integer64
 function mid            string    string,integer64,integer64?
+function play           none      string
 function print          none      list
 function right          string    string,integer64
-function rgba           long      integer,integer?,integer?,integer?
+function sound          none      double,double
 function system         none      integer
 

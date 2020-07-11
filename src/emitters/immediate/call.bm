@@ -10,6 +10,8 @@ sub imm_do_call(node, result as imm_value_t)
     select case ast_nodes(node).ref
 
     'Assorted functions and statements, alphabetical
+    case TOK_BEEP
+        beep
     case TOK_CHR
         imm_eval ast_get_child(node, 1), v1
         result.s = chr$(v1.n)
@@ -36,12 +38,19 @@ sub imm_do_call(node, result as imm_value_t)
         else
             result.s = mid$(v1.s, v2.n)
         end if
+    case TOK_PLAY
+        imm_eval ast_get_child(node, 1), v1
+        play v1.s
     case TOK_PRINT
         imm_do_print node
     case TOK_RIGHT
         imm_eval ast_get_child(node, 1), v1
         imm_eval ast_get_child(node, 2), v2
         result.s = right$(v1.s, v2.n)
+    case TOK_SOUND
+        imm_eval ast_get_child(node, 1), v1
+        imm_eval ast_get_child(node, 2), v2
+        sound v1.n, v2.n
     case TOK_SYSTEM
         if ast_num_children(node) = 1 then
             imm_eval ast_get_child(node, 1), v1
