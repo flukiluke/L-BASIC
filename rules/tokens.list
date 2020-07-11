@@ -199,9 +199,12 @@ function fix            single    single
 function fix            double    double
 function fix            quad      quad
 function left           string    string,integer64
+# Commented out because no corresponding executor yet
+# function locate         none      integer?,integer?,integer?
+# function locate         none      integer?,integer?,integer?,integer,integer
 function mid            string    string,integer64,integer64?
 function play           none      string
 function print          none      list
 function right          string    string,integer64
 function sound          none      double,double
-function system         none      integer
+function system         none      integer?

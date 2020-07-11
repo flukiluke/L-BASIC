@@ -130,6 +130,8 @@ sub ast_dump_pretty(root, indent_level)
         print #1, dump_nn$(root); "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
     case AST_GOTO
         print #1, indent$; dump_nn$(root); "goto("; dump_nn$(ast_nodes(root).ref); ")";
+    case AST_NONE
+        print #1, dump_nn$(root); "[NONE]";
     end select
 end sub
 

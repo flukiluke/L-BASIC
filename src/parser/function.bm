@@ -33,6 +33,7 @@ sub ps_funcargs(root)
     debuginfo "Start funcargs"
     'This code first builds a candidate type signature, then tries to match that against an instance signature.
     func = ast_nodes(root).ref
+    if tok_token = TOK_COMMA then ps_funcarg root, candidate$
     do
         if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
         select case tok_token
@@ -53,9 +54,13 @@ sub ps_funcargs(root)
         expr = ast_get_child(root, i)
         expr_type = type_of_expr(expr)
         arg_type = type_sig_argtype(matching_sig, i)
-        if expr_type <> arg_type then
+        if expr_type <> arg_type and expr_type <> TYPE_NONE then
             ast_replace_child root, i, ast_add_cast(expr, arg_type)
         end if
+    next i
+    'Add any optional arguments at end
+    for i = ast_num_children(root) + 1 to type_sig_numargs(matching_sig)
+        ast_attach root, ast_add_node(AST_NONE)
     next i
     debuginfo "Completed funcargs"
 end sub
@@ -64,7 +69,13 @@ end sub
 'Results: token after expression
 sub ps_funcarg(root, candidate$)
     debuginfo "Start funcarg"
-    expr = ps_expr
+    if tok_token = TOK_COMMA then
+        'empty argument
+        expr = ast_add_node(AST_NONE)
+        flags = TYPE_BYREF
+    else
+        expr = ps_expr
+    end if
     'Declare whether this expression would satisfy a BYREF argument
     if ast_nodes(expr).typ = AST_VAR then flags = TYPE_BYREF
     candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)

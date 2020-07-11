@@ -56,3 +56,5 @@ const AST_CAST = 11
 const AST_FLAGS = 12
 'If the goto is resolved, ref is the node to jump to. If unresolved, the label symtab. A fully-parsed program will have no unresolved labels.
 const AST_GOTO = 13
+'Used for empty optional arguments to functions
+const AST_NONE = 14

@@ -85,6 +85,10 @@ function ast_num_children(node)
     ast_num_children = len(ast_children(node)) / len(dummy&)
 end function
 
+function ast_is_none(node)
+    ast_is_none = ast_nodes(node).typ = AST_NONE
+end function
+
 function ast_get_child(node, index)
     ast_get_child = cvl(mid$(ast_children(node), len(dummy&) * (index - 1) + 1, len(dummy&)))
 end function
