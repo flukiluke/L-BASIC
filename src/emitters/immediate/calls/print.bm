@@ -2,8 +2,7 @@
 'SPDX-License-Identifier: Apache-2.0
 'print.bm - Executor for PRINT statement
 
-sub imm_do_print(node)
-    dim temp as imm_value_t
+case TOK_PRINT
     for i = 1 to ast_num_children(node)
         child = ast_get_child(node, i)
         if ast_nodes(child).typ = AST_FLAGS then
@@ -13,24 +12,23 @@ sub imm_do_print(node)
                 print
             end if
         else
-            imm_eval child, temp
+            imm_eval child, v1
             'Need to check type explicitly so we can explicitly give the correct C*() function
             select case type_of_expr(child)
             case TYPE_INTEGER
-                print cint(temp.n);
+                print cint(v1.n);
             case TYPE_LONG
-                print clng(temp.n);
+                print clng(v1.n);
             case TYPE_INTEGER64
-                print _round(temp.n);
+                print _round(v1.n);
             case TYPE_SINGLE
-                print csng(temp.n);
+                print csng(v1.n);
             case TYPE_DOUBLE
-                print cdbl(temp.n);
+                print cdbl(v1.n);
             case TYPE_QUAD
-                print temp.n;
+                print v1.n;
             case TYPE_STRING
-                print temp.s;
+                print v1.s;
             end select
         end if
     next i
-end sub

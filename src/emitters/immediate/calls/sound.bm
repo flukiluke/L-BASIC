@@ -1,0 +1,15 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'sound.bm - Executors for sound functions
+
+case TOK_BEEP
+    beep
+
+case TOK_PLAY
+    imm_eval ast_get_child(node, 1), v1
+    play v1.s
+
+case TOK_SOUND
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    sound v1.n, v2.n

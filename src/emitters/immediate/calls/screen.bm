@@ -1,0 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'screen.bm - Executors for screen management commands
+
+case TOK_CLS
+    cls
+

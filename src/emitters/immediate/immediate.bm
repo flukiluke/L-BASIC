@@ -40,7 +40,5 @@ end sub
 '$include: 'for.bm'
 '$include: 'goto.bm'
 '$include: 'if.bm'
-'$include: 'input.bm'
 '$include: 'loop.bm'
-'$include: 'print.bm'
 '$include: 'var.bm'

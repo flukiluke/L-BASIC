@@ -1,0 +1,50 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'maths.bm - Executors for maths operations
+
+case TOK_ABS
+    imm_eval ast_get_child(node, 1), v1
+    result.n = abs(v1.n)
+
+case TOK_ATN
+    imm_eval ast_get_child(node, 1), v1
+    result.n = atn(v1.n)
+
+case TOK_BACKSLASH
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    result.n = v1.n \ v2.n
+
+case TOK_DASH
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    result.n = v1.n - v2.n
+
+case TOK_MOD
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    result.n = v1.n mod v2.n
+
+case TOK_POWER
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    result.n = v1.n ^ v2.n
+
+case TOK_NEGATIVE
+    imm_eval ast_get_child(node, 1), v1
+    result.n = -v1.n
+
+case TOK_PLUS
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    if type_of_call(node) = TYPE_STRING then result.s = v1.s + v2.s else result.n = v1.n + v2.n
+
+case TOK_SLASH
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    result.n = v1.n / v2.n
+
+case TOK_STAR
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    result.n = v1.n * v2.n
