@@ -177,6 +177,13 @@ generic select
 generic case
 
 # functions with return type none are subs
+function abs            integer   integer
+function abs            long      long
+function abs            integer64 integer64
+function abs            single    single
+function abs            double    double
+function abs            quad      quad
+function asc            integer   string,integer64?
 function beep           none
 function chr            string    integer
 function cls            none
@@ -194,4 +201,3 @@ function print          none      list
 function right          string    string,integer64
 function sound          none      double,double
 function system         none      integer
-
