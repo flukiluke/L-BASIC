@@ -50,6 +50,8 @@ function ps_variable_p(token, content$)
             symtab_add_entry sym
             var = symtab_last_entry
         end if
+    elseif symtab(token).typ <> SYM_VARIABLE then
+        ps_error "Expected variable"
     else
         var = token
     end if

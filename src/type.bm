@@ -22,7 +22,7 @@ function type_of_expr(root)
     case AST_FLAGS
         type_of_expr = TYPE_LONG
     case else
-        ps_error "Cannot determine type of expression " + str$(root)
+        type_of_expr = TYPE_NONE
     end select
 end function
 
