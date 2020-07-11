@@ -3,5 +3,27 @@
 'screen.bm - Executors for screen management commands
 
 case TOK_CLS
-    cls
+    c1 = ast_get_child(node, 1)
+    c2 = ast_get_child(node, 2)
+    if ast_is_none(c1) and ast_is_none(c2) then
+        cls
+    elseif not ast_is_none(c1) then
+        imm_eval c1, v1
+        cls v1.n
+    elseif not ast_is_none(c2) then
+        imm_eval c2, v2
+        cls , v2.n
+    else
+        imm_eval c1, v1
+        imm_eval c2, v2
+        cls v1.n, v2.n
+    end if
 
+case TOK_COLOR
+    v1.n = _defaultcolor
+    v2.n = _backgroundcolor
+    c1 = ast_get_child(node, 1)
+    c2 = ast_get_child(node, 2)
+    if not ast_is_none(c1) then imm_eval c1, v1
+    if not ast_is_none(c2) then imm_eval c2, v2
+    color v1.n, v2.n

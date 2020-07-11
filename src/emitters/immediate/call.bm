@@ -9,6 +9,8 @@ sub imm_do_call(node, result as imm_value_t)
     dim v3 as imm_value_t
     select case ast_nodes(node).ref
     '$include: 'calls/input.bm'
+    '$include: 'calls/file.bm'
+    '$inlcude: 'calls/graphics.bm'
     '$include: 'calls/logic.bm'
     '$include: 'calls/maths.bm'
     '$include: 'calls/misc.bm'

@@ -15,6 +15,10 @@ case TOK_BACKSLASH
     imm_eval ast_get_child(node, 2), v2
     result.n = v1.n \ v2.n
 
+case TOK_COS
+    imm_eval ast_get_child(node, 1), v1
+    result.n = cos(v1.n)
+
 case TOK_DASH
     imm_eval ast_get_child(node, 1), v1
     imm_eval ast_get_child(node, 2), v2

@@ -189,22 +189,41 @@ function atn            double    double
 function atn            quad      quad
 
 function beep           none
+
+function cdbl           double    double
+function chdir          none      string
 function chr            string    integer
-function cls            none
+function cint           integer   integer
+function clng           long      long
+function cls            none      integer?,long?
+function color          none      long?,long?
+function command        string    integer?
+function cos            single    single
+function cos            double    double
+function cos            quad      quad
+function csng           single    single
+
 function input          none      list
 function int            single    single
 function int            double    double
 function int            quad      quad
+
 function fix            single    single
 function fix            double    double
 function fix            quad      quad
+
 function left           string    string,integer64
+
 # Commented out because no corresponding executor yet
 # function locate         none      integer?,integer?,integer?
 # function locate         none      integer?,integer?,integer?,integer,integer
+
 function mid            string    string,integer64,integer64?
+
 function play           none      string
 function print          none      list
+
 function right          string    string,integer64
+
 function sound          none      double,double
 function system         none      integer?
