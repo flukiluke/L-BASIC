@@ -59,6 +59,7 @@ end function
 
 '$include: 'assignment.bm'
 '$include: 'const.bm'
+'$include: 'drawing.bm'
 '$include: 'for.bm'
 '$include: 'function.bm'
 '$include: 'goto.bm'

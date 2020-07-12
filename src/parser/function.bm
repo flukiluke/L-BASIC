@@ -39,6 +39,13 @@ end function
 'Expects: first token after function name
 'Results: token after argument list
 sub ps_funcargs(root)
+    ps_funcargs_tail root, ""
+end sub
+
+'Expects: token in argument list
+'Results: token after argument list
+'Note: This allows parsing an argument list that is already partially parsed by specialised functions
+sub ps_funcargs_tail(root, candidate$)
     debuginfo "Start funcargs"
     'This code first builds a candidate type signature, then tries to match that against an instance signature.
     func = ast_nodes(root).ref

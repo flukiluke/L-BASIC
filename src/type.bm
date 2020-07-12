@@ -20,7 +20,7 @@ function type_of_expr(root)
     case AST_CAST
         type_of_expr = type_of_cast(root)
     case AST_FLAGS
-        type_of_expr = TYPE_LONG
+        type_of_expr = TYPE_FLAGS
     case else
         type_of_expr = TYPE_NONE
     end select

@@ -194,6 +194,7 @@ function cdbl           double    double
 function chdir          none      string
 function chr            string    integer
 function cint           integer   integer
+function circle         none      flags,single,single,integer,long?,single?,single?,single?
 function clng           long      long
 function cls            none      integer?,long?
 function color          none      long?,long?
@@ -225,5 +226,6 @@ function print          none      list
 
 function right          string    string,integer64
 
+function screen         none      long,integer?,integer?,integer?
 function sound          none      double,double
 function system         none      integer?

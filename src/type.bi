@@ -37,7 +37,8 @@ const TYPE_QUAD = 7
 'Everyone's favourite non-numeric type
 const TYPE_STRING = 8
 
-'Not a real type; used to denote that a function has a flexible number of arbitrary child nodes (looking at you, INPUT & PRINT).
+'These types aren't real types
+'Flexible number of arbitrary child nodes (looking at you, INPUT & PRINT).
 const TYPE_LIST = 9
 'Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
 const TYPE_FLAGS = 10

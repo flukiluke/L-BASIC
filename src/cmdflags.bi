@@ -10,3 +10,4 @@ const PRINT_NEXT_FIELD = 1 'A comma used after a variable moves to the next 14-c
 const PRINT_NEWLINE = 2 'No comma or semicolon at the end of the list
 'Note: a semicolon sets no flag
 
+const GRAPHICS_STEP = 1 'Next args are coordinate that is relative
