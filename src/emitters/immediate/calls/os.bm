@@ -1,6 +1,6 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'misc.bm - Miscellaneous executors that don't fit anywhere else
+'os.bm - Various OS and environment functions
 
 case TOK_COMMAND
     if ast_is_none(ast_get_child(node, 1)) then
@@ -16,6 +16,15 @@ case TOK_COMMAND
 
 case TOK__COMMANDCOUNT
     result.n = _commandcount - input_file_command_offset
+
+case TOK_ENVIRON
+    c1 = ast_get_child(node, 1)
+    imm_eval c1, v1
+    if type_of_expr(c1) = TYPE_STRING then
+        result.s = environ$(v1.s)
+    else
+        result.s = environ$(v1.n)
+    end if
 
 case TOK_SYSTEM
     if not ast_is_none(ast_get_child(node, 1)) then

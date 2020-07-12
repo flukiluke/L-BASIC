@@ -17,12 +17,13 @@ sub imm_do_call(node, result as imm_value_t)
     '$include: 'calls/graphics.bm'
     '$include: 'calls/logic.bm'
     '$include: 'calls/maths.bm'
-    '$include: 'calls/misc.bm'
+    '$include: 'calls/os.bm'
     '$include: 'calls/print.bm'
     '$include: 'calls/rounding.bm'
     '$include: 'calls/screen.bm'
     '$include: 'calls/sound.bm'
     '$include: 'calls/string.bm'
+    '$include: 'calls/time.bm'
     case else
         imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
     end select

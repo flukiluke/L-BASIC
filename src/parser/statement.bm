@@ -59,7 +59,6 @@ function ps_stmt
             if ast_nodes(ps_final_nested).typ <> AST_DO_PRE and ast_nodes(ps_final_nested).typ <> AST_DO_POST then ps_error "LOOP without DO"
             stmt = -1
         case TOK_WEND
-            print ast_nodes(ps_final_nested).typ
             if ast_nodes(ps_final_nested).typ <> AST_WHILE then ps_error "WEND without WHILE"
             stmt = -1
         case TOK_NEXT

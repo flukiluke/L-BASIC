@@ -5,3 +5,15 @@
 case TOK_CHDIR
     imm_eval ast_get_child(node, 1), v1
     chdir v1.s
+
+case TOK_FILES
+    c1 = ast_get_child(node, 1)
+    if ast_is_none(c1) then
+        files
+    else
+        imm_eval c1, v1
+        files v1.s
+    end if
+
+case TOK_FREEFILE
+    result.n = freefile

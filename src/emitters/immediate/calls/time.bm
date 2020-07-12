@@ -1,0 +1,18 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'time.bm - Executors for time and date related functions
+
+case TOK_DATE
+    result.s = date$
+
+case TOK_TIME
+    result.s = time$
+
+case TOK_TIMER
+    c1 = ast_get_child(node, 1)
+    if ast_is_none(c1) then
+        result.n = timer
+    else
+        imm_eval c1, v1
+        result.n = timer(v1.n)
+    end if

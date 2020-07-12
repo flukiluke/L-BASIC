@@ -2,17 +2,6 @@
 'SPDX-License-Identifier: Apache-2.0
 'graphics.bm - Executors for graphics functions
 
-case TOK_SCREEN
-    'Ignores second argument
-    imm_eval ast_get_child(node, 1), v1
-    v2.n = 0
-    c2 = ast_get_child(node, 3)
-    if not ast_is_none(c2) then imm_eval c2, v2
-    v3.n = 0
-    c3 = ast_get_child(node, 4)
-    if not ast_is_none(c3) then imm_eval c3, v3
-    screen v1.n, , v2.n, v3.n
-
 case TOK_CIRCLE
     'Node 1 is flag for STEP
     imm_eval ast_get_child(node, 2), v1
@@ -35,3 +24,18 @@ case TOK_CIRCLE
     else
         circle (v1.n, v2.n), v3.n, v4.n, v5.n, v6.n, v7.n
     end if
+
+case TOK_DRAW
+    imm_eval ast_get_child(node, 1), v1
+    draw v1.s
+
+case TOK_SCREEN
+    'Ignores second argument
+    imm_eval ast_get_child(node, 1), v1
+    v2.n = 0
+    c2 = ast_get_child(node, 3)
+    if not ast_is_none(c2) then imm_eval c2, v2
+    v3.n = 0
+    c3 = ast_get_child(node, 4)
+    if not ast_is_none(c3) then imm_eval c3, v3
+    screen v1.n, , v2.n, v3.n
