@@ -76,11 +76,9 @@ sub ast_attach(parent, child)
     end if
     if ast_nodes(child).parent then debuginfo "Warning: changing node parent"
     ast_nodes(child).parent = parent
-    ast_nodes(parent).num_children = ast_nodes(parent).num_children + 1
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
 
-'Why does this function exist when there's a .num_children field on the node?
 function ast_num_children(node)
     ast_num_children = len(ast_children(node)) / len(dummy&)
 end function

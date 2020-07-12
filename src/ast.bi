@@ -9,7 +9,6 @@ type ast_node_t
     typ as long
     ref as long
     ref2 as long 'It pains me to add this, but I needed to put type signature references somewhere for dumping and I don't want to make a new node for that
-    num_children as long
 end type
 
 'The nodes themselves
