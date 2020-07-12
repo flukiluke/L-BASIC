@@ -4,11 +4,18 @@
 
 case TOK_COMMAND
     if ast_is_none(ast_get_child(node, 1)) then
-        result.s = command$
+        result.s = ""
+        for i = input_file_command_offset + 1 to _commandcount
+            result.s = result.s + command$(i)
+            if i <> _commandcount then result.s = result.s + " "
+        next
     else
         imm_eval ast_get_child(node, 1), v1
-        result.s = command$(v1.n)
+        result.s = command$(input_file_command_offset + v1.n)
     end if
+
+case TOK__COMMANDCOUNT
+    result.n = _commandcount - input_file_command_offset
 
 case TOK_SYSTEM
     if not ast_is_none(ast_get_child(node, 1)) then
