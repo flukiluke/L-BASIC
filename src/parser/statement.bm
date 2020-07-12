@@ -40,10 +40,6 @@ function ps_stmt
             stmt = ps_const
         case TOK_GOTO
             stmt = ps_goto
-        case TOK_END, TOK_ELSE, TOK_ELSEIF, TOK_LOOP, TOK_WEND, TOK_NEXT, TOK_CASE, TOK_EOF 
-            'These all end a block in some fashion. The block-specific
-            ' code will assert the ending token.
-            stmt = -1
         case TOK_EXIT
             stmt = ps_exit
         case TOK_UNKNOWN
@@ -51,6 +47,30 @@ function ps_stmt
         case TOK_NEWLINE
             'Blank line; ignore it
             stmt = 0
+        'These all end a block in some fashion. The block-specific code will assert the
+        'ending token, but we check it's syntactically valid here.
+        case TOK_END
+            if ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then ps_error "Unexpected END"
+            stmt = 1
+        case TOK_ELSE, TOK_ELSEIF
+            if ast_nodes(ps_final_nested).typ <> AST_IF then ps_error tok_human_readable$(tok_token) + " without IF"
+            stmt = -1
+        case TOK_LOOP
+            if ast_nodes(ps_final_nested).typ <> AST_DO_PRE and ast_nodes(ps_final_nested).typ <> AST_DO_POST then ps_error "LOOP without DO"
+            stmt = -1
+        case TOK_WEND
+            print ast_nodes(ps_final_nested).typ
+            if ast_nodes(ps_final_nested).typ <> AST_WHILE then ps_error "WEND without WHILE"
+            stmt = -1
+        case TOK_NEXT
+            if ast_nodes(ps_final_nested).typ <> AST_FOR then ps_error "NEXT without FOR"
+            stmt = -1
+        case TOK_CASE
+            if ast_nodes(ps_final_nested).typ <> AST_SELECT then ps_error "CASE without SELECT"
+            stmt = -1
+        case TOK_EOF
+            if ps_final_nested <> 0 then ps_error "Unexpected end of file"
+            stmt = -1
         case else
             select case symtab(tok_token).typ
             case SYM_VARIABLE

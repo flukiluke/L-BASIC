@@ -61,6 +61,12 @@ sub ast_dump_pretty(root, indent_level)
             ast_dump_pretty ast_get_child(root, ast_num_children(root)), indent_level
         end if
         print #1, indent$; "END IF";
+    case AST_WHILE
+        print #1, dump_nn$(root); indent$; "WHILE ";
+        ast_dump_pretty ast_get_child(root, 1), 0
+        print #1,
+        ast_dump_pretty ast_get_child(root, 2), indent_level
+        print #1, indent$; "WEND";
     case AST_DO_PRE
         print #1, dump_nn$(root); indent$; "DO WHILE ";
         ast_dump_pretty ast_get_child(root, 1), 0

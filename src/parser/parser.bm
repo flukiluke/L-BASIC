@@ -44,12 +44,17 @@ function ps_last_nested(ast_type)
     next i
 end function
 
+function ps_final_nested
+    if len(ps_nested_structures$) = 0 then exit function
+    ps_final_nested = cvl(right$(ps_nested_structures$, 4))
+end function
+
 sub ps_add_nested_structure(node)
     ps_nested_structures$ = ps_nested_structures$ + mkl$(node)
 end sub
 
 sub ps_remove_nested_structure
-    ps_nested_structures$ = mid$(ps_nested_structures$, len(ps_nested_structures$) - 4)
+    ps_nested_structures$ = left$(ps_nested_structures$, len(ps_nested_structures$) - 4)
 end sub
 
 sub ps_error(msg$)

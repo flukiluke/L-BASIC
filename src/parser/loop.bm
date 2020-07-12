@@ -6,7 +6,7 @@
 'Results: NEWLINE after WEND
 function ps_while
     debuginfo "Start WHILE loop"
-    root = ast_add_node(AST_DO_PRE)
+    root = ast_add_node(AST_WHILE)
     ps_add_nested_structure root
     ps_consume TOK_WHILE
 

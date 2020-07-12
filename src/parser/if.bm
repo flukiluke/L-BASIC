@@ -8,6 +8,7 @@ function ps_if
     debuginfo "Start conditional"
     root = ast_add_node(AST_IF)
     ps_consume TOK_IF
+    ps_add_nested_structure root
 
     condition = ps_expr
     if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
@@ -49,6 +50,7 @@ function ps_if
         ps_consume TOK_IF
     end if
 
+    ps_remove_nested_structure
     ps_if = root
     debuginfo "Completed conditional"
 end function

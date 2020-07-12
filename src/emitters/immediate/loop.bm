@@ -2,6 +2,7 @@
 'SPDX-License-Identifier: Apache-2.0
 'loop.bm - Executor for DO LOOP and WHILE WEND
 
+'Also used for WHILE WEND loops
 sub imm_do_do_pre(node)
     dim temp as imm_value_t
     guard = ast_get_child(node, 1)
