@@ -20,28 +20,28 @@ function ps_stmt
             ps_error "Unexpected literal " + tok_content$
         case TOK_CIRCLE
             stmt = ps_circle
-        case TOK_IF
-            stmt = ps_if
-        case TOK_DO
-            stmt = ps_do
-        case TOK_WHILE
-            stmt = ps_while
-        case TOK_FOR
-            stmt = ps_for
-        case TOK_SELECT
-            stmt = ps_select
-        case TOK_PRINT
-            stmt = ps_print
-        case TOK_INPUT
-            stmt = ps_stmt_input
-        case TOK_DIM
-            stmt = ps_dim
         case TOK_CONST
             stmt = ps_const
-        case TOK_GOTO
-            stmt = ps_goto
+        case TOK_DIM
+            stmt = ps_dim
+        case TOK_DO
+            stmt = ps_do
         case TOK_EXIT
             stmt = ps_exit
+        case TOK_FOR
+            stmt = ps_for
+        case TOK_GOTO
+            stmt = ps_goto
+        case TOK_IF
+            stmt = ps_if
+        case TOK_INPUT
+            stmt = ps_stmt_input
+        case TOK_PRINT
+            stmt = ps_print
+        case TOK_SELECT
+            stmt = ps_select
+        case TOK_WHILE
+            stmt = ps_while
         case TOK_UNKNOWN
             stmt = ps_assignment
         case TOK_NEWLINE
