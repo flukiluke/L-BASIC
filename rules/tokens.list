@@ -203,6 +203,13 @@ function cos            single    single
 function cos            double    double
 function cos            quad      quad
 function csng           single    single
+function csrlin         integer
+function cvd            double    string
+function cvdmbf         double    string
+function cvi            single    string
+function cvl            long      string
+function cvs            single    string
+function cvsmbf         single    string
 
 function input          none      list
 function int            single    single

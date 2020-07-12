@@ -27,3 +27,6 @@ case TOK_COLOR
     if not ast_is_none(c1) then imm_eval c1, v1
     if not ast_is_none(c2) then imm_eval c2, v2
     color v1.n, v2.n
+
+case TOK_CSRLIN
+    result.n = csrlin
