@@ -7,13 +7,16 @@
 function ps_while
     debuginfo "Start WHILE loop"
     root = ast_add_node(AST_DO_PRE)
+    ps_add_nested_structure root
     ps_consume TOK_WHILE
+
     ast_attach root, ps_expr
     ps_consume TOK_NEWLINE
 
     ast_attach root, ps_block
     ps_consume TOK_WEND
 
+    ps_remove_nested_structure
     ps_while = root
     debuginfo "Completed WHILE loop"
 end function
@@ -32,6 +35,7 @@ end function
 function ps_do_pre
     debuginfo "Start DO-pre loop"
     root = ast_add_node(AST_DO_PRE)
+    ps_add_nested_structure root
     if tok_token = TOK_UNTIL then
         ps_consume TOK_UNTIL
         'Need to invert guard condition
@@ -52,6 +56,7 @@ function ps_do_pre
     ast_attach root, ps_block
     ps_consume TOK_LOOP
 
+    ps_remove_nested_structure
     ps_do_pre = root
     debuginfo "Completed DO-pre loop"
 end function
@@ -62,6 +67,7 @@ function ps_do_post
     debuginfo "Start DO-post loop"
     ps_consume TOK_NEWLINE
     root = ast_add_node(AST_DO_POST)
+    ps_add_nested_structure root
     block = ps_block
 
     ps_consume TOK_LOOP
@@ -86,6 +92,7 @@ function ps_do_post
     ast_attach root, guard
     ast_attach root, block
 
+    ps_remove_nested_structure
     ps_do_post = root
     debuginfo "Completed DO-post loop"
 end function

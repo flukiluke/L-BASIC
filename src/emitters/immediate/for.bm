@@ -22,6 +22,12 @@ sub imm_do_for(node)
     do while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n) or imm_next_jump > 0
         imm_run block
         if imm_next_jump then exit sub
+        if imm_exit_node > 0 and imm_exit_node = node then
+            imm_exit_node = 0
+            exit sub
+        elseif imm_exit_node > 0 then
+            exit sub
+        end if
         imm_stack(sp).n = imm_stack(sp).n + step_val.n
     loop
 end sub

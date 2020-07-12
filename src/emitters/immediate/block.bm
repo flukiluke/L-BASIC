@@ -28,6 +28,7 @@ sub imm_do_block(node, result as imm_value_t)
                 exit function
             end if
         end if
+        if imm_exit_node > 0 then exit sub
     next i
 end sub
 

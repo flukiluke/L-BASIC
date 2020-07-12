@@ -57,3 +57,5 @@ const AST_FLAGS = 12
 const AST_GOTO = 13
 'Used for empty optional arguments to functions
 const AST_NONE = 14
+'The EXIT statement. ref is the loop statement we're exiting.
+const AST_EXIT = 15

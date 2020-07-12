@@ -7,7 +7,9 @@
 function ps_for
     debuginfo "Start FOR loop"
     root = ast_add_node(AST_FOR)
+    ps_add_nested_structure root
     ps_consume TOK_FOR
+
     var = ps_variable
     var_type = symtab(var).v1
     if not type_is_number(var_type) then ps_error "FOR iterator variable must be numeric"
@@ -60,6 +62,7 @@ function ps_for
         if check_var <> var then ps_error "NEXT variable does not match FOR variable"
     end if
 
+    ps_remove_nested_structure
     ps_for = root
     debuginfo "Completed FOR loop"
 end function

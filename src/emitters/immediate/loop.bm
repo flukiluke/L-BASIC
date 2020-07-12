@@ -10,6 +10,12 @@ sub imm_do_do_pre(node)
     do while temp.n <> 0 or imm_next_jump <> 0
         imm_run block
         if imm_next_jump then exit sub
+        if imm_exit_node > 0 and imm_exit_node = node then
+            imm_exit_node = 0
+            exit sub
+        elseif imm_exit_node > 0 then
+            exit sub
+        end if
         imm_eval guard, temp
     loop
 end sub
@@ -21,6 +27,12 @@ sub imm_do_do_post(node)
     do
         imm_run block
         if imm_next_jump then exit sub
+        if imm_exit_node > 0 and imm_exit_node = node then
+            imm_exit_node = 0
+            exit sub
+        elseif imm_exit_node > 0 then
+            exit sub
+        end if
         imm_eval guard, temp
     loop while temp.n
 end sub

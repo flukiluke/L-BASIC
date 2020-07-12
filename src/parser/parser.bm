@@ -35,6 +35,23 @@ function ps_is_terminator(t)
     end select
 end function
 
+function ps_last_nested(ast_type)
+    for i = len(ps_nested_structures$) - 3 to 1 step -4
+        if ast_nodes(cvl(mid$(ps_nested_structures$, i, 4))).typ = ast_type then
+            ps_last_nested = cvl(mid$(ps_nested_structures$, i, 4))
+            exit function
+        end if
+    next i
+end function
+
+sub ps_add_nested_structure(node)
+    ps_nested_structures$ = ps_nested_structures$ + mkl$(node)
+end sub
+
+sub ps_remove_nested_structure
+    ps_nested_structures$ = mid$(ps_nested_structures$, len(ps_nested_structures$) - 4)
+end sub
+
 sub ps_error(msg$)
     Error_message$ = msg$
     error 101
@@ -60,6 +77,7 @@ end function
 '$include: 'assignment.bm'
 '$include: 'const.bm'
 '$include: 'drawing.bm'
+'$include: 'exit.bm'
 '$include: 'for.bm'
 '$include: 'function.bm'
 '$include: 'goto.bm'

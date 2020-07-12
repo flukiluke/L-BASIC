@@ -44,6 +44,8 @@ function ps_stmt
             'These all end a block in some fashion. The block-specific
             ' code will assert the ending token.
             stmt = -1
+        case TOK_EXIT
+            stmt = ps_exit
         case TOK_UNKNOWN
             stmt = ps_assignment
         case TOK_NEWLINE

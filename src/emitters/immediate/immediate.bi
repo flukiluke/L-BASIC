@@ -10,3 +10,6 @@ dim shared imm_stack_last
 'Instead of executing the next statement, execution should begin at
 'this node if it is > 0 (used to support GOTO)
 dim shared imm_jump_path$
+
+'If > 0, an EXIT command is in effect and imm_exit_node is the node to exit
+dim shared imm_exit_node

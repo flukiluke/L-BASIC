@@ -153,6 +153,7 @@ generic dim
 generic as
 generic const
 generic goto
+generic exit
 
 generic if
 generic then

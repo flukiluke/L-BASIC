@@ -23,3 +23,7 @@ dim shared ps_unattached_labels$
 'mkl$ list of nodes that ref a label location but were unresolved
 'because the label hadn't been positioned yet.
 dim shared ps_unresolved_jumps$
+
+'mkl$ list of nodes that are DO, WHILE or FOR for the purposes of
+'parsing EXIT statements
+dim shared ps_nested_structures$

@@ -1,0 +1,27 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'exit.bm - Parse rules for EXIT statements
+
+function ps_exit
+    debuginfo "Start exit"
+    root = ast_add_node(AST_EXIT)
+    ps_consume TOK_EXIT
+
+    select case tok_token
+    case TOK_DO
+        target = ps_last_nested(AST_DO_PRE)
+        if target = 0 then target = ps_last_nested(AST_DO_POST)
+    case TOK_WHILE
+        target = ps_last_nested(AST_WHILE)
+    case TOK_FOR
+        target = ps_last_nested(AST_FOR)
+    case else
+        ps_error "Expected DO, WHILE or FOR"
+    end select
+    if target = 0 then ps_error "Not inside a " + tok_human_readable$(tok_token) + " block"
+    tok_advance
+    ast_nodes(root).ref = target
+
+    ps_exit = root
+    debuginfo "Completed exit"
+end function

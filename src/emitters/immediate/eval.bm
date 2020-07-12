@@ -34,5 +34,7 @@ sub imm_eval(node, result as imm_value_t)
         imm_do_cast node, result
     case AST_GOTO
         imm_do_goto node
+    case AST_EXIT
+        imm_exit_node = ast_nodes(node).ref
     end select
 end sub
