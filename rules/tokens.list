@@ -199,6 +199,7 @@ function clng           long      long
 function cls            none      integer?,long?
 function color          none      long?,long?
 function command        string    integer?
+function _commandcount  long
 function cos            single    single
 function cos            double    double
 function cos            quad      quad

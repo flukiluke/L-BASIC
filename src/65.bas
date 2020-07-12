@@ -57,6 +57,7 @@ type options_t
 end type
 
 dim shared options as options_t
+dim shared input_file_command_offset as integer
 parse_cmd_line_args
 
 if instr(_os$, "[WINDOWS]") then
@@ -245,12 +246,12 @@ end sub
 
 sub show_help
     print "The 65 BASIC compiler"
-    print "Usage: " + command$(0) + " [OPTIONS] [FILE]
+    print "Usage: " + command$(0) + " [OPTIONS] [FILE]"
     print "Execute FILE if given, otherwise launch an interactive session."
     print '                                                                                '80 columns
     print "Options:"
     print "  -t, --terminal                   Run in terminal mode (no graphical window)"
-    print "  -c FILE, --compile FILE          Compile FILE instead if executing"
+    print "  -c FILE, --compile FILE          Compile FILE instead of executing"
     print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
     print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
     print "  -d, --debug                      For debugging 65 itself"
@@ -290,11 +291,15 @@ sub parse_cmd_line_args()
                     options.terminal_mode = TRUE
                     fatalerror "Unknown option " + arg$
                 end if
-                if options.mainarg <> "" then
-                    options.terminal_mode = TRUE
-                    fatalerror "Unexpected argument " + arg$
+                ' if options.mainarg <> "" then 'not needed for the proper functioning of program interaction with command$
+                    ' options.terminal_mode = TRUE
+                    ' fatalerror "Unexpected argument " + arg$
+                ' end if
+                if options.mainarg = "" then 
+                    options.mainarg = arg$
+                    input_file_command_offset = i
+                    exit for
                 end if
-                options.mainarg = arg$
         end select
     next i
     if options.mainarg = "" then options.interactive_mode = TRUE
