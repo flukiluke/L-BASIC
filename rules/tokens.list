@@ -215,6 +215,7 @@ function cvsmbf         single    string
 
 function date           string
 function draw           none      string
+function _deflate       string    string
 
 function environ        string    integer
 function environ        string    string
@@ -234,8 +235,14 @@ function input          none      list
 function int            single    single
 function int            double    double
 function int            quad      quad
+function _inflate       string    string
 
 function left           string    string,integer64
+function lcase          string    string
+function log            single    single
+function log            double    double
+function log            quad      quad
+function ltrim          string    string
 
 # Commented out because no corresponding executor yet
 # function locate         none      integer?,integer?,integer?
@@ -247,10 +254,17 @@ function play           none      string
 function print          none      list
 
 function right          string    string,integer64
+function rtrim          string    string
 
 function screen         none      long,integer?,integer?,integer?
 function sound          none      double,double
 function system         none      integer?
+function _strcmp        integer   string,string
+function _stricmp       integer   string,string
+function space          string    long    
 
 function time           string
 function timer          double    single?
+function _trim          string    string
+
+function ucase          string    string
