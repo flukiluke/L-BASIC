@@ -10,8 +10,12 @@ MERGED_SOURCE := $(CURDIR)/65-merged.bas
 SRC_DIR := $(CURDIR)/src
 TOOLS_DIR := $(CURDIR)/tools
 RULES_DIR := $(CURDIR)/rules
+TEST_DIR := $(CURDIR)/tests
 
 all: $(OUTPUT_BINARY) $(MERGED_SOURCE)
+
+test: $(TOOLS_DIR)/test.tool $(shell find $(TEST_DIR) -type f -name '*.test')
+	$(TOOLS_DIR)/test.tool $(filter-out $<,$^)
 
 $(TOOLS_DIR)/%.tool: $(TOOLS_DIR)/%.bas
 	$(QB64) -x $< -o $@.tool

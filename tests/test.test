@@ -1,0 +1,9 @@
+$title: Example successful test
+print "Hello world"
+$expect: stdout
+Hello world
+$finish
+
+$title: Example successful error
+asdfjkl
+$expect: error
