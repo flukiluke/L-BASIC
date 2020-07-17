@@ -12,8 +12,10 @@ TOOLS_DIR := $(CURDIR)/tools
 RULES_DIR := $(CURDIR)/rules
 TEST_DIR := $(CURDIR)/tests
 
+.PHONY: all
 all: $(OUTPUT_BINARY) $(MERGED_SOURCE)
 
+.PHONY: test
 test: $(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) $(shell find $(TEST_DIR) -type f -name '*.test')
 	$(TOOLS_DIR)/test.tool $(filter-out $<,$^)
 
