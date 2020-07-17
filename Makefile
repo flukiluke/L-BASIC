@@ -14,7 +14,7 @@ TEST_DIR := $(CURDIR)/tests
 
 all: $(OUTPUT_BINARY) $(MERGED_SOURCE)
 
-test: $(TOOLS_DIR)/test.tool $(shell find $(TEST_DIR) -type f -name '*.test')
+test: $(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) $(shell find $(TEST_DIR) -type f -name '*.test')
 	$(TOOLS_DIR)/test.tool $(filter-out $<,$^)
 
 $(TOOLS_DIR)/%.tool: $(TOOLS_DIR)/%.bas
