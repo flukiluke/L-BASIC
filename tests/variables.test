@@ -1,0 +1,23 @@
+$title: disallow changing variable types
+x% = 1
+x& = 2
+$expect: error
+
+$title: disallow changing variable types on same line
+x% = x&
+$expect: error
+
+$title: implicit type symbols
+x% = 1
+y& = 2
+z$ = "hello"
+print x%; y&; z$
+$expect: stdout
+ 1  2 hello
+$finish
+
+$title: default to 0 and empty string
+print x%; y!; "{"; z$; "}"
+$expect: stdout
+ 0  0 {}
+$finish

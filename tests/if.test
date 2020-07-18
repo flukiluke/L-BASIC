@@ -1,0 +1,30 @@
+$title: single line
+if 1 then print "a"
+if 0 then print "b"
+$expect: stdout
+a
+$finish
+
+$title: single line with else
+if 1 then print "x"; else print "y";
+if 0 then print "a" else print "b"
+$expect: stdout
+xb
+$finish
+
+$title: multi line
+if 1 then
+    print "x";
+    print "y"
+end if
+if 0 then
+    print "x";
+    print "y"
+else
+    print "a";
+    print "b"
+end if
+$expect: stdout
+xy
+ab
+$finish
