@@ -19,6 +19,7 @@ function ps_if
     if ucase$(tok_content$) = "REM" then
         block = ast_add_node(AST_BLOCK)
         ast_attach root, block
+        ps_remove_nested_structure
         ps_if = root
         debuginfo "Completed conditional (single-line REM)"
         exit function
