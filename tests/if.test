@@ -24,7 +24,84 @@ else
     print "a";
     print "b"
 end if
+if 1 then
+else
+    print "z"
+end if
+if 1 then
+    print "c"
+else
+end if
 $expect: stdout
 xy
 ab
+c
+$finish
+
+$title: single elseif
+if 0 then
+    print "a"
+elseif 1 then
+    print "b"
+end if
+$expect: stdout
+b
+$finish
+
+$title: multiple elseifs
+if 0 then
+    print "a"
+elseif 0 then
+elseif 1 then
+    print "c"
+end if
+$expect: stdout
+c
+$finish
+
+$title: else must be last clause
+if 1 then
+    print "a"
+else
+    print "b"
+elseif 1 then
+    print "c"
+end if
+$expect: error
+
+$title: single line with colons
+if 1 then print "a";:print "b";
+if 1 then :
+if 1 then :print "c";:
+if 1 then :print "d";:print "e";
+if 0 then print "f"; else :
+if 0 then print "g"; else print "h";:print "i";
+if 0 then print "j"; else :print "k":
+$expect: stdout
+abcdehik
+$finish
+
+$title: multiline with colons
+if 0 then
+    print "a"
+else : print "b";
+end if
+if 0 then
+    print "c"
+else : print "d";
+end if
+if 0 then
+    print "e"
+else : print "f": end if
+$expect: stdout
+bdf
+$finish
+
+$title: rem
+if 1 then rem
+if 1 then
+    print
+else rem
+end if
+$expect: stdout
 $finish
