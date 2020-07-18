@@ -23,6 +23,7 @@ if _commandcount < 2 then
 end if
 
 tmpdir$ = "/tmp/"
+
 testbinary$ = command$(1)
 
 for cmdline_index = 2 to _commandcount
@@ -33,7 +34,7 @@ for cmdline_index = 2 to _commandcount
         if left$(lt$, 7) = "$title:" then
             active_test = ubound(tests) + 1
             redim _preserve tests(1 to active_test) as test_unit_t
-            tests(active_test).title = ltrim$(mid$(lt$, 8))
+            tests(active_test).title = basename$(command$(cmdline_index)) + ":" + ltrim$(mid$(lt$, 8))
             active_section = 1
         elseif left$(lt$, 8) = "$expect:" then
             tests(active_test).expect = ltrim$(mid$(lt$, 9))
@@ -88,7 +89,9 @@ for active_test = 1 to ubound(tests)
             print "OK"
             successes = successes + 1
         else
-            print "Failed, output was: "; actual_output$
+            print "Failed!"
+            print "Expected: "; tests(active_test).expected_output;
+            print "  Actual: "; actual_output$;
         end if
     case else
         print "Unknown condition"
@@ -103,6 +106,12 @@ system
 ehandler:
     print "Error"; err; "on line"; _errorline
     system 2
+
+function basename$(path$)
+    dot = _instrrev(path$, ".")
+    slash = _instrrev(path$, "/")
+    basename$ = mid$(path$, slash + 1, dot - slash - 1)
+end function
 
 'Fellippe Heitor https://www.qb64.org/forum/index.php?topic=2813.msg120768#msg120768
 FUNCTION crc32~& (buf AS STRING)

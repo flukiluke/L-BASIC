@@ -1,0 +1,49 @@
+$title: newline
+print "top"
+print
+print "bottom"
+$expect: stdout
+top
+
+bottom
+$finish
+
+$title: nothing
+print "top"
+print ;
+print "bottom"
+$expect: stdout
+top
+bottom
+$finish
+
+$title: semicolon joined
+print "hello"; "world"
+print "the"; "rain"; ; "in";
+print ;"spain"; "fal" + "ls"; "mainly";
+$expect: stdout_nonl
+helloworld
+theraininspainfallsmainly
+$finish
+
+$title: semicolons and commas
+'QB64 treats commas as spaces on terminal output
+print "hello", "world"
+print ,"the rain",,"in";,"spain",
+print "falls"
+$expect: stdout
+hello world
+ the rain  in spain falls
+$finish
+
+$title: numbers
+biggestint% = 32767
+smallestint% = -32768
+biggestlong& = 2147483647
+smallestlong& = -2147483648
+smallsingle! = 1234567
+bigsingle! = 12345678
+print 134; -7; biggestint%; smallestint%; biggestlong&; smallestlong&; smallsingle!; bigsingle!
+$expect: stdout
+ 134 -7  32767 -32768  2147483647 -2147483648  1234567  1.234568E+07 
+$finish
