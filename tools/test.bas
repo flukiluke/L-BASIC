@@ -76,11 +76,12 @@ for active_test = 1 to ubound(tests)
         else
             print "Failed, expected error but ran successfully."
         end if
-    case "stdout"
+    case "stdout", "stdout_nonl"
         open filename$ + ".output" for binary as #1
         actual_output$ = space$(lof(1))
         get #1, , actual_output$
         close #1
+        if tests(active_test).expect = "stdout_nonl" then actual_output$ = actual_output$ + chr$(10)
         if retcode > 0 then
             print "Failed with error, output was: "; actual_output$
         elseif crc32~&(actual_output$) = crc32~&(tests(active_test).expected_output) then
