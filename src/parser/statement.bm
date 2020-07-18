@@ -51,7 +51,7 @@ function ps_stmt
         'ending token, but we check it's syntactically valid here.
         case TOK_END
             if ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then ps_error "Unexpected END"
-            stmt = 1
+            stmt = -1
         case TOK_ELSE, TOK_ELSEIF
             if ast_nodes(ps_final_nested).typ <> AST_IF then ps_error tok_human_readable$(tok_token) + " without IF"
             stmt = -1
