@@ -1,0 +1,34 @@
+$title: literals
+const a = 20.2
+const b = "hello"
+const c = b
+print a; b; c
+$expect: stdout
+ 20.2 hellohello
+$finish
+
+$title: expressions
+const false = 0
+const true = not false
+print true; false
+$expect: stdout
+-1  0 
+$finish
+
+$title: combined definition
+const false = 0, true = not false
+print true; false
+$expect: stdout
+-1  0 
+$finish
+
+$title: duplicate const is illegal
+const a = 1
+const a = 3
+$expect: error
+
+$title: reassigning is illegal
+const a = 1
+a = 3
+$expect: error
+
