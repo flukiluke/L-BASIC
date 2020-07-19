@@ -25,7 +25,7 @@ end if
 tmpdir$ = "/tmp/"
 
 testbinary$ = command$(1)
-
+chdir _startdir$
 for cmdline_index = 2 to _commandcount
     open command$(cmdline_index) for binary as #1
     while not eof(1)

@@ -100,11 +100,15 @@ $finish
 $title: rem
 if 1 then rem
 if 1 then
-    print "a"
+    print "a";
 else rem
 end if
+if 0 then
+else rem
+    print "b"
+end if
 $expect: stdout
-a
+ab
 $finish
 
 $title: expressions

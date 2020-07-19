@@ -58,6 +58,8 @@ end type
 
 dim shared options as options_t
 dim shared input_file_command_offset
+
+chdir _startdir$
 parse_cmd_line_args
 
 if instr(_os$, "[WINDOWS]") then
