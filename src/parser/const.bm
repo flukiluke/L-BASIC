@@ -11,30 +11,35 @@ end sub
 function ps_const
     debuginfo "Start const"
     ps_consume TOK_CONST
-    if tok_token <> TOK_UNKNOWN then ps_error "CONST already defined"
-    'Change default type because we want to infer it from the rvalue
-    prev_default = ps_default_type
-    ps_default_type = TYPE_NONE
-    ref = ps_variable
-    ps_default_type = prev_default
-    symtab(ref).v3 = TRUE 'Mark constant
+    'We use a block so we can deal with multiple consts
+    root = ast_add_node(AST_BLOCK)
 
-    root = ast_add_node(AST_ASSIGN)
-    ast_nodes(root).ref = ref
-    ps_consume TOK_EQUALS
+    do
+        if tok_token <> TOK_UNKNOWN then ps_error "CONST already defined"
+        'Change default type because we want to infer it from the rvalue
+        prev_default = ps_default_type
+        ps_default_type = TYPE_NONE
+        ref = ps_variable
+        ps_default_type = prev_default
+        symtab(ref).v3 = TRUE 'Mark constant
+        node = ast_add_node(AST_ASSIGN)
+        ast_attach root, node
+        ast_nodes(node).ref = ref
+        ps_consume TOK_EQUALS
 
-    expr = ps_expr
-    if symtab(ref).v1 = TYPE_NONE then
-        symtab(ref).v1 = type_of_expr(expr)
-        ast_attach root, expr
-    elseif type_can_cast(symtab(ref).v1, type_of_expr(expr)) then
-        cast = ast_add_node(AST_CAST)
-        ast_nodes(cast).ref = symtab(ref).v1
-        ast_attach cast, expr
-        ast_attach root, cast
-    else
-        ps_error "Type mismatch"
-    end if
+        expr = ps_expr
+        if symtab(ref).v1 = TYPE_NONE then
+            symtab(ref).v1 = type_of_expr(expr)
+            ast_attach node, expr
+        elseif type_can_cast(symtab(ref).v1, type_of_expr(expr)) then
+            cast = ast_add_node(AST_CAST)
+            ast_nodes(cast).ref = symtab(ref).v1
+            ast_attach cast, expr
+            ast_attach node, cast
+        else
+            ps_error "Type mismatch"
+        end if
+    loop while ps_consumed(TOK_COMMA) 
 
     ps_const = root
     debuginfo "Completed const"
