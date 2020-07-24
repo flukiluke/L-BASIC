@@ -1,0 +1,94 @@
+$title: while
+while x < 3
+    print x
+    x = x + 1
+wend
+$expect: stdout
+ 0 
+ 1 
+ 2 
+$finish
+
+$title: do while
+do while x < 3
+    print x
+    x = x + 1
+loop
+$expect: stdout
+ 0 
+ 1 
+ 2 
+$finish
+
+$title: do until
+do until x >= 3
+    print x
+    x = x + 1
+loop
+$expect: stdout
+ 0 
+ 1 
+ 2 
+$finish
+
+$title: loop while
+do
+    print x
+    x = x + 1
+loop while x < 3
+$expect: stdout
+ 0 
+ 1 
+ 2 
+$finish
+
+$title: loop until
+do
+    print x
+    x = x + 1
+loop until x >= 3
+$expect: stdout
+ 0 
+ 1 
+ 2 
+$finish
+
+$title: do with dual conditions illegal
+x = 0
+do until x >= 3
+    print x
+    x = x + 1
+loop until x < 3
+$expect: error
+
+$title: nested do
+do while x < 2
+    y = 0
+    do while y < 2
+        print x; y
+        y = y + 1
+    loop
+    x = x + 1
+loop
+$expect: stdout
+ 0  0 
+ 0  1 
+ 1  0 
+ 1  1 
+$finish
+
+$title: nested while & do
+do while x < 2
+    y = 0
+    while y < 2
+        print x; y
+        y = y + 1
+    wend
+    x = x + 1
+loop
+$expect: stdout
+ 0  0 
+ 0  1 
+ 1  0 
+ 1  1 
+$finish
