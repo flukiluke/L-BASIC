@@ -2,8 +2,8 @@
 'SPDX-License-Identifier: Apache-2.0
 'tokeng.bi - Delcarations for tokeniser engine
 
-'$include: '../../rules/ts_data.bi'
-'$include: '../../rules/token_data.bi'
+'$include: 'ts_data.bi'
+'$include: 'token_data.bi'
 
 type tokeniser_state_t
     index as long

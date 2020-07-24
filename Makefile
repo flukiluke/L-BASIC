@@ -9,7 +9,6 @@ MERGED_SOURCE := $(CURDIR)/65-merged.bas
 
 SRC_DIR := $(CURDIR)/src
 TOOLS_DIR := $(CURDIR)/tools
-RULES_DIR := $(CURDIR)/rules
 TEST_DIR := $(CURDIR)/tests
 
 .PHONY: all
@@ -22,14 +21,14 @@ test: $(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) $(shell find $(TEST_DIR) -type f -
 $(TOOLS_DIR)/%.tool: $(TOOLS_DIR)/%.bas
 	$(QB64) -x $< -o $@.tool
 
-TS_FILES := $(RULES_DIR)/ts_data.bi $(RULES_DIR)/ts_data.bm
-TOKEN_FILES := $(RULES_DIR)/token_data.bi $(RULES_DIR)/token_registrations.bm
+TS_FILES := $(SRC_DIR)/parser/ts_data.bi $(SRC_DIR)/parser/ts_data.bm
+TOKEN_FILES := $(SRC_DIR)/parser/token_data.bi $(SRC_DIR)/parser/token_registrations.bm
 
-$(TS_FILES): $(RULES_DIR)/ts.rules $(TOOLS_DIR)/tsgen.tool
-	$(TOOLS_DIR)/tsgen.tool $(RULES_DIR)/ts.rules $(TS_FILES)
+$(TS_FILES): $(SRC_DIR)/parser/ts.rules $(TOOLS_DIR)/tsgen.tool
+	$(TOOLS_DIR)/tsgen.tool $(SRC_DIR)/parser/ts.rules $(TS_FILES)
 
-$(TOKEN_FILES): $(RULES_DIR)/tokens.list $(TOOLS_DIR)/tokgen.tool
-	$(TOOLS_DIR)/tokgen.tool $(RULES_DIR)/tokens.list $(TOKEN_FILES)
+$(TOKEN_FILES): $(SRC_DIR)/parser/tokens.list $(TOOLS_DIR)/tokgen.tool
+	$(TOOLS_DIR)/tokgen.tool $(SRC_DIR)/parser/tokens.list $(TOKEN_FILES)
 
 # Main binary
 $(OUTPUT_BINARY): $(SRC_DIR)/65.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi')

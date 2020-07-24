@@ -146,4 +146,4 @@ function tok_human_readable$(token)
     end if
 end function
 
-'$include: '../../rules/ts_data.bm'
+'$include: 'ts_data.bm'
