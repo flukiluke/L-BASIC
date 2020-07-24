@@ -1,7 +1,9 @@
 /*.bas
 /65
 /65-merged.bas
-/rules/*.bi
-/rules/*.bm
+src/parser/token_data.bi
+src/parser/token_registrations.bm
+src/parser/ts_data.bi
+src/parser/ts_data.bm
 /tools/*.tool
 *.swp
