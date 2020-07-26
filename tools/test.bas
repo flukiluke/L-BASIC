@@ -5,6 +5,7 @@
 deflng a-z
 $console:only
 _dest _console
+randomize timer
 
 type test_unit_t
     title as string
@@ -55,6 +56,7 @@ for cmdline_index = 2 to _commandcount
     close #1
 next cmdline_index
 
+starttime! = timer(0.001)
 for active_test = 1 to ubound(tests)
     'print "TITLE: "; tests(active_test).title
     'print "PROGRAM"
@@ -63,7 +65,7 @@ for active_test = 1 to ubound(tests)
     'print "EXPECT: "; tests(active_test).expect
     'print tests(active_test).expected_output;
     
-    filename$ = tmpdir$ + "test-" + date$ + time$ + hex$(crc32~&(tests(active_test).program))
+    filename$ = tmpdir$ + "test-" + date$ + time$ + "-" + rndhex$(4)
     open filename$ + ".bas" for output as #1
     print #1, tests(active_test).program
     close #1
@@ -85,7 +87,7 @@ for active_test = 1 to ubound(tests)
         if tests(active_test).expect = "stdout_nonl" then actual_output$ = actual_output$ + chr$(10)
         if retcode > 0 then
             print "Failed with error, output was: "; actual_output$
-        elseif crc32~&(actual_output$) = crc32~&(tests(active_test).expected_output) then
+        elseif actual_output$ = tests(active_test).expected_output then
             print "OK"
             successes = successes + 1
         else
@@ -99,7 +101,9 @@ for active_test = 1 to ubound(tests)
     kill filename$ + ".bas"
     kill filename$ + ".output"
 next active_test
-print "Total"; str$(successes); "/"; ltrim$(str$(ubound(tests))); " OK"
+endtime! = timer(0.001)
+
+print "Total"; str$(successes); "/"; ltrim$(str$(ubound(tests))); " OK in"; int((endtime! - starttime!) * 10) / 10; "seconds"
 
 system
 
@@ -113,35 +117,9 @@ function basename$(path$)
     basename$ = mid$(path$, slash + 1, dot - slash - 1)
 end function
 
-'Fellippe Heitor https://www.qb64.org/forum/index.php?topic=2813.msg120768#msg120768
-FUNCTION crc32~& (buf AS STRING)
-    'adapted from https://rosettacode.org/wiki/CRC-32
-    STATIC table(255) AS _UNSIGNED LONG
-    STATIC have_table AS _BYTE
-    DIM crc AS _UNSIGNED LONG, k AS _UNSIGNED LONG
-    DIM i AS LONG, j AS LONG
- 
-    IF have_table = 0 THEN
-        FOR i = 0 TO 255
-            k = i
-            FOR j = 0 TO 7
-                IF (k AND 1) THEN
-                    k = _SHR(k, 1)
-                    k = k XOR &HEDB88320
-                ELSE
-                    k = _SHR(k, 1)
-                END IF
-                table(i) = k
-            NEXT
-        NEXT
-        have_table = -1
-    END IF
- 
-    crc = NOT crc ' crc = &Hffffffff
- 
-    FOR i = 1 TO LEN(buf)
-        crc = (_SHR(crc, 8)) XOR table((crc AND &HFF) XOR ASC(buf, i))
-    NEXT
- 
-    crc32~& = NOT crc
-END FUNCTION
+function rndhex$(length)
+    for i = 1 to length
+        result$ = result$ + hex$(int(rnd * 256))
+    next i
+    rndhex$ = result$
+end function
