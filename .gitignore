@@ -7,3 +7,4 @@ src/parser/ts_data.bi
 src/parser/ts_data.bm
 /tools/*.tool
 *.swp
+*.testresult

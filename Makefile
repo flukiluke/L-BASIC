@@ -15,8 +15,10 @@ TEST_DIR := $(CURDIR)/tests
 all: $(OUTPUT_BINARY) $(MERGED_SOURCE)
 
 .PHONY: test
-test: $(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) $(shell find $(TEST_DIR) -type f -name '*.test')
-	$(TOOLS_DIR)/test.tool $(filter-out $<,$^)
+TESTS := $(shell find $(TEST_DIR) -type f -name '*.test')
+test: $(TESTS:.test=.testresult)
+%.testresult: $(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) %.test
+	$(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) $(word 3,$^)
 
 $(TOOLS_DIR)/%.tool: $(TOOLS_DIR)/%.bas
 	$(QB64) -x $< -o $@.tool
