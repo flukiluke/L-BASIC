@@ -1,0 +1,130 @@
+$title: equality
+a$ = "hello"
+b$ = "world"
+c$ = "hello"
+print a$ = b$; a$ = c$; a$ <> b$; a$ <> c$; "."
+$expect: stdout
+ 0 -1 -1  0 .
+$finish
+
+$title: asc
+a$ = "hello world"
+print asc(a$); asc(a$, 2); "."
+$expect: stdout
+ 104  101 .
+$finish
+
+$title: asc past end of string illegal
+a$ = "hello"
+print asc(a$, 6)
+$expect: error
+
+$title: chr
+print chr$(101)
+$expect: stdout
+e
+$finish
+
+$title: chr greater than byte illegal
+print chr$(300)
+$expect: error
+
+$title: negative chr illegal
+print chr$(-40)
+$expect: error
+
+$title: binary instr
+print instr("hello", "h"); instr("hello", "lo"); instr("hello", "asdf"); "."
+print instr("hello", ""); instr("", "h"); instr("", ""); "."
+$expect: stdout
+ 1  4  0 .
+ 1  0  0 .
+$finish
+
+$title: ternary instr
+print instr(1, "hello", "h"); instr(-2, "hello", "e"); instr(4, "hello", "l"); "."
+print instr(10, "hello", "h"); "."
+$expect: stdout
+ 1  2  4 .
+ 0 .
+$finish
+
+$title: lcase
+print lcase$("HeLLo")
+$expect: stdout
+hello
+$finish
+
+$title: left
+print left$("hello", 2)
+print left$("hello", 6)
+print left$("hello", 0)
+print left$("hello", -1)
+$expect: stdout
+he
+hello
+
+
+$finish
+
+$title: right
+print right$("hello", 2)
+print right$("hello", 6)
+print right$("hello", 0)
+print right$("hello", -1)
+$expect: stdout
+lo
+hello
+
+
+$finish
+
+$title: ltrim
+print "{"; ltrim$("  hello  "); "}"
+$expect: stdout
+{hello  }
+$finish
+
+$title: rtrim
+print "{"; rtrim$("  hello  "); "}"
+$expect: stdout
+{  hello}
+$finish
+
+$title: _trim
+print "{"; _trim$("  hello  "); "}"
+$expect: stdout
+{hello}
+$finish
+
+$title: binary mid
+print mid$("hello", 3)
+print mid$("hello", -2)
+print mid$("hello", 6)
+print mid$("", 1)
+$expect: stdout
+llo
+hello
+
+
+$finish
+
+$title: ternary mid
+print mid$("hello", 2, 3)
+print mid$("hello", 4, 3)
+$expect: stdout
+ell
+lo
+$finish
+
+$title: space
+print "{"; space$(4); "}"
+$expect: stdout
+{    }
+$finish
+
+$title: ucase
+print ucase$("HeLLo")
+$expect: stdout
+HELLO
+$finish

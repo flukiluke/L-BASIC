@@ -19,7 +19,7 @@ dim active_section '0 = none, 1 = program, 2 = output
 on error goto ehandler
 
 if _commandcount < 2 then
-    print "Usage: "; command$(0); "<test binary> <test files>"
+    print "Usage: "; command$(0); " <test binary> <test files>"
     system 1
 end if
 

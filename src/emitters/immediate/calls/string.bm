@@ -51,6 +51,17 @@ case TOK__INFLATE
     imm_eval ast_get_child(node, 1), v1
     result.s = _inflate$(v1.s)
 
+case TOK_INSTR
+    v1.n = 1
+    haystack = 1
+    if ast_num_children(node) = 3 then
+        haystack = 2
+        imm_eval ast_get_child(node, 1), v1
+    end if
+    imm_eval ast_get_child(node, haystack), v2
+    imm_eval ast_get_child(node, haystack + 1), v3
+    result.n = instr(v1.n, v2.s, v3.s)
+
 case TOK_LEFT
     imm_eval ast_get_child(node, 1), v1
     imm_eval ast_get_child(node, 2), v2

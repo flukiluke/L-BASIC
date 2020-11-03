@@ -176,6 +176,7 @@ generic next
 
 generic select
 generic case
+generic is
 
 # functions with return type none are subs
 function abs            integer   integer
@@ -184,23 +185,38 @@ function abs            integer64 integer64
 function abs            single    single
 function abs            double    double
 function abs            quad      quad
+# absolute
+# access
+# alias
+# any
+# append
 function asc            integer   string,integer64?
 function atn            single    single
 function atn            double    double
 function atn            quad      quad
 
 function beep           none
+# binary
+# bload
+# bsave
+# byval
 
+# call
+# calls
 function cdbl           double    double
+# chain
 function chdir          none      string
 function chr            string    integer
 function cint           integer   integer
 function circle         none      flags,single,single,integer,long?,single?,single?,single?
+# clear
 function clng           long      long
+# close
 function cls            none      integer?,long?
 function color          none      long?,long?
 function command        string    integer?
 function _commandcount  long
+# common
 function cos            single    single
 function cos            double    double
 function cos            quad      quad
@@ -213,58 +229,171 @@ function cvl            long      string
 function cvs            single    string
 function cvsmbf         single    string
 
+# data
 function date           string
-function draw           none      string
+# declare
+# def seg
+# def*
 function _deflate       string    string
+function draw           none      string
 
 function environ        string    integer
 function environ        string    string
+# eof
+# erase
+# erdev
+# erl
+# err
+# error
 function exp            single    single
 function exp            double    double
 function exp            quad      quad
 
+# field
+# fileattr
 function files          none      string?
 function fix            single    single
 function fix            double    double
 function fix            quad      quad
+# fre
 function freefile       long
+# function
+
+# get
+# gosub
 
 function hex            string    integer64
 
+# include
+function _inflate       string    string
+# inkey
+# inp
 function input          none      list
+# input$
+function instr          integer64 string,string
+function instr          integer64 integer64,string,string
 function int            single    single
 function int            double    double
 function int            quad      quad
-function _inflate       string    string
+# interrupt
 
-function left           string    string,integer64
+# key
+# kill
+
+# lbound
 function lcase          string    string
+function left           string    string,integer64
+# len
+# let
+# line
+# line input
+# loc
+# function locate         none      integer?,integer?,integer?
+# function locate         none      integer?,integer?,integer?,integer,integer
+# lock
+# lof
 function log            single    single
 function log            double    double
 function log            quad      quad
+# lpos
+# lprint
+# lset
 function ltrim          string    string
 
-# Commented out because no corresponding executor yet
-# function locate         none      integer?,integer?,integer?
-# function locate         none      integer?,integer?,integer?,integer,integer
 
 function mid            string    string,integer64,integer64?
+# mkd
+# mkdir
+# mkdmbf
+# mki
+# mkl
+# mks
+# mksmbf
 
+# name
+
+# oct
+# off
+# on com|error|key|pen|play|strig|timer|uevent|gosub
+# open
+# option
+# out
+# output
+
+# paint
+# palette
+# pcopy
+# peek
+# pen
 function play           none      string
+# pmap
+# point
+# poke
+# pos
+# preset
 function print          none      list
+# pset
+# put
 
+# random
+# randomize
+# read
+# redim
+# reset
+# restore
+# resume
+# return
 function right          string    string,integer64
+# rmdir
+# rnd
+# rset
 function rtrim          string    string
+# run
 
+# sadd
 function screen         none      long,integer?,integer?,integer?
+# seek
+# setmem
+# sgn
+# shared
+# shell
+# signal
+# sin
+# sleep
 function sound          none      double,double
-function system         none      integer?
+function space          string    long    
+# spc
+# sqr
+# static
+# stick
+# stop
+# str
 function _strcmp        integer   string,string
 function _stricmp       integer   string,string
-function space          string    long    
+# strig
+# string
+# sub
+# swap
+function system         none      integer?
 
+# tab
+# tan
 function time           string
 function timer          double    single?
 function _trim          string    string
+# type
 
+# ubound
 function ucase          string    string
+# uevent
+# unlock
+
+# val
+# varptr
+# varseg
+# view
+
+# wait
+# width
+# window
+# write
