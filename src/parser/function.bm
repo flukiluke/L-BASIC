@@ -85,15 +85,16 @@ end sub
 'Results: token after expression
 sub ps_funcarg(root, candidate$)
     debuginfo "Start funcarg"
+    if ps_consumed(TOK_DOUBLE_SFX) then flags = TYPE_FILEHANDLE
     if tok_token = TOK_COMMA then
         'empty argument
         expr = ast_add_node(AST_NONE)
-        flags = TYPE_BYREF
+        flags = flags or TYPE_BYREF
     else
         expr = ps_expr
     end if
     'Declare whether this expression would satisfy a BYREF argument
-    if ast_nodes(expr).typ = AST_VAR then flags = TYPE_BYREF
+    if ast_nodes(expr).typ = AST_VAR then flags = flags or TYPE_BYREF
     candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
     ast_attach root, expr
     debuginfo "Completed funcarg"

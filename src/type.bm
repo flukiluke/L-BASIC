@@ -181,6 +181,8 @@ function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
     elseif checkmode = 1 then
         result = type_can_safely_cast(c_arg, sig_arg)
     end if
+    fh_ok = ((c_flags and TYPE_FILEHANDLE) <> 0) imp ((sig_flags and TYPE_FILEHANDLE) <> 0)
+    result = result and (fh_ok <> 0)
     type_sig_compatible_arg = result
 end function
 
@@ -241,6 +243,7 @@ function type_human_sig$(sig$)
         if flags and TYPE_BYVAL then o$ = o$ + "BYVAL "
         if flags and TYPE_BYREF then o$ = o$ + "BYREF "
         if flags and TYPE_OPTIONAL then o$ = o$ + "OPTION "
+        if flags and TYPE_FILEHANDLE then o$ = o$ + "#"
         o$ = o$ + type_human_readable$(cvl(mid$(sig$, p * 8 - 3, 4)))
         if p < (len(sig$) - 4) / 8 then o$ = o$ + ", "
     next p

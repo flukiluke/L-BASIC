@@ -295,7 +295,7 @@ function len            integer64 @quad
 # function locate         none      integer?,integer?,integer?
 # function locate         none      integer?,integer?,integer?,integer,integer
 # lock
-# lof
+function lof            integer64 %long
 function log            single    single
 function log            double    double
 function log            quad      quad

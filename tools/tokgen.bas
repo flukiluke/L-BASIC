@@ -42,6 +42,7 @@
 'ARGS is a comma-separated string specifying the type and nature of arguments passed to a function.
 'Each comma-separated element is a type name, with the following optional prefixes and suffixes:
 ' @ prefix: The argument must be passed BYREF and its type must match exactly
+' % prefix: The argument is a file handle and may appear with a leading #
 ' ? suffix: The argument is optional
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
@@ -186,6 +187,7 @@ sub process_arg_list(arglist$)
     split_args arglist$
     const TYPE_OPTIONAL = 1
     const TYPE_BYREF = 2
+    const TYPE_FILEHANDLE = 8
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
         flags = 0
@@ -196,6 +198,10 @@ sub process_arg_list(arglist$)
         if left$(args$(i), 1) = "@" then
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_BYREF
+        end if
+        if left$(args$(i), 1) = "%" then
+            args$(i) = mid$(args$(i), 2)
+            flags = flags OR TYPE_FILEHANDLE
         end if
         print #3, "type_add_sig_arg sym.v1, TYPE_"; args$(i); ","; flags
     next i

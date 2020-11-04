@@ -47,3 +47,4 @@ const TYPE_FLAGS = 10
 const TYPE_OPTIONAL = 1
 const TYPE_BYREF = 2
 const TYPE_BYVAL = 4
+const TYPE_FILEHANDLE = 8
