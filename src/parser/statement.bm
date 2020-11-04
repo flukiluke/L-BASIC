@@ -36,6 +36,8 @@ function ps_stmt
             stmt = ps_if
         case TOK_INPUT
             stmt = ps_stmt_input
+        case TOK_OPEN
+            stmt = ps_open
         case TOK_PRINT
             stmt = ps_print
         case TOK_SELECT

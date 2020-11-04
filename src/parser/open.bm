@@ -1,0 +1,48 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'open.bm - Parse rules for OPEN statement
+
+'Expects: TOK_OPEN
+'Results: TOK_NEWLINE
+'Format OPEN filename$ [FOR {INPUT|OUTPUT|BINARY|RANDOM}] AS [#]fileno& [LEN=reclen]
+function ps_open
+    debuginfo "Start open"
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = TOK_OPEN
+    ast_nodes(root).ref2 = symtab(TOK_OPEN).v1
+    ps_consume TOK_OPEN
+
+    'Filename
+    ast_attach root, ps_expr
+
+    flags = ast_add_node(AST_FLAGS)
+    ast_attach root, flags
+    ps_consume TOK_FOR
+    select case tok_token
+    case TOK_INPUT
+        ast_nodes(flags).ref = OPEN_INPUT
+    case TOK_OUTPUT
+        ast_nodes(flags).ref = OPEN_OUTPUT
+    case TOK_BINARY
+        ast_nodes(flags).ref = OPEN_BINARY
+    case TOK_RANDOM
+        ast_nodes(flags).ref = OPEN_RANDOM
+    case else
+        ps_error "Unknown file mode"
+    end select
+    tok_advance
+
+    ps_consume TOK_AS
+
+    if tok_token = TOK_DOUBLE_SFX then tok_advance
+    ast_attach root, ps_expr
+
+    if tok_token = TOK_LEN then
+        ps_consume TOK_LEN
+        ps_consume TOK_EQUALS
+        ast_attach root, ps_expr
+    end if
+
+    ps_open = root
+    debuginfo "Completed open"
+end function

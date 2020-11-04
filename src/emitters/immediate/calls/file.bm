@@ -24,4 +24,21 @@ case TOK_KILL
 
 case TOK_LOF
     imm_eval ast_get_child(node, 1), v1
-    result.n = lof(v1.n)
+    result.n = lof(v1.n + imm_filehandle_offset)
+
+case TOK_OPEN
+    imm_eval ast_get_child(node, 1), v1 'filename
+    imm_eval ast_get_child(node, 3), v2 'file handle
+    v2.n = v2.n + imm_filehandle_offset
+    v3.n = 128 'len
+    if ast_num_children(node) = 4 then imm_eval ast_get_child(node, 4), v3
+    select case ast_nodes(ast_get_child(node, 2)).ref
+    case OPEN_INPUT
+        open v1.s for input as #v2.n
+    case OPEN_OUTPUT
+        open v1.s for output as #v2.n
+    case OPEN_BINARY
+        open v1.s for binary as #v2.n
+    case OPEN_RANDOM
+        open v1.s for random as #v2.n len=v3.n
+    end select

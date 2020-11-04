@@ -12,6 +12,7 @@ sub imm_init
         imm_stack(i).s = ""
         imm_stack(i).n = 0
     next i
+    imm_filehandle_offset = freefile - 1
 end sub
 
 sub imm_reinit

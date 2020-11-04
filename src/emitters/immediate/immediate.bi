@@ -13,3 +13,7 @@ dim shared imm_jump_path$
 
 'If > 0, an EXIT command is in effect and imm_exit_node is the node to exit
 dim shared imm_exit_node
+
+'Allow for input code to use file handles without clashing with internally
+'opened files
+dim shared imm_filehandle_offset

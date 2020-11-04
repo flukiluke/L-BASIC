@@ -193,7 +193,7 @@ function atn            double    double
 function atn            quad      quad
 
 function beep           none
-# binary
+generic binary
 # bload
 # bsave
 # byval
@@ -319,10 +319,10 @@ function mid            string    string,integer64,integer64?
 # oct
 # off
 # on com|error|key|pen|play|strig|timer|uevent|gosub
-# open
+function open           none      string,flags,%long,long?
 # option
 # out
-# output
+generic output
 
 # paint
 # palette
@@ -339,7 +339,7 @@ function print          none      list
 # pset
 # put
 
-# random
+generic random
 # randomize
 # read
 # redim

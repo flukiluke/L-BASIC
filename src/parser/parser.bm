@@ -90,6 +90,7 @@ end function
 '$include: 'input.bm'
 '$include: 'labels.bm'
 '$include: 'loop.bm'
+'$include: 'open.bm'
 '$include: 'pratt.bm'
 '$include: 'print.bm'
 '$include: 'statement.bm'
