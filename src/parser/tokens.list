@@ -3,7 +3,8 @@
 # tokens.list - Description of parser tokens
 
 generic unknown   ; nosym
-generic eof       ; nosym
+# ieof -> internal eof, so as to not clash with the EOF function
+generic ieof       ; nosym
 # End Of Input - used to signify the end of a user's input in interactive
 # mode (can't use newline because we're always looking one token ahead).
 generic eoi       ; nosym
@@ -237,7 +238,7 @@ function draw           none      string
 function end            none      integer?
 function environ        string    integer
 function environ        string    string
-# eof
+function eof            long      long
 # erase
 # erdev
 # erl

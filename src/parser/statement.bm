@@ -75,7 +75,7 @@ function ps_stmt
         case TOK_CASE
             if ast_nodes(ps_final_nested).typ <> AST_SELECT then ps_error "CASE without SELECT"
             stmt = -1
-        case TOK_EOF
+        case TOK_IEOF
             if ps_final_nested <> 0 then ps_error "Unexpected end of file"
             stmt = -1
         case else

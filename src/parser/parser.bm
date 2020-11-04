@@ -63,7 +63,7 @@ sub ps_error(msg$)
 end sub
 
 'Expects: first token in block
-'Results: block end marker or EOF
+'Results: block end marker or IEOF
 function ps_block
     debuginfo "Start block"
     root = ast_add_node(AST_BLOCK)
