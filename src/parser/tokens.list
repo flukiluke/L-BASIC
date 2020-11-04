@@ -208,7 +208,7 @@ function cint           integer   integer
 function circle         none      flags,single,single,integer,long?,single?,single?,single?
 # clear
 function clng           long      long
-# close
+function close          none      %long?
 function cls            none      integer?,long?
 function color          none      long?,long?
 function command        string    integer?

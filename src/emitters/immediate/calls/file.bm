@@ -6,6 +6,16 @@ case TOK_CHDIR
     imm_eval ast_get_child(node, 1), v1
     chdir v1.s
 
+case TOK_CLOSE
+    if ast_num_children(node) = 1 then
+        imm_eval ast_get_child(node, 1), v1
+        close #n1.n
+    else
+        for i = imm_filehandle_offset + 1 to 255
+            close i
+        next i
+    end if
+
 case TOK_FILES
     c1 = ast_get_child(node, 1)
     if ast_is_none(c1) then
