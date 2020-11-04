@@ -50,8 +50,14 @@ function ps_stmt
         'These all end a block in some fashion. The block-specific code will assert the
         'ending token, but we check it's syntactically valid here.
         case TOK_END
-            if ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then ps_error "Unexpected END"
-            stmt = -1
+            if tok_next_token <> TOK_IF and tok_next_token <> TOK_SELECT then
+                'Handle regular END command
+                stmt = ps_stmtreg
+            elseif ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then
+                ps_error "Unexpected END"
+            else
+                stmt = -1
+            end if
         case TOK_ELSE, TOK_ELSEIF
             if ast_nodes(ps_final_nested).typ <> AST_IF then ps_error tok_human_readable$(tok_token) + " without IF"
             stmt = -1
