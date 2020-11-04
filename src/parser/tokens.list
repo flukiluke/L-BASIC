@@ -276,7 +276,7 @@ function int            quad      quad
 # interrupt
 
 # key
-# kill
+function kill           none      string
 
 # lbound
 function lcase          string    string
