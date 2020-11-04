@@ -51,6 +51,10 @@ case TOK_PLUS
     imm_eval ast_get_child(node, 2), v2
     if type_of_call(node) = TYPE_STRING then result.s = v1.s + v2.s else result.n = v1.n + v2.n
 
+case TOK_SIN
+    imm_eval ast_get_child(node, 1), v1
+    result.n = sin(v1.n)
+
 case TOK_SLASH
     imm_eval ast_get_child(node, 1), v1
     imm_eval ast_get_child(node, 2), v2
@@ -60,3 +64,7 @@ case TOK_STAR
     imm_eval ast_get_child(node, 1), v1
     imm_eval ast_get_child(node, 2), v2
     result.n = v1.n * v2.n
+
+case TOK_TAN
+    imm_eval ast_get_child(node, 1), v1
+    result.n = tan(v1.n)

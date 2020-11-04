@@ -362,7 +362,9 @@ function screen         none      long,integer?,integer?,integer?
 # shared
 # shell
 # signal
-# sin
+function sin            single    single
+function sin            double    double
+function sin            quad      quad
 # sleep
 function sound          none      double,double
 function space          string    long    
@@ -381,7 +383,9 @@ function _stricmp       integer   string,string
 function system         none      integer?
 
 # tab
-# tan
+function tan            single    single
+function tan            double    double
+function tan            quad      quad
 function time           string
 function timer          double    single?
 function _trim          string    string
