@@ -17,7 +17,7 @@ function ps_circle
         ps_consume TOK_STEP
     end if
     ast_attach root, flags
-    candidate$ = type_sig_add_arg$("", TYPE_FlAGS, 0)
+    candidate$ = type_sig_add_arg$("", TYPE_FLAGS, 0)
 
     ps_consume TOK_OPAREN
     expr = ps_expr

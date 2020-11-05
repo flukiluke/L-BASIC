@@ -91,7 +91,7 @@ function type_add_sig(previous, sig$)
         redim _preserve type_signatures(type_last_signature * 2) as type_signature_t
     end if
     type_signatures(type_last_signature).sig = sig$
-    type_signatures(type_last_signature).succ = 0 'Avoids QB64 compilr bug
+    type_signatures(type_last_signature).succ = 0 'Avoids QB64 compiler bug
     if previous then type_signatures(previous).succ = type_last_signature
     type_add_sig = type_last_signature
 end function

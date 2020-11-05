@@ -41,6 +41,8 @@ function ps_open
         ps_consume TOK_LEN
         ps_consume TOK_EQUALS
         ast_attach root, ps_expr
+    else
+        ast_attach root, ast_add_node(AST_NONE)
     end if
 
     ps_open = root
