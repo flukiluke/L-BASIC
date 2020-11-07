@@ -258,7 +258,13 @@ function fix            quad      quad
 function freefile       long
 # function
 
-function get            none      %long,integer64?,long?
+function get            none      %long,integer64?,@string?
+function get            none      %long,integer64?,@integer?
+function get            none      %long,integer64?,@long?
+function get            none      %long,integer64?,@integer64?
+function get            none      %long,integer64?,@single?
+function get            none      %long,integer64?,@double?
+function get            none      %long,integer64?,@quad?
 # function get            none      flags,single,single,single,single,@arrayelem
 # gosub
 
