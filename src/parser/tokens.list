@@ -258,7 +258,8 @@ function fix            quad      quad
 function freefile       long
 # function
 
-# get
+function get            none      %long,integer64?,long?
+# function get            none      flags,single,single,single,single,@arrayelem
 # gosub
 
 function hex            string    integer64
@@ -338,6 +339,14 @@ function play           none      string
 # preset
 function print          none      list
 # pset
+function put            none      %long,integer64?,string?
+function put            none      %long,integer64?,integer?
+function put            none      %long,integer64?,long?
+function put            none      %long,integer64?,integer64?
+function put            none      %long,integer64?,single?
+function put            none      %long,integer64?,double?
+function put            none      %long,integer64?,quad?
+#put graphics
 # put
 
 generic random

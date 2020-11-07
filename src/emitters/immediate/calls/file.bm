@@ -58,3 +58,39 @@ case TOK_OPEN
     case OPEN_RANDOM
         open v1.s for random as #v2.n len=v3.n
     end select
+
+case TOK_PUT
+    imm_eval ast_get_child(node, 1), v1
+    v1.n = v1.n + imm_filehandle_offset
+    v2.n = seek(v1.n)
+    position = ast_get_child(node, 2)
+    if not ast_is_none(position) then imm_eval position, v2
+    src_var = ast_get_child(node, 3)
+    if ast_is_none(src_var) then
+        put #v1.n, v2.n
+    else
+        imm_eval src_var, v3
+        select case type_of_expr(src_var)
+        case TYPE_INTEGER
+            putvar_int% = v3.n
+            put #v1.n, v2.n, putvar_int%
+        case TYPE_LONG
+            putvar_long& = v3.n
+            put #v1.n, v2.n, putvar_long&
+        case TYPE_INTEGER64
+            putvar_int64&& = v3.n
+            put #v1.n, v2.n, putvar_int64&&
+        case TYPE_SINGLE
+            putvar_single! = v3.n
+            put #v1.n, v2.n, putvar_single!
+        case TYPE_DOUBLE
+            putvar_double# = v3.n
+            put #v1.n, v2.n, putvar_double#
+        case TYPE_QUAD
+            putvar_quad## = v3.n
+            put #v1.n, v2.n, putvar_quad##
+        case TYPE_STRING
+            putvar_str$ = v3.s
+            put #v1.n, v2.n, putvar_str$
+        end select
+    end if
