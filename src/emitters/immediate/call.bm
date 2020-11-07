@@ -15,6 +15,7 @@ sub imm_do_call(node, result as imm_value_t)
     '$include: 'calls/input.bm'
     '$include: 'calls/file.bm'
     '$include: 'calls/graphics.bm'
+    '$include: 'calls/keyboard.bm'
     '$include: 'calls/logic.bm'
     '$include: 'calls/maths.bm'
     '$include: 'calls/memory.bm'

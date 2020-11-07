@@ -272,7 +272,7 @@ function hex            string    integer64
 
 # include
 function _inflate       string    string
-# inkey
+function inkey          string
 # inp
 function input          none      list
 # input$

@@ -1,0 +1,6 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'keyboard.bm - Executors for keyboard handling functions
+
+case TOK_INKEY
+    result.s = inkey$
