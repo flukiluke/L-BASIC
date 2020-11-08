@@ -300,8 +300,8 @@ function len            integer64 @quad
 # line
 # line input
 # loc
-# function locate         none      integer?,integer?,integer?
-# function locate         none      integer?,integer?,integer?,integer,integer
+function locate         none      integer?,integer?,integer?
+function locate         none      integer?,integer?,integer?,integer,integer
 # lock
 function lof            integer64 %long
 function log            single    single

@@ -2,7 +2,6 @@
 'SPDX-License-Identifier: Apache-2.0
 'call.bm - Executor for CALLs
 
-'Operations may be inlined here if they are short
 sub imm_do_call(node, result as imm_value_t)
     dim v1 as imm_value_t
     dim v2 as imm_value_t

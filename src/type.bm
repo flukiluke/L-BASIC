@@ -108,6 +108,28 @@ function type_sig_add_arg$(old$, new_argtype, new_argflags)
     type_sig_add_arg$ = old$ + mkl$(new_argtype) + mkl$(new_argflags)
 end function
 
+'Function call resolution!
+'Each function name has one or more signatures. A signature gives the return type and the
+'type of each of its arguments. When a call is parsed, a candidate is built which is like
+'a signature in that it is a list of the type of each supplied argument (a candidate's
+'return type is always NONE because we can't reliably detect that).
+'
+'With the candidate we then have to find a signature that matches. The procedure:
+'1) 
+'   a) Look for a compatible signature. A sig is compatible if all required arguments are
+'      supplied, there are not too many optional arguments and all passed arguments can be
+'      cast to the expected type.
+'   b) if there no matches, fail.
+'   c) If there is exactly 1 compatible sig, that is the result.
+'   d) If there are multiple strictly compatible sigs, continue to step 2.
+'2)
+'   a) Of all compatible signatures, select the first one where all the casts are lossless.
+'   b) If no sig matches with lossless casts, select the last sig from the list of compatibles.
+'
+'Rule 1c is the usual case for simple functions. 2a allows polymorphic functions to be listed
+'in the tokens.list file in order of increasing type width and the narrowest version that
+'doesn't lose data is picked. 2b is a fallback if a cast is inevitable.
+
 function type_find_sig_match(func, candidate$)
     debuginfo "Function resolution candidate is " + type_human_sig$(mkl$(0) + candidate$)
     sig_index = symtab(func).v1
@@ -171,7 +193,7 @@ function type_pick_best_compatible_sig(compatibles$, candidate$)
 end function
 
 function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
-'checkmode = 0 for lossy casts, 1 for lossless casts only
+    'checkmode = 0 for lossy casts, 1 for lossless casts only
     if c_arg = TYPE_NONE then
         result = (sig_flags and TYPE_OPTIONAL) > 0
     elseif sig_flags and TYPE_BYREF then
