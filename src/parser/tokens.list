@@ -176,6 +176,8 @@ generic select
 generic case
 generic is
 
+generic type
+
 # functions with return type none are subs
 function abs            integer   integer
 function abs            long      long

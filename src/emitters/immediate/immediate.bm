@@ -4,6 +4,7 @@
 
 sub imm_init
     redim imm_stack(ps_last_var_index) as imm_value_t
+    imm_stack_last = ps_last_var_index
     'No, I'm not crazy - this explicit initialisation is to
     'work around a QB64 bug where it doesn't set these values
     'properly. Probably something to do with the dynamic-length
@@ -18,6 +19,7 @@ end sub
 sub imm_reinit
     u = ubound(imm_stack)
     redim _preserve imm_stack(ps_last_var_index) as imm_value_t
+    imm_stack_last = ps_last_var_index
     for i = u + 1 to ps_last_var_index
         imm_stack(i).s = ""
         imm_stack(i).n = 0

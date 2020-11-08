@@ -1,0 +1,72 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'udt.bm - Parser for user-defined types
+
+'Expects: TOK_TYPE
+'Results: token after END TYPE
+function ps_udt
+    debuginfo "Start UDT definition"
+    dim udt_sym as symtab_entry_t
+    udt_sym.typ = SYM_UDT
+    udt_sym.v1 = 0
+
+    ps_consume TOK_TYPE
+    if tok_token <> TOK_UNKNOWN then ps_error "UDT name already in use"
+    udt_sym.identifier = ucase$(tok_content$)
+    tok_advance
+    ps_consume TOK_NEWLINE
+    ps_line_prelude
+
+    do
+        ps_udt_element udt_sym
+        udt_sym.v1 = udt_sym.v1 + 1
+    loop until ps_consumed(TOK_END)
+
+    symtab_add_entry udt_sym
+    ps_udt = 0 'Never generate any ast nodes
+    ps_consume TOK_TYPE
+    debuginfo "End UDT definition"
+end function
+
+'Expects: Element identifier
+'Results: token after newline
+sub ps_udt_element(udt_sym as symtab_entry_t)
+    debuginfo "Start UDT element"
+    dim elem_sym as symtab_entry_t
+    elem_sym.typ = SYM_VARIABLE
+    
+    'Because UDT element names appear in such a restricted environment,
+    'they can live in their own namespace without conflicting with
+    'existing symbols. We just require that the name be an alphanumeric
+    'identifier.
+    elem_name$ = ucase$(tok_content$)
+    select case left$(elem_name$, 1)
+    case "A" to "Z", "_"
+    case else
+        print tok_content$
+        ps_error "Invalid UDT element name"
+    end select
+    for i = 2 to len(elem_name$)
+        select case mid$(elem_name$, i, 1)
+        case "A" to "Z", "0" to "9", "_"
+        case else
+            ps_error "Invalid UDT element name"
+        end select
+    next i
+    elem_sym.identifier = udt_sym.identifier + "." + elem_name$
+    tok_advance
+
+    'Set type from sigil, AS clause or default type
+    elem_sym.v1 = ps_opt_sigil
+    if elem_sym.v1 = 0 then elem_sym.v1 = ps_default_type
+
+    'Note that UDT elements are at consecutive locations
+    ps_last_var_index = ps_last_var_index + 1
+    elem_sym.v2 = ps_last_var_index
+    symtab_add_entry elem_sym
+    
+    ps_consume TOK_NEWLINE
+    ps_line_prelude
+    debuginfo "Completed UDT element"
+end sub
+

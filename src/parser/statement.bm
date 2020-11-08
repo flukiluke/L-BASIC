@@ -4,14 +4,12 @@
 
 'Expects: first token of statement
 'Results: NEWLINE or block end marker
+'Returns:
+'   -1 ->  end of a block
+'   0 -> statement did not generate any ast nodes
+'   > 0 -> ast node
 function ps_stmt
-    'This part only relevant for interactive mode
-    do while tok_token = TOK_NEWLINE
-        ps_consume TOK_NEWLINE
-    loop
-    if tok_token = TOK_EOI then
-        ps_consume TOK_EOI
-    end if
+    ps_line_prelude
 
     if tok_token = TOK_LINENUM then ps_label
     debuginfo "Start statement"
@@ -42,6 +40,8 @@ function ps_stmt
             stmt = ps_print
         case TOK_SELECT
             stmt = ps_select
+        case TOK_TYPE
+            stmt = ps_udt
         case TOK_WHILE
             stmt = ps_while
         case TOK_UNKNOWN

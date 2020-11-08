@@ -21,11 +21,26 @@ end function
 
 sub ps_assert(expected)
     if tok_token <> expected then
-        ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
+        if ucase$(tok_human_readable(tok_token)) = ucase$(tok_content$) then
+            ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token)
+        else
+            ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token) + " " + chr$(34) + tok_content$ + chr$(34)
+        end if
     else
         debuginfo "Assert " + tok_human_readable(expected)
     end if
     if tok_token = TOK_NEWLINE and not ps_is_linejoin then ps_actual_linenum = ps_actual_linenum + 1
+end sub
+
+'Execute this when at the beginning of a line. As well as consuming whitespace,
+'it handles the EOI from interactive mode.
+sub ps_line_prelude
+    do while tok_token = TOK_NEWLINE
+        ps_consume TOK_NEWLINE
+    loop
+    if tok_token = TOK_EOI then
+        ps_consume TOK_EOI
+    end if
 end sub
 
 function ps_is_terminator(t)
@@ -95,4 +110,5 @@ end function
 '$include: 'print.bm'
 '$include: 'statement.bm'
 '$include: 'tokeng.bm'
+'$include: 'udt.bm'
 '$include: 'var.bm'

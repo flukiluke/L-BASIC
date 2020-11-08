@@ -64,7 +64,7 @@ function nud(token, content$)
             ast_attach node, ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
             ast_nodes(node).ref2 = matching_sig
         case else
-            ps_error "Unexpected operator " + tok_human_readable$(token)
+            ps_error "Unexpected " + tok_human_readable$(token)
         end select
     end select
     nud = node
@@ -89,6 +89,9 @@ function lbp(token, content$)
 end function
 
 function led(token, content$, left_node)
+    'content$ is not used by might be useful one day.
+    'This next line stops the warning about unused variables.
+    content$ = content$
     node = ast_add_node(AST_CALL)
     ast_nodes(node).ref = token
     select case symtab(token).typ

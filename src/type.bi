@@ -42,6 +42,8 @@ const TYPE_STRING = 8
 const TYPE_LIST = 9
 'Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
 const TYPE_FLAGS = 10
+'Values above TYPE_LAST are user-defined types
+const TYPE_LAST = 10
 
 'Flags for type signature flags
 const TYPE_OPTIONAL = 1
