@@ -5,6 +5,15 @@
 case TOK_DATE
     result.s = date$
 
+case TOK_SLEEP
+    period = ast_get_child(node, 1)
+    if ast_is_none(period) then
+        sleep
+    else
+        imm_eval period, v1
+        sleep v1.n
+    end if
+
 case TOK_TIME
     result.s = time$
 
