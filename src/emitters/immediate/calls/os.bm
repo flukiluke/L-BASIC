@@ -20,7 +20,9 @@ case TOK__COMMANDCOUNT
 case TOK_END
     v1.n = 0
     if not ast_is_none(ast_get_child(node, 1)) then imm_eval ast_get_child(node, 1), v1
-    end v1.n
+    'END is only useful when the display will disappear after execution is finished,
+    'which is not the case when running in terminal mode.
+    if options.terminal_mode then system v1.n else end v1.n
         
 case TOK_ENVIRON
     c1 = ast_get_child(node, 1)
