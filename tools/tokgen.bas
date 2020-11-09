@@ -115,7 +115,10 @@ do while not eof(1)
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TYPE_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "TYPE" then print #3, "sym.typ = SYM_TYPE"
+        if previous$(0) <> "TYPE" then
+            print #3, "sym.typ = SYM_TYPE"
+            print #3, "sym.v1 = 1" 'Size of internal types is always 1
+        end if
         print #3, "sym.identifier = "; toksym$
         print #3, "symtab_add_entry sym"
     case "FUNCTION"

@@ -7,7 +7,7 @@
 function ps_udt
     debuginfo "Start UDT definition"
     dim udt_sym as symtab_entry_t
-    udt_sym.typ = SYM_UDT
+    udt_sym.typ = SYM_TYPE
     udt_sym.v1 = 0
 
     ps_consume TOK_TYPE
@@ -33,7 +33,7 @@ end function
 sub ps_udt_element(udt_sym as symtab_entry_t)
     debuginfo "Start UDT element"
     dim elem_sym as symtab_entry_t
-    elem_sym.typ = SYM_VARIABLE
+    elem_sym.typ = SYM_UDT_ELEMENT
     
     'Because UDT element names appear in such a restricted environment,
     'they can live in their own namespace without conflicting with
@@ -60,9 +60,8 @@ sub ps_udt_element(udt_sym as symtab_entry_t)
     elem_sym.v1 = ps_opt_sigil
     if elem_sym.v1 = 0 then elem_sym.v1 = ps_default_type
 
-    'Note that UDT elements are at consecutive locations
-    ps_last_var_index = ps_last_var_index + 1
-    elem_sym.v2 = ps_last_var_index
+    'Get offset of element in UDT
+    elem_sym.v2 = udt_sym.v1
     symtab_add_entry elem_sym
     
     ps_consume TOK_NEWLINE

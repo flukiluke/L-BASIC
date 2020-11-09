@@ -71,13 +71,31 @@ end function
 'Results: post token if sigil present, unchanged otherwise
 function ps_opt_sigil
     debuginfo "Start optional sigil"
-    if tok_token = TOK_AS then ps_consume TOK_AS
-    typ = type_tok2type(tok_token)
-    if typ then
-        ps_opt_sigil = typ
+    if ps_consumed(TOK_AS) then
+        typ = symtab_get_id(ucase$(tok_content$))
+        if typ = 0 or symtab(typ).typ <> SYM_TYPE then ps_error "Expected type name"
         tok_advance
     else
-        ps_opt_sigil = 0
+        select case token
+        case TOK_INTEGER_SFX
+            typ = TYPE_INTEGER
+        case TOK_LONG_SFX
+            typ = TYPE_LONG
+        case TOK_INTEGER64_SFX
+            typ = TYPE_INTEGER64
+        case TOK_SINGLE_SFX
+            typ = TYPE_SINGLE
+        case TOK_DOUBLE_SFX
+            typ = TYPE_DOUBLE
+        case TOK_QUAD_SFX
+            typ = TYPE_QUAD
+        case TOK_STRING_SFX
+            typ = TYPE_STRING
+        case else
+            typ = 0
+        end select
+        if typ then tok_advance
     end if
+    ps_opt_sigil = typ
     debuginfo "Completed optional sigil"
 end function
