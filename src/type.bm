@@ -210,21 +210,21 @@ end function
 
 function type_tok2type(sfx_token)
     select case sfx_token
-    case TOK_INTEGER_SFX, TOK_INTEGER
+    case TOK_INTEGER_SFX, TYPE_INTEGER
         type_tok2type = TYPE_INTEGER
-    case TOK_LONG_SFX, TOK_LONG
+    case TOK_LONG_SFX, TYPE_LONG
         type_tok2type = TYPE_LONG
-    case TOK_INTEGER64_SFX, TOK_INTEGER64
+    case TOK_INTEGER64_SFX, TYPE_INTEGER64
         type_tok2type = TYPE_INTEGER64
-    case TOK_SINGLE_SFX, TOK_SINGLE
+    case TOK_SINGLE_SFX, TYPE_SINGLE
         type_tok2type = TYPE_SINGLE
-    case TOK_DOUBLE_SFX, TOK_DOUBLE
+    case TOK_DOUBLE_SFX, TYPE_DOUBLE
         type_tok2type = TYPE_DOUBLE
-    case TOK_QUAD_SFX, TOK_QUAD
+    case TOK_QUAD_SFX, TYPE_QUAD
         type_tok2type = TYPE_QUAD
-    case TOK_OFFSET_SFX, TOK_OFFSET
+    case TOK_OFFSET_SFX, TYPE_OFFSET
         type_tok2type = TYPE_OFFSET
-    case TOK_STRING_SFX, TOK_STRING
+    case TOK_STRING_SFX, TYPE_STRING
         type_tok2type = TYPE_STRING
     case else
         type_tok2type = 0

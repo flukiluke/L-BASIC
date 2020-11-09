@@ -16,34 +16,8 @@ end type
 redim shared type_signatures(10) as type_signature_t
 dim shared type_last_signature as long
 
-'Variable data types
-'This element is not typed and attempting to give it a type in as error
-const TYPE_NONE = 0
-
-'16 bits
-const TYPE_INTEGER = 1
-'32 bits
-const TYPE_LONG = 2
-'64 bits
-const TYPE_INTEGER64 = 3
-'Not yet used, but intended for pointers
-const TYPE_OFFSET = 4
-'binary32 floating-point
-const TYPE_SINGLE = 5
-'binary64 floating-point
-const TYPE_DOUBLE = 6
-'binary128 floating-point
-const TYPE_QUAD = 7
-'Everyone's favourite non-numeric type
-const TYPE_STRING = 8
-
-'These types aren't real types
-'Flexible number of arbitrary child nodes (looking at you, INPUT & PRINT).
-const TYPE_LIST = 9
-'Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
-const TYPE_FLAGS = 10
-'Values above TYPE_LAST are user-defined types
-const TYPE_LAST = 10
+'Note: constants for actual data types (TYPE_LONG etc.) are defined in tokens.list
+'for greater ease of handling UDTs.
 
 'Flags for type signature flags
 const TYPE_OPTIONAL = 1

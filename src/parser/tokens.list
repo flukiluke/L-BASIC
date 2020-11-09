@@ -14,6 +14,50 @@ generic semicolon ; direct nosym
 generic rem
 generic linenum   ; nosym
 
+# Type symbols
+generic integer_sfx     ; direct nosym
+generic long_sfx        ; direct nosym
+generic integer64_sfx   ; direct nosym
+generic single_sfx      ; direct nosym
+generic double_sfx      ; direct nosym
+generic quad_sfx        ; direct nosym
+generic string_sfx      ; direct nosym
+
+# Types and pseudotypes
+# Akin to C's void type
+type none       ; nosym
+# Flexible number of arbitrary arguments (looking at you, INPUT & PRINT)
+type list       ; nosym
+#Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
+type flags      ; nosym
+# 16 bits
+type integer
+# 32 bits
+type long
+# 64 bits
+type integer64
+# binary32 floating-point
+type single
+# binary64 floating-point
+type double
+# binary128 floating-point
+type quad
+# Everyone's favourite non-numeric type
+type string
+
+# Parentheses don't have any real meaning, they only direct the parsing
+generic oparen ; direct nosym
+generic cparen ; direct nosym
+
+# Numbers
+# numint: 1234, numdec: 12.34, numexp: 12.3E4, numbase: &H1234
+literal numint ; direct
+literal numdec ; direct
+literal numexp ; direct
+literal numbase ; direct
+# A string
+literal stringlit ; direct
+#
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).
 # Note -3^2 = -(3^2)
@@ -115,39 +159,6 @@ prefix  negative        13          quad      quad                ; nosym
 infix   ^(power)        14  left    single    single,single       ; direct
 infix   ^(power)        14  left    double    double,double       ; direct
 infix   ^(power)        14  left    quad      quad,quad           ; direct
-
-# Parentheses don't have any real meaning, they only direct the parsing
-generic oparen ; direct nosym
-generic cparen ; direct nosym
-
-# Numbers
-# numint: 1234, numdec: 12.34, numexp: 12.3E4, numbase: &H1234
-literal numint ; direct
-literal numdec ; direct
-literal numexp ; direct
-literal numbase ; direct
-# A string
-literal stringlit ; direct
-
-# Type symbols and names
-generic integer_sfx     ; direct nosym
-generic integer
-generic long_sfx        ; direct nosym
-generic long
-generic integer64_sfx   ; direct nosym
-generic integer64
-generic offset_sfx      ; direct nosym
-generic offset
-
-generic single_sfx      ; direct nosym
-generic single
-generic double_sfx      ; direct nosym
-generic double
-generic quad_sfx        ; direct nosym
-generic quad
-generic string_sfx      ; direct nosym
-generic string
-
 
 # Basic language constructs
 generic dim

@@ -16,7 +16,10 @@
 '
 'generic NAME ; FLAGS
 'Adds a symtab entry with no extra information.
-
+'
+'type NAME ; FLAGS
+'Like generic, but generate the name as TYPE_ instead of TOK_ and SYM_TYPE instead of SYM_GENERIC.
+'
 'literal NAME ; FLAGS
 'Represent a literal. Does not generate a symtab entry.
 '
@@ -105,6 +108,14 @@ do while not eof(1)
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "GENERIC" then print #3, "sym.typ = SYM_GENERIC"
+        print #3, "sym.identifier = "; toksym$
+        print #3, "symtab_add_entry sym"
+    case "TYPE"
+        assertsize 2
+        toknum = toknum + 1
+        cur_toknum = toknum
+        print #2, "CONST TYPE_" + tokname$ + " =" + str$(toknum)
+        if previous$(0) <> "TYPE" then print #3, "sym.typ = SYM_TYPE"
         print #3, "sym.identifier = "; toksym$
         print #3, "symtab_add_entry sym"
     case "FUNCTION"
