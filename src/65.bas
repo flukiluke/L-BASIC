@@ -162,7 +162,6 @@ sub interactive_mode
         node = ps_stmt
         'Could return 0 if statement does not generate ast nodes
         if node then
-            if type_of_expr(node) <> TYPE_NONE then ps_error "Expression not allowed here"
             Error_context = 0
             if options.debug then
                 Error_context = 3
