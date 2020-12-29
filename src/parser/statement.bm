@@ -52,7 +52,8 @@ function ps_stmt
         'These all end a block in some fashion. The block-specific code will assert the
         'ending token, but we check it's syntactically valid here.
         case TOK_END
-            if tok_next_token <> TOK_IF and tok_next_token <> TOK_SELECT then
+            'We can't check tok_next_token because it does not always contain correct look-ahead information
+            if ucase$(tok_next_content$) <> "IF" and ucase$(tok_next_content$) <> "SELECT" then
                 'Handle regular END command
                 stmt = ps_stmtreg
             elseif ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then

@@ -74,7 +74,6 @@ end sub
 'Takes udt variable as argument
 function ps_udt_element_access(head)
     debuginfo "Start udt element access"
-    print head; symtab(head).typ
     if symtab(head).typ <> SYM_VARIABLE then ps_error "UDT element access not on UDT"
     head_typ_name$ = symtab(symtab(head).v1).identifier
     elem = symtab_get_id(head_typ_name$ + "." + ucase$(tok_content$))

@@ -50,7 +50,6 @@ end function
 'Note: process simple variables, i.e. no udt or array stuff. Returns AST_VAR.
 function ps_simple_variable_p(head, content$)
     debuginfo "Start simple variable"
-    print head, content$
     node = ast_add_node(AST_VAR)
     sigil = ps_opt_sigil
     if head = TOK_UNKNOWN then

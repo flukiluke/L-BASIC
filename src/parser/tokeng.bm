@@ -23,7 +23,18 @@ sub tok_init
 end sub
 
 sub tok_advance
-    tok_token = tok_next_token
+    'We defer symbol table lookups to now (instead of in tok_read_next_token) so
+    'we can correctly find any recently declared symbols.
+    if tok_next_token = 0 then
+        id = symtab_get_id(ucase$(tok_next_content$))
+        if id = 0 then
+            tok_token = TOK_UNKNOWN
+        else
+            tok_token = id
+        end if
+    else
+        tok_token = tok_next_token
+    end if
     tok_content$ = tok_next_content$
     if not options.interactive_mode then
         tok_read_next_token
@@ -66,14 +77,9 @@ sub tok_read_next_token
             elseif ucase$(tok_next_content$) = "REM" then
                 goto rem_hack
             end if
-                
-            id = symtab_get_id(ucase$(tok_next_content$))
-            if id = 0 then
-                tok_next_token = TOK_UNKNOWN
-            else
-                tok_next_token = id
-            end if
             tokeng_state.linestart = FALSE
+            'tok_next_token is not properly set here; see comments in tok_advance
+            tok_next_token = 0
 
         case TS_LINENUM
             if not tokeng_state.linestart then ps_error "Line number must be at start of line"
