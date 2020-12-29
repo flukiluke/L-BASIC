@@ -54,7 +54,7 @@ function type_of_cast(node)
 end function
 
 function type_of_udt_access(node)
-    type_of_udt_access = symtab(ast_nodes(node).ref2).v1
+    type_of_udt_access = symtab(ast_nodes(node).ref).v1
 end function
 
 function type_is_lvalue(node)

@@ -72,16 +72,15 @@ end sub
 'Expects: Element
 'Results: token after element
 'Takes udt variable as argument
-function ps_udt_element_access(head)
+function ps_udt_element_access(lvalue)
     debuginfo "Start udt element access"
-    if symtab(head).typ <> SYM_VARIABLE then ps_error "UDT element access not on UDT"
-    head_typ_name$ = symtab(symtab(head).v1).identifier
+    head_typ_name$ = symtab(type_of_lvalue(lvalue)).identifier
     elem = symtab_get_id(head_typ_name$ + "." + ucase$(tok_content$))
     if elem = 0 or symtab(elem).typ <> SYM_UDT_ELEMENT then ps_error "Bad UDT element access"
     tok_advance
     node = ast_add_node(AST_UDT_ACCESS)
-    ast_nodes(node).ref = head
-    ast_nodes(node).ref2 = elem
+    ast_attach node, lvalue
+    ast_nodes(node).ref = elem
     ps_udt_element_access = node
     debuginfo "Completed udt element access"
 end function
