@@ -53,26 +53,15 @@ function ps_simple_variable_p(head, content$)
     node = ast_add_node(AST_VAR)
     sigil = ps_opt_sigil
     if head = TOK_UNKNOWN then
-        'New variable
-        ucase_content$ = ucase$(content$)
-        s = symtab_get_id(ucase_content$)
-        if s then
-            'Slight hack: in the case of something like A = A + 1 where A is previously defined, tokeng will fail
-            'to identify the second A as an existing variable because it is looking ahead. So, we check again here
-            'to confirm it's a new variable.
-            if sigil and sigil <> symtab(s).v1 then ps_error "Type suffix does not match existing variable type"
-            ast_nodes(node).ref = s
-        else
-            'Add new variable (implicit declaration)
-            dim sym as symtab_entry_t
-            sym.identifier = ucase_content$
-            sym.typ = SYM_VARIABLE
-            if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
-            ps_last_var_index = ps_last_var_index + 1
-            sym.v2 = ps_last_var_index
-            symtab_add_entry sym
-            ast_nodes(node).ref = symtab_last_entry
-        end if
+        'Add new variable (implicit declaration)
+        dim sym as symtab_entry_t
+        sym.identifier = ucase$(content$)
+        sym.typ = SYM_VARIABLE
+        if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
+        ps_last_var_index = ps_last_var_index + 1
+        sym.v2 = ps_last_var_index
+        symtab_add_entry sym
+        ast_nodes(node).ref = symtab_last_entry
     elseif symtab(head).typ <> SYM_VARIABLE then
         ps_error "Expected variable"
     else
