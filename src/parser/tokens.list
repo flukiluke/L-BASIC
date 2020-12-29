@@ -11,6 +11,7 @@ generic eoi       ; nosym
 generic newline   ; direct nosym
 generic comma     ; direct nosym
 generic semicolon ; direct nosym
+generic .(dot)    ; direct
 generic rem
 generic linenum   ; nosym
 

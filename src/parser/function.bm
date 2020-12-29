@@ -94,7 +94,7 @@ sub ps_funcarg(root, candidate$)
         expr = ps_expr
     end if
     'Declare whether this expression would satisfy a BYREF argument
-    if ast_nodes(expr).typ = AST_VAR then flags = flags or TYPE_BYREF
+    if type_is_lvalue(expr) then flags = flags or TYPE_BYREF
     candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
     ast_attach root, expr
     debuginfo "Completed funcarg"

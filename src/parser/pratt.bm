@@ -43,21 +43,19 @@ function nud(token, content$)
         goto negative_hack
     case TOK_UNKNOWN
         'Implicit variable definitions
-        node = ast_add_node(AST_VAR)
-        ast_nodes(node).ref = ps_variable_p(token, content$)
+        node = ps_simple_variable_p(token, content$)
     case else
         negative_hack:
         select case symtab(token).typ
         case SYM_FUNCTION
             node = ps_funccall_p(token)
         case SYM_VARIABLE
-            node = ast_add_node(AST_VAR)
-            ast_nodes(node).ref = ps_variable_p(token, content$)
+            node = ps_lvalue_p(token, content$)
         case SYM_PREFIX
             node = ast_add_node(AST_CALL)
             ast_nodes(node).ref = token
             expr = pt_expr(symtab(token).v2)
-            if ast_nodes(expr).typ = AST_VAR then candidate_flags = TYPE_BYREF
+            if type_is_lvalue(expr) then candidate_flags = TYPE_BYREF
             candidate$ = type_sig_add_arg$("", type_of_expr(expr), flags)
             matching_sig = type_find_sig_match(token, candidate$)
             if matching_sig = 0 then ps_error "Cannot find matching type signature"
@@ -101,9 +99,9 @@ function led(token, content$, left_node)
         else 'right-associative
             right_node = pt_expr(symtab(token).v2 - 1)
         end if
-        if ast_nodes(left_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
+        if type_is_lvalue(left_node) then candidate_flags = TYPE_BYREF
         candidate$ = type_sig_add_arg$("", type_of_expr(left_node), flags)
-        if ast_nodes(right_node).typ = AST_VAR then candidate_flags = TYPE_BYREF
+        if type_is_lvalue(right_node) then candidate_flags = TYPE_BYREF
         candidate$ = type_sig_add_arg$(candidate$, type_of_expr(right_node), flags)
         matching_sig = type_find_sig_match(token, candidate$)
         if matching_sig = 0 then ps_error "Cannot find matching type signature"

@@ -40,8 +40,6 @@ sub tok_advance
             tok_read_next_token
         end if
     end if
-    debuginfo tok_human_readable$(tok_token) + " <- " + tok_human_readable$(tok_next_token)
-
 end sub
 
 sub tok_read_next_token

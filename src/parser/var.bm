@@ -9,62 +9,81 @@ function ps_dim
     debuginfo "Start dim"
     ps_consume TOK_DIM
     do
-        ps_assert_not_const ps_variable
+        var = ps_simple_variable
     loop while ps_consumed(TOK_COMMA)
     ps_dim = 0
     debuginfo "Completed dim"
 end function
 
-'Expects: variable token
-'Results: token after variable & sigil
-function ps_variable
+function ps_lvalue
     token = tok_token
     content$ = tok_content$
     tok_advance
-    ps_variable = ps_variable_p(token, content$)
+    ps_lvalue = ps_lvalue_p(token, content$)
+end function
+
+function ps_lvalue_p(head, content$)
+    debuginfo "Start lvalue"
+    if ps_consumed(TOK_DOT) then
+        'UDT element access
+        node = ps_udt_element_access(head)
+    elseif ps_consumed(TOK_OPAREN) then
+        'TODO array access
+        ps_error "Array access unsupported"
+    else
+        node = ps_simple_variable_p(head, content$)
+        if symtab(ast_nodes(node).ref).v3 then ps_error "CONST cannot be lvalue"
+    end if
+    ps_lvalue_p = node
+    debuginfo "Completed lvalue"
+end function
+
+function ps_simple_variable
+    token = tok_token
+    content$ = tok_content$
+    tok_advance
+    ps_simple_variable = ps_simple_variable_p(token, content$)
 end function
 
 'Expects: token after variable, variable token as arg
-'Results: post token
-function ps_variable_p(token, content$)
-    debuginfo "Start variable"
-    dim sym as symtab_entry_t
-    'Do array & udt element stuff here.
-    'For now only support simple variables.
-  
-    'New variable?
-    if token = TOK_UNKNOWN then
+'Results: token after optional sigil
+'Note: process simple variables, i.e. no udt or array stuff. Returns AST_VAR.
+function ps_simple_variable_p(head, content$)
+    debuginfo "Start simple variable"
+    print head, content$
+    node = ast_add_node(AST_VAR)
+    sigil = ps_opt_sigil
+    if head = TOK_UNKNOWN then
+        'New variable
         ucase_content$ = ucase$(content$)
         s = symtab_get_id(ucase_content$)
         if s then
             'Slight hack: in the case of something like A = A + 1 where A is previously defined, tokeng will fail
             'to identify the second A as an existing variable because it is looking ahead. So, we check again here
             'to confirm it's a new variable.
-            var = s
+            if sigil and sigil <> symtab(s).v1 then ps_error "Type suffix does not match existing variable type"
+            ast_nodes(node).ref = s
         else
+            'Add new variable (implicit declaration)
+            dim sym as symtab_entry_t
             sym.identifier = ucase_content$
             sym.typ = SYM_VARIABLE
-            sym.v1 = ps_default_type
+            if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
             ps_last_var_index = ps_last_var_index + 1
             sym.v2 = ps_last_var_index
             symtab_add_entry sym
-            var = symtab_last_entry
+            ast_nodes(node).ref = symtab_last_entry
         end if
-    elseif symtab(token).typ <> SYM_VARIABLE then
+    elseif symtab(head).typ <> SYM_VARIABLE then
         ps_error "Expected variable"
     else
-        var = token
+        'Existing variable
+        if sigil and sigil <> symtab(head).v1 then ps_error "Type suffix does not match existing variable type"
+        ast_nodes(node).ref = head
     end if
 
-    'Check for type sigil
-    sigil = ps_opt_sigil
-    if sigil then
-        if token <> TOK_UNKNOWN and sigil <> symtab(var).v1 then ps_error "Type suffix does not match existing variable type"
-        'Otherwise it's a new variable; set its type
-        symtab(var).v1 = sigil
-    end if
-    ps_variable_p = var
-    debuginfo "Completed variable"
+    ps_simple_variable_p = node
+    debuginfo "Completed simple variable"
 end function
 
 'Expects: sigil or otherwise

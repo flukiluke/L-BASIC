@@ -2,10 +2,6 @@
 'SPDX-License-Identifier: Apache-2.0
 'const.bm - Parse rules for CONST
 
-sub ps_assert_not_const(var)
-    if symtab(var).v3 then ps_error "Cannot modify CONST"
-end sub
-
 'Expects: TOK_CONST
 'Results: token after rvalue
 function ps_const
@@ -19,21 +15,23 @@ function ps_const
         'Change default type because we want to infer it from the rvalue
         prev_default = ps_default_type
         ps_default_type = TYPE_NONE
-        ref = ps_variable
+        lval = ps_variable_simple
+        var = ast_nodes(lval).ref
+
         ps_default_type = prev_default
-        symtab(ref).v3 = TRUE 'Mark constant
+        symtab(var).v3 = TRUE 'Mark constant
         node = ast_add_node(AST_ASSIGN)
         ast_attach root, node
-        ast_nodes(node).ref = ref
+        ast_attach node, lval
         ps_consume TOK_EQUALS
 
         expr = ps_expr
-        if symtab(ref).v1 = TYPE_NONE then
-            symtab(ref).v1 = type_of_expr(expr)
+        if type_of_lvalue(lval) = TYPE_NONE then
+            symtab(var).v1 = type_of_expr(expr)
             ast_attach node, expr
-        elseif type_can_cast(symtab(ref).v1, type_of_expr(expr)) then
+        elseif type_can_cast(symtab(var).v1, type_of_expr(expr)) then
             cast = ast_add_node(AST_CAST)
-            ast_nodes(cast).ref = symtab(ref).v1
+            ast_nodes(cast).ref = type_of_lvalue(lval)
             ast_attach cast, expr
             ast_attach node, cast
         else

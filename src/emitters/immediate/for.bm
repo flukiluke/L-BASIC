@@ -7,16 +7,16 @@ sub imm_do_for(node)
     dim end_val as imm_value_t
     dim step_val as imm_value_t
 
-    sp = imm_var_stack_pos(node)
+    sp = imm_var_stack_pos(ast_get_child(node, 1))
     if imm_next_jump = 0 then
         'If we're GOTOing the middle of the loop, the start value isn't even evaluated
-        imm_eval ast_get_child(node, 1), start_val
+        imm_eval ast_get_child(node, 2), start_val
         imm_stack(sp).n = start_val.n
     end if
-    imm_eval ast_get_child(node, 2), end_val
-    imm_eval ast_get_child(node, 3), step_val
+    imm_eval ast_get_child(node, 3), end_val
+    imm_eval ast_get_child(node, 4), step_val
 
-    block = ast_get_child(node, 4)
+    block = ast_get_child(node, 5)
     direction = sgn(step_val.n)
     if direction = 0 then direction = 1
     do while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n) or imm_next_jump > 0

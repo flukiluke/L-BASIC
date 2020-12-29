@@ -17,6 +17,7 @@
 '$dynamic
 $console
 $screenhide
+option _explicitarray
 _dest _console
 deflng a-z
 const FALSE = 0, TRUE = not FALSE

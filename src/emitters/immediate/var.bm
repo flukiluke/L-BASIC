@@ -25,7 +25,16 @@ sub imm_enforce_type(result as imm_value_t, typ)
     end select
 end sub
 
-function imm_var_stack_pos(var)
-    imm_var_stack_pos = symtab(ast_nodes(var).ref).v2
+function imm_var_stack_pos(node)
+    select case ast_nodes(node).typ
+    case AST_VAR
+        imm_var_stack_pos = symtab(ast_nodes(node).ref).v2
+    case AST_UDT_ACCESS
+        print "UDT access unsupported"
+    case AST_ARRAY_ACCESS
+        print "Array access unsupported"
+    case else
+        print "Cannot get stack position of"; node
+    end select
 end function
 

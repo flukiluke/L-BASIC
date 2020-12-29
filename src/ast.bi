@@ -8,7 +8,7 @@ type ast_node_t
     parent as long
     typ as long
     ref as long
-    ref2 as long 'It pains me to add this, but I needed to put type signature references somewhere for dumping and I don't want to make a new node for that
+    ref2 as long
 end type
 
 'The nodes themselves
@@ -27,9 +27,10 @@ const AST_FALSE = 1
 const AST_TRUE = 2
 const AST_ONE = 3
 
-'The types of node. Note the regex-like notation with ? for optionality.
+'The types of node.
+'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, any of the lvalue types or NONE (if allowed).
 
-'assign  expr => ref = expr
+'assign lvalue expr => lvalue = expr
 const AST_ASSIGN = 1
 'if expr1 block1 [expr2 block2 ...] [block-n] => IF expr1 THEN block1 ELSEIF expr2 THEN block2 ... ELSE block-n
 const AST_IF = 2
@@ -40,7 +41,7 @@ const AST_WHILE = 3
 const AST_DO_PRE = 4
 'do expr block => DO: block: LOOP WHILE expr
 const AST_DO_POST = 5
-'for expr1 expr2 expr3 block => FOR ref = expr1 TO expr2 STEP expr3
+'for lvalue expr1 expr2 expr3 block => FOR lvalue = expr1 TO expr2 STEP expr3
 const AST_FOR = 6
 'select expr1 (expr block)* block? => SELECT CASE expr1: CASE expr: block: CASE expr: block: CASE ELSE: block
 const AST_SELECT = 7
@@ -50,15 +51,21 @@ const AST_CALL = 8
 const AST_CONSTANT = 9
 '(assign | if | do_pre | do_post | for | select | call)*
 const AST_BLOCK = 10
-'ref is reference to symtab
-const AST_VAR = 11
 'For now casts are first-class AST elements instead of just CALLs. We'll see if this is a good idea or not. ref is a type, child is a CALL, CONSTANT or VAR.
-const AST_CAST = 12
+const AST_CAST = 11
 'ref is an integer. Used to pass extra data to some functions that have behaviour set by syntax (e.g. INPUT)
-const AST_FLAGS = 13
+const AST_FLAGS = 12
 'If the goto is resolved, ref is the node to jump to. If unresolved, the label symtab. A fully-parsed program will have no unresolved labels.
-const AST_GOTO = 14
+const AST_GOTO = 13
 'Used for empty optional arguments to functions
-const AST_NONE = 15
+const AST_NONE = 14
 'The EXIT statement. ref is the loop statement we're exiting.
-const AST_EXIT = 16
+const AST_EXIT = 15
+
+'These nodes may appear where-ever an lvalue is required
+'ref is reference to symtab
+const AST_VAR = 16
+'Access to a UDT element. First child is the lvalue we're accessing an element of, ref is the UDT element symbol.
+const AST_UDT_ACCESS = 17
+'Access to an array element. First child is the lvalue to be indexed. Second child is expression for the index.
+const AST_ARRAY_ACCESS = 18

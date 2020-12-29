@@ -6,14 +6,14 @@
 'Results: token after rvalue
 function ps_assignment
     debuginfo "Start assignment"
-    ref = ps_variable
-    ps_assert_not_const ref
     root = ast_add_node(AST_ASSIGN)
-    ast_nodes(root).ref = ref
+
+    lval = ps_lvalue
+    ast_attach root, lval
     ps_consume TOK_EQUALS
 
     expr = ps_expr
-    lvalue_type = symtab(ref).v1
+    lvalue_type = type_of_lvalue(lval)
     rvalue_type = type_of_expr(expr)
     if not type_can_cast(lvalue_type, rvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
     expr = ast_add_cast(expr, lvalue_type)

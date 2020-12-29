@@ -35,9 +35,7 @@ function ps_stmt_input
     end if
 
     do
-        var = ast_add_node(AST_VAR)
-        ast_nodes(var).ref = ps_variable
-        ps_assert_not_const ast_nodes(var).ref
+        var = ps_lvalue
         ast_attach root, var
     loop while ps_consumed(TOK_COMMA)
 

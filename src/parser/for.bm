@@ -10,10 +10,10 @@ function ps_for
     ps_add_nested_structure root
     ps_consume TOK_FOR
 
-    var = ps_variable
-    var_type = symtab(var).v1
+    var = ps_lvalue
+    var_type = type_of_lvalue(var)
     if not type_is_number(var_type) then ps_error "FOR iterator variable must be numeric"
-    ast_nodes(root).ref = var
+    ast_attach root, var
     ps_consume TOK_EQUALS
 
     start_val = ps_expr
@@ -57,10 +57,8 @@ function ps_for
     ast_attach root, ps_block
 
     ps_consume TOK_NEXT
-    if tok_token <> TOK_NEWLINE then
-        check_var = ps_variable
-        if check_var <> var then ps_error "NEXT variable does not match FOR variable"
-    end if
+    'TODO: Check this lvalue matches the one at the top of the loop
+    dummy = ps_lvalue
 
     ps_remove_nested_structure
     ps_for = root
