@@ -34,8 +34,9 @@ const SYM_FUNCTION = 5
 'v1 -> AST node that is labelled.
 'v2 -> Label has been located (if false, label has only been referenced)
 const SYM_LABEL = 6
-'Both internal and types and UDTs
+'Both internal types and UDTs
 'v1 -> Fixed size of data type
+'v2 -> is UDT?
 const SYM_TYPE = 7
 'An element of a udt, stored with the name "udt_name.element_name"
 'v1 -> the data type
