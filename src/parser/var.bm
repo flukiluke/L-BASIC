@@ -9,7 +9,10 @@ function ps_dim
     debuginfo "Start dim"
     ps_consume TOK_DIM
     do
-        var = ps_simple_variable
+        if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
+        var_name$ = tok_content$
+        tok_advance
+        dummy = ps_new_var_p(var_name$)
     loop while ps_consumed(TOK_COMMA)
     ps_dim = 0
     debuginfo "Completed dim"
@@ -52,17 +55,9 @@ end function
 function ps_simple_variable_p(head, content$)
     debuginfo "Start simple variable"
     node = ast_add_node(AST_VAR)
-    sigil = ps_opt_sigil
     if head = TOK_UNKNOWN then
         'Add new variable (implicit declaration)
-        dim sym as symtab_entry_t
-        sym.identifier = ucase$(content$)
-        sym.typ = SYM_VARIABLE
-        if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
-        ps_last_var_index = ps_last_var_index + 1
-        sym.v2 = ps_last_var_index
-        symtab_add_entry sym
-        ast_nodes(node).ref = symtab_last_entry
+        ast_nodes(node).ref = ps_new_var_p(content$)
     elseif symtab(head).typ <> SYM_VARIABLE then
         ps_error "Expected variable"
     else
@@ -106,4 +101,16 @@ function ps_opt_sigil
     end if
     ps_opt_sigil = typ
     debuginfo "Completed optional sigil"
+end function
+
+function ps_new_var_p(var_name$)
+    dim sym as symtab_entry_t
+    sym.identifier = ucase$(var_name$)
+    sym.typ = SYM_VARIABLE
+    sigil = ps_opt_sigil
+    if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
+    ps_last_var_index = ps_last_var_index + 1
+    sym.v2 = ps_last_var_index
+    symtab_add_entry sym
+    ps_new_var_p = symtab_last_entry
 end function
