@@ -51,6 +51,7 @@ sub tok_advance
             tok_read_next_token
         end if
     end if
+    debuginfo ">>> " + tok_content$
 end sub
 
 sub tok_read_next_token

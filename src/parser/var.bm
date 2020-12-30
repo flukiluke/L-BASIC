@@ -62,6 +62,7 @@ function ps_simple_variable_p(head, content$)
         ps_error "Expected variable"
     else
         'Existing variable
+        sigil = ps_opt_sigil
         if sigil and sigil <> symtab(head).v1 then ps_error "Type suffix does not match existing variable type"
         ast_nodes(node).ref = head
     end if
@@ -75,11 +76,10 @@ end function
 function ps_opt_sigil
     debuginfo "Start optional sigil"
     if ps_consumed(TOK_AS) then
-        typ = symtab_get_id(ucase$(tok_content$))
+        typ = tok_token
         if typ = 0 or symtab(typ).typ <> SYM_TYPE then ps_error "Expected type name"
-        tok_advance
     else
-        select case token
+        select case tok_token
         case TOK_INTEGER_SFX
             typ = TYPE_INTEGER
         case TOK_LONG_SFX
@@ -97,8 +97,8 @@ function ps_opt_sigil
         case else
             typ = 0
         end select
-        if typ then tok_advance
     end if
+    if typ then tok_advance
     ps_opt_sigil = typ
     debuginfo "Completed optional sigil"
 end function
