@@ -10,7 +10,7 @@ function ps_for
     ps_add_nested_structure root
     ps_consume TOK_FOR
 
-    var = ps_lvalue
+    var = ps_lvalue_mutable
     var_type = type_of_lvalue(var)
     if not type_is_number(var_type) then ps_error "FOR iterator variable must be numeric"
     ast_attach root, var
@@ -58,7 +58,7 @@ function ps_for
 
     ps_consume TOK_NEXT
     'TODO: Check this lvalue matches the one at the top of the loop
-    dummy = ps_lvalue
+    dummy = ps_lvalue_mutable
 
     ps_remove_nested_structure
     ps_for = root

@@ -35,7 +35,7 @@ function ps_stmt_input
     end if
 
     do
-        var = ps_lvalue
+        var = ps_lvalue_mutable
         ast_attach root, var
     loop while ps_consumed(TOK_COMMA)
 

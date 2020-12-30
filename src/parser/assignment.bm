@@ -8,7 +8,7 @@ function ps_assignment
     debuginfo "Start assignment"
     root = ast_add_node(AST_ASSIGN)
 
-    lval = ps_lvalue
+    lval = ps_lvalue_mutable
     ast_attach root, lval
     ps_consume TOK_EQUALS
 

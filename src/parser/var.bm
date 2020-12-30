@@ -25,10 +25,15 @@ function ps_lvalue
     ps_lvalue = ps_lvalue_p(token, content$)
 end function
 
+function ps_lvalue_mutable
+    node = ps_lvalue
+    if symtab(ast_nodes(node).ref).v3 then ps_error "Cannot reassign CONST"
+    ps_lvalue_mutable = node
+end function
+
 function ps_lvalue_p(head, content$)
     debuginfo "Start lvalue"
     node = ps_simple_variable_p(head, content$)
-    if symtab(ast_nodes(node).ref).v3 then ps_error "CONST cannot be lvalue"
     do while tok_token = TOK_DOT or tok_token = TOK_OPAREN
         if ps_consumed(TOK_DOT) then
             'UDT element access
