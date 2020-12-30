@@ -28,12 +28,10 @@ sub imm_eval(node, result as imm_value_t)
         end if
     case AST_BLOCK
         imm_do_block node, result
-    case AST_VAR
+    case AST_VAR, AST_UDT_ACCESS
         sp = imm_var_stack_pos(node)
         result.s = imm_stack(sp).s
         result.n = imm_stack(sp).n
-    case AST_UDT_ACCESS
-        print "Cannot evaluate UDT access"
     case AST_ARRAY_ACCESS
         print "Cannot evaluate array access"
     case AST_CAST

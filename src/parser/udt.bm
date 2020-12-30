@@ -18,8 +18,10 @@ function ps_udt
     ps_line_prelude
 
     do
-        ps_udt_element udt_sym
-        udt_sym.v1 = udt_sym.v1 + 1
+        elem = ps_udt_element(udt_sym)
+        udt_sym.v1 = udt_sym.v1 + type_fixed_size(symtab(elem).v1)
+        'If we ever need to keep a list of all the elements in a UDT,
+        'this is where we'd build it.
     loop until ps_consumed(TOK_END)
 
     symtab_add_entry udt_sym
@@ -30,7 +32,7 @@ end function
 
 'Expects: Element identifier
 'Results: token after newline
-sub ps_udt_element(udt_sym as symtab_entry_t)
+function ps_udt_element(udt_sym as symtab_entry_t)
     debuginfo "Start UDT element"
     dim elem_sym as symtab_entry_t
     elem_sym.typ = SYM_UDT_ELEMENT
@@ -66,8 +68,9 @@ sub ps_udt_element(udt_sym as symtab_entry_t)
     
     ps_consume TOK_NEWLINE
     ps_line_prelude
+    ps_udt_element = symtab_last_entry
     debuginfo "Completed UDT element"
-end sub
+end function
 
 'Expects: Element
 'Results: token after element

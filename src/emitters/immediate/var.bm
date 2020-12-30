@@ -30,7 +30,7 @@ function imm_var_stack_pos(node)
     case AST_VAR
         imm_var_stack_pos = symtab(ast_nodes(node).ref).v2
     case AST_UDT_ACCESS
-        print "UDT access unsupported"
+        imm_var_stack_pos = imm_var_stack_pos(ast_get_child(node, 1)) + symtab(ast_nodes(node).ref).v2
     case AST_ARRAY_ACCESS
         print "Array access unsupported"
     case else

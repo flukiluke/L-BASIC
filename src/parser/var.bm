@@ -109,8 +109,8 @@ function ps_new_var_p(var_name$)
     sym.typ = SYM_VARIABLE
     sigil = ps_opt_sigil
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
-    ps_last_var_index = ps_last_var_index + 1
-    sym.v2 = ps_last_var_index
+    sym.v2 = ps_next_var_index
+    ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
     symtab_add_entry sym
     ps_new_var_p = symtab_last_entry
 end function

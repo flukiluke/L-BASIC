@@ -2,6 +2,13 @@
 'SPDX-License-Identifier: Apache-2.0
 'type.bm - Routines for type management
 
+'The fixed size of a type is the amount of memory/elements needed to store
+'a variable of that type, but only counting a fixed-sized pointer for dynamic
+'structures such as strings and arrays.
+function type_fixed_size(typ)
+    type_fixed_size = symtab(typ).v1
+end function
+
 function type_is_number(typ)
     select case typ
     case TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD

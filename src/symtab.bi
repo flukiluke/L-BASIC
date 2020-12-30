@@ -35,11 +35,11 @@ const SYM_FUNCTION = 5
 'v2 -> Label has been located (if false, label has only been referenced)
 const SYM_LABEL = 6
 'Both internal and types and UDTs
-'v1 -> number of elements in this UDT, or 1 for internal types
+'v1 -> Fixed size of data type
 const SYM_TYPE = 7
 'An element of a udt, stored with the name "udt_name.element_name"
 'v1 -> the data type
-'v2 -> position of element in udt (first is 0)
+'v2 -> position of element in udt (first is 0, then incrementing by the fixed size of previous values)
 const SYM_UDT_ELEMENT = 8
 
 dim shared symtab(1000) as symtab_entry_t

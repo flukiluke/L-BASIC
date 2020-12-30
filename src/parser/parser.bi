@@ -5,9 +5,9 @@
 '$include: 'tokeng.bi'
 '$include: 'token_registrations.bm'
 
-'This is the number of local variables
-'Eventually this will need to be per-scope, but for now it's just going here
-dim shared ps_last_var_index as long
+'Next available slot for variables, used by immediate mode to know how many
+'data slots to allocate. Eventually this will need to be per-scope.
+dim shared ps_next_var_index as long
 
 'actual as opposed to any explicit old-timey line numbers/labels in the program
 dim shared ps_actual_linenum as long
