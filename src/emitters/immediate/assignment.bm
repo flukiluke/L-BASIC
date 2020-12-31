@@ -9,7 +9,7 @@ sub imm_do_assign(node)
     dest_addr = imm_var_stack_pos(lvalue)  
     src_addr = rvalue.n
     typ = type_of_lvalue(lvalue)
-    if symtab(typ).v2 then
+    if symtab(typ).v2 = SYM_TYPE_UDT then
         for i = 0 to type_fixed_size(typ) - 1
             imm_stack(dest_addr + i) = imm_stack(src_addr + i)
         next i

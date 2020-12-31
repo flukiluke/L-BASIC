@@ -9,7 +9,7 @@ function ps_udt
     dim udt_sym as symtab_entry_t
     udt_sym.typ = SYM_TYPE
     udt_sym.v1 = 0
-    udt_sym.v2 = TRUE
+    udt_sym.v2 = SYM_TYPE_UDT
 
     ps_consume TOK_TYPE
     if tok_token <> TOK_UNKNOWN then ps_error "UDT name already in use"

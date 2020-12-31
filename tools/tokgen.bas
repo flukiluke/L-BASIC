@@ -19,6 +19,7 @@
 '
 'type NAME ; FLAGS
 'Like generic, but generate the name as TYPE_ instead of TOK_ and SYM_TYPE instead of SYM_GENERIC.
+'This always emits a SYM_TYPE_INTERNAL type.
 '
 'literal NAME ; FLAGS
 'Represent a literal. Does not generate a symtab entry.
@@ -118,6 +119,7 @@ do while not eof(1)
         if previous$(0) <> "TYPE" then
             print #3, "sym.typ = SYM_TYPE"
             print #3, "sym.v1 = 1" 'Size of internal types is always 1
+            print #3, "sym.v2 = SYM_TYPE_INTERNAL"
         end if
         print #3, "sym.identifier = "; toksym$
         print #3, "symtab_add_entry sym"

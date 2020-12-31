@@ -36,12 +36,18 @@ const SYM_FUNCTION = 5
 const SYM_LABEL = 6
 'Both internal types and UDTs
 'v1 -> Fixed size of data type
-'v2 -> is UDT?
+'v2 -> One of SYM_TYPE_*, see below
+'v3 -> If SYM_TYPE_ARRAY, type of the array element
 const SYM_TYPE = 7
 'An element of a udt, stored with the name "udt_name.element_name"
 'v1 -> the data type
 'v2 -> position of element in udt (first is 0, then incrementing by the fixed size of previous values)
 const SYM_UDT_ELEMENT = 8
+
+'Further categorisation of SYM_TYPE
+const SYM_TYPE_INTERNAL = 0
+const SYM_TYPE_UDT = 1
+const SYM_TYPE_ARRAY = 2
 
 dim shared symtab(1000) as symtab_entry_t
 dim shared symtab_last_entry
