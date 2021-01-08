@@ -236,30 +236,10 @@ function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
 end function
 
 function type_human_readable$(typ)
-    select case typ
-    case TYPE_NONE
-        type_human_readable$ = "NONE"
-    case TYPE_INTEGER
-        type_human_readable$ = "INTEGER"
-    case TYPE_LONG
-        type_human_readable$ = "LONG"
-    case TYPE_INTEGER64
-        type_human_readable$ = "INTEGER64"
-    case TYPE_SINGLE
-        type_human_readable$ = "SINGLE"
-    case TYPE_DOUBLE
-        type_human_readable$ = "DOUBLE"
-    case TYPE_QUAD
-        type_human_readable$ = "QUAD"
-    case TYPE_STRING
-        type_human_readable$ = "STRING"
-    case TYPE_FLAGS
-        type_human_readable$ = "FLAGS"
-    case TYPE_LIST
-        type_human_readable$ = "LIST"
-    case else
-        type_human_readable$ = "UNKNOWN"
-    end select
+    id$ = symtab(typ).identifier
+    'Remove any name mangling
+    if left$(id$, 1) = "|" then id$ = mid$(id$, 2)
+    type_human_readable$ = id$
 end function
 
 function type_human_sig$(sig$)

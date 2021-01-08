@@ -9,6 +9,7 @@ type symtab_entry_t
     v1 as long
     v2 as long
     v3 as long
+    v4 as long
 end type
 
 'A generic entry. No vn parameters are used.
@@ -38,6 +39,7 @@ const SYM_LABEL = 6
 'v1 -> Fixed size of data type
 'v2 -> One of SYM_TYPE_*, see below
 'v3 -> If SYM_TYPE_ARRAY, type of the array element
+'v4 -> If SYM_TYPE_ARRAY, number of dimensions
 const SYM_TYPE = 7
 'An element of a udt, stored with the name "udt_name.element_name"
 'v1 -> the data type
@@ -45,8 +47,11 @@ const SYM_TYPE = 7
 const SYM_UDT_ELEMENT = 8
 
 'Further categorisation of SYM_TYPE
+'e.g. INTEGER, STRING
 const SYM_TYPE_INTERNAL = 0
+'Stored as the UDT name
 const SYM_TYPE_UDT = 1
+'Stored as the element type followed by parentheses and the number of dimensions, e.g. INTEGER(2)
 const SYM_TYPE_ARRAY = 2
 
 dim shared symtab(1000) as symtab_entry_t
