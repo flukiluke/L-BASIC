@@ -142,11 +142,16 @@ sub ps_new_array(var_name$, sigil, block)
     dim sym as symtab_entry_t
     do
         dims$ = dims$ + mkl$(ps_expr)
+        print "Add "; cvl(right$(dims$, 4))
         if ps_consumed(TOK_TO) then
             dims$ = dims$ + mkl$(ps_expr)
+            print "TO add "; cvl(right$(dims$, 4))
         else
             'Whoops, there was in implicit lower bound. Add it in.
-            dims$ = left$(dims$, len(dims$) - 4) + mkl$(0) + right$(dims$, 4)
+            implicit_zero = ast_add_node(AST_CONSTANT)
+            ast_nodes(implicit_zero).ref = AST_FALSE
+            dims$ = left$(dims$, len(dims$) - 4) + mkl$(implicit_zero) + right$(dims$, 4)
+            print "Adj"
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_assert TOK_CPAREN
