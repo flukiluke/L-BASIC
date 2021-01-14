@@ -3,7 +3,7 @@
 # Makefile for project
 
 # This should point to your QB64 installation
-QB64 := /home/luke/comp/git_qb64/qb64 -v -q
+QB64 := /home/luke/comp/git_qb64/qb64 -q -w
 OUTPUT_BINARY := $(CURDIR)/65
 MERGED_SOURCE := $(CURDIR)/65-merged.bas
 

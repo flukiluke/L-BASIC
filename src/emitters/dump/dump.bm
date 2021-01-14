@@ -131,10 +131,18 @@ sub ast_dump_pretty(root, indent_level)
         print #1, "udt(";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, ", "; symtab(ast_nodes(root).ref).identifier; ")";
+    case AST_ARRAY_ACCESS
+        ast_dump_pretty ast_get_child(root, 1), 0
+        print #1, "(";
+        for i = 2 to ast_num_children(root)
+            ast_dump_pretty ast_get_child(root, i), 0
+            if i <> ast_num_children(root) then print #1, ", "
+        next i
+        print #1, ")";
     case AST_ARRAY_RESIZE
         print #1, "REDIM ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print "(";
+        print #1, "(";
         for i = 2 to ast_num_children(root) step 2
             ast_dump_pretty ast_get_child(root, i), 0
             print #1, " TO ";

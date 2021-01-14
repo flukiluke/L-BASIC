@@ -69,7 +69,7 @@ function imm_get_addr(node)
 end function
 
 sub imm_set_at_addr(addr, v as imm_value_t)
-    
+    'print "Set ["; addr; "] ="; v.n; v.s
     if addr < 0 then
         imm_heap(-addr) = v
     elseif addr > 0 then
@@ -80,6 +80,7 @@ sub imm_set_at_addr(addr, v as imm_value_t)
 end sub
 
 sub imm_set_at_addr_s(addr, v$)
+    'print "Set ["; addr; "] ="; s
     if addr < 0 then
         imm_heap(-addr).s = v$
     elseif addr > 0 then
@@ -90,7 +91,7 @@ sub imm_set_at_addr_s(addr, v$)
 end sub
 
 sub imm_set_at_addr_n(addr, n as _float)
-    print "Set ["; addr; "] ="; n
+    'print "Set ["; addr; "] ="; n
     if addr < 0 then
         imm_heap(-addr).n = n
     elseif addr > 0 then

@@ -40,7 +40,7 @@ function type_of_lvalue(node)
     case AST_UDT_ACCESS
         type_of_lvalue = type_of_udt_access(node)
     case AST_ARRAY_ACCESS
-        ps_error "Unimplemented: type of array"
+        type_of_lvalue = type_of_array_access(node)
     end select
 end function
 
@@ -62,6 +62,12 @@ end function
 
 function type_of_udt_access(node)
     type_of_udt_access = symtab(ast_nodes(node).ref).v1
+end function
+
+function type_of_array_access(node)
+    array = ast_get_child(node, 1)
+    array_type = type_of_lvalue(array)
+    type_of_array_access = symtab(array_type).v3
 end function
 
 function type_is_lvalue(node)

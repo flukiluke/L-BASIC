@@ -91,6 +91,11 @@ end if
 if options.terminal_mode then system else end
 
 error_handler:
+    if options.debug then
+        close
+        open "SCRN:" as #1
+        dump_program 1
+    end if
     select case Error_context
     case 1 'Parsing code
         print "Parser: ";

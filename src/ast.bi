@@ -67,7 +67,7 @@ const AST_EXIT = 15
 const AST_VAR = 16
 'Access to a UDT element. First child is the lvalue we're accessing an element of, ref is the UDT element symbol.
 const AST_UDT_ACCESS = 17
-'Access to an array element. First child is the lvalue to be indexed. Second child is expression for the index in leftmost dimension, then so on for other dimensions. ref is the element type.
+'Access to an array element. First child is the lvalue to be indexed. Second child is expression for the index in leftmost dimension, then so on for other dimensions.
 const AST_ARRAY_ACCESS = 18
 
 'Emitted by DIM/REDIM statements. first child is lvalue to be resized, then each pair of children after are expr for the lower and upper bound of each dimension.

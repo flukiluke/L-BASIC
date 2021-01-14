@@ -94,6 +94,7 @@ function ps_block
     debuginfo "End block"
 end function
 
+'$include: 'array.bm'
 '$include: 'assignment.bm'
 '$include: 'const.bm'
 '$include: 'drawing.bm'

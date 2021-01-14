@@ -1,0 +1,81 @@
+'Expects: (
+'Results: token after ) or sigil, if present
+'This sub produced AST_ARRAY_RESIZE operations for each dimension
+'and adds them to the supplied block. It also generates the symtab entries
+'for the array itself and its type.
+sub ps_new_array(var_name$, sigil, block)
+    debuginfo "Start new array"
+    'array declaration. dims$ will be a series of pairs of AST_EXPR,
+    'which are the lower and upper bounds for each dimension.
+    dim sym as symtab_entry_t
+    do
+        dims$ = dims$ + mkl$(ps_expr)
+        if ps_consumed(TOK_TO) then
+            dims$ = dims$ + mkl$(ps_expr)
+        else
+            'Whoops, there was in implicit lower bound. Add it in.
+            implicit_zero = ast_add_node(AST_CONSTANT)
+            ast_nodes(implicit_zero).ref = AST_FALSE
+            dims$ = left$(dims$, len(dims$) - 4) + mkl$(implicit_zero) + right$(dims$, 4)
+        end if
+    loop while ps_consumed(TOK_COMMA)
+    ps_assert TOK_CPAREN
+    tok_advance
+
+    sigil2 = ps_opt_sigil
+    if sigil2 > 0 and sigil > 0 then ps_error "Cannot give type twice"
+    if sigil2 then sigil = sigil2
+    if sigil = 0 then sigil = ps_default_type
+
+    'First we construct the array's type
+    array_type_name$ = symtab(sigil).identifier + "(" + ltrim$(str$(len(dims$) / 4 / 2)) + ")"
+    array_type_sym = symtab_get_id(array_type_name$)
+    if array_type_sym = 0 then
+        sym.identifier = array_type_name$
+        sym.typ = SYM_TYPE
+        'The fixed size is each of the bounds plus a pointer to the data.
+        sym.v1 = 1 + len(dims$) / 4
+        sym.v2 = SYM_TYPE_ARRAY
+        sym.v3 = sigil
+        sym.v4 = len(dims$) / 4 / 2
+        symtab_add_entry sym
+        array_type_sym = symtab_last_entry
+    end if
+
+    'Now we have a SYM_ for the type, we can create the actual array variable
+    sym.identifier = ucase$(var_name$)
+    sym.typ = SYM_VARIABLE
+    sym.v1 = array_type_sym
+    sym.v2 = ps_next_var_index
+    ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+    sym.v3 = false
+    symtab_add_entry sym
+    var = symtab_last_entry
+
+    node = ast_add_node(AST_ARRAY_RESIZE)
+    var_node = ast_add_node(AST_VAR)
+    ast_nodes(var_node).ref = var
+    ast_children(node) = mkl$(var_node) + dims$
+    ast_attach block, node
+    debuginfo "Completed new array"
+end sub
+
+'Expects: First index of array access
+'Results: token after )
+'Takes array variable as argument
+function ps_array_element_access(lvalue)
+    debuginfo "Start array element access"
+    array_type = type_of_lvalue(lvalue)
+    if symtab(array_type).v2 <> SYM_TYPE_ARRAY then ps_error "Value is not an array"
+    dimensions = symtab(array_type).v4
+    node = ast_add_node(AST_ARRAY_ACCESS)
+    ast_attach node, lvalue
+    do
+        ast_attach node, ps_expr
+    loop while ps_consumed(TOK_COMMA)
+    ps_assert TOK_CPAREN
+    tok_advance
+    if ast_num_children(node) - 1 <> dimensions then ps_error "Incorrect number of dimensions"
+    ps_array_element_access = node
+    debuginfo "Completed array element access"
+end function
