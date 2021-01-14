@@ -36,8 +36,8 @@ sub imm_eval(node, result as imm_value_t)
         else
             imm_get_at_addr addr, result
         end if
-    case AST_ARRAY_ACCESS
-        print "Cannot evaluate array access"
+    case AST_ARRAY_RESIZE
+        imm_do_array_resize node
     case AST_CAST
         imm_do_cast node, result
     case AST_GOTO

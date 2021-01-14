@@ -142,16 +142,13 @@ sub ps_new_array(var_name$, sigil, block)
     dim sym as symtab_entry_t
     do
         dims$ = dims$ + mkl$(ps_expr)
-        print "Add "; cvl(right$(dims$, 4))
         if ps_consumed(TOK_TO) then
             dims$ = dims$ + mkl$(ps_expr)
-            print "TO add "; cvl(right$(dims$, 4))
         else
             'Whoops, there was in implicit lower bound. Add it in.
             implicit_zero = ast_add_node(AST_CONSTANT)
             ast_nodes(implicit_zero).ref = AST_FALSE
             dims$ = left$(dims$, len(dims$) - 4) + mkl$(implicit_zero) + right$(dims$, 4)
-            print "Adj"
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_assert TOK_CPAREN
@@ -163,13 +160,13 @@ sub ps_new_array(var_name$, sigil, block)
     if sigil = 0 then sigil = ps_default_type
 
     'First we construct the array's type
-    array_type_name$ = symtab(sigil).identifier + "(" + ltrim$(str$(len(dim$) / 2)) + ")"
+    array_type_name$ = symtab(sigil).identifier + "(" + ltrim$(str$(len(dims$) / 2)) + ")"
     array_type_sym = symtab_get_id(array_type_name$)
     if array_type_sym = 0 then
         sym.identifier = array_type_name$
         sym.typ = SYM_TYPE
         'The fixed size is each of the bounds plus a pointer to the data.
-        sym.v1 = 1 + len(dim$) / 4
+        sym.v1 = 1 + len(dims$) / 4
         sym.v2 = SYM_TYPE_ARRAY
         sym.v3 = sigil
         sym.v4 = len(dims$) / 4 / 2
@@ -183,13 +180,15 @@ sub ps_new_array(var_name$, sigil, block)
     sym.v1 = array_type_sym
     sym.v2 = ps_next_var_index
     ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+    print type_fixed_size(sym.v1)
     sym.v3 = false
     symtab_add_entry sym
     var = symtab_last_entry
 
     node = ast_add_node(AST_ARRAY_RESIZE)
-    ast_nodes(node).ref = var
-    ast_children(node) = dims$
+    var_node = ast_add_node(AST_VAR)
+    ast_nodes(var_node).ref = var
+    ast_children(node) = mkl$(var_node) + dims$
     ast_attach block, node
     debuginfo "Completed new array"
 end sub

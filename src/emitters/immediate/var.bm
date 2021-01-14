@@ -90,6 +90,7 @@ sub imm_set_at_addr_s(addr, v$)
 end sub
 
 sub imm_set_at_addr_n(addr, n as _float)
+    print "Set ["; addr; "] ="; n
     if addr < 0 then
         imm_heap(-addr).n = n
     elseif addr > 0 then

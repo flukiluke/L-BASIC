@@ -36,6 +36,7 @@ sub imm_error(msg$)
     error 101
 end sub
 
+'$include: 'array.bm'
 '$include: 'assignment.bm'
 '$include: 'block.bm'
 '$include: 'call.bm'
