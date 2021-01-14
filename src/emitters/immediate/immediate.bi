@@ -3,9 +3,21 @@ type imm_value_t
     s as string
 end type
 
-'Since we only have one scope for now, the stack is static in size
-dim shared imm_stack(0) as imm_value_t
+'Stack holds objects with fixed memory size. Note a single element can
+'hold a variable length string, and all UDTs are of fixed size (because
+'any variable-size components like arrays are in fact pointers).
+'Begins at 1 so we can catch null pointer errors, and so all pointers have
+'SGN = 1.
+dim shared imm_stack(1) as imm_value_t
 dim shared imm_stack_last
+
+'Heap holds dynamically allocated objects i.e. arrays. See heap.bm
+'for the allocation strategy. Note that pointers to heap locations are
+'always stored as negative values, to distinguish them from stack addresses
+'(but are made positive just before heap access, so the array below grows
+'in the positive direction). We'd like to grow the array negatively too, but
+'that would force a copy on each reallocation which isn't desired.
+dim shared imm_heap(1) as imm_value_t
 
 'Instead of executing the next statement, execution should begin at
 'this node if it is > 0 (used to support GOTO)

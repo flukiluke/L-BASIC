@@ -30,9 +30,10 @@ sub type_dump_functions
 end sub
 
 sub symtab_dump
-    print #1, " ID          Name     Typ     v1     v2     v3"
+    print #1, " ID          Name     Typ     v1     v2     v3     v4"
     for i = 1 to symtab_last_entry
-        print #1, using "###    \            \ ###    ###    ###    ###"; i; symtab(i).identifier; symtab(i).typ,symtab(i).v1; symtab(i).v2; symtab(i).v3
+        print #1, using "###    \            \ ###    ###    ###    ###    ###"; i; symtab(i).identifier; _
+                        symtab(i).typ,symtab(i).v1; symtab(i).v2; symtab(i).v3; symtab(i).v4
     next i
 end sub
 

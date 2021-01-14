@@ -28,14 +28,13 @@ sub imm_eval(node, result as imm_value_t)
         end if
     case AST_BLOCK
         imm_do_block node, result
-    case AST_VAR, AST_UDT_ACCESS
-        sp = imm_var_stack_pos(node)
-        'Store stack pointer for a full UDT reference
+    case AST_VAR, AST_UDT_ACCESS, AST_ARRAY_ACCESS
+        addr = imm_get_addr(node)
+        'Store address for a full UDT or array reference
         if symtab(type_of_lvalue(node)).v2 then
-            result.n = sp
+            result.n = addr
         else
-            result.s = imm_stack(sp).s
-            result.n = imm_stack(sp).n
+            imm_get_at_addr addr, result
         end if
     case AST_ARRAY_ACCESS
         print "Cannot evaluate array access"

@@ -19,16 +19,17 @@ case TOK_INPUT
         comma = instr(readline$, ",")
         if comma = 0 then comma = len(readline$) + 1
         var = ast_get_child(node, first_var_offset + i)
-        sp = imm_var_stack_pos(var)
+        var_addr = imm_get_addr(var)
         if nomoredata then
-            imm_stack(sp).s = ""
-            imm_stack(sp).n = 0
+            v1.n = 0
+            v1.s = ""
         elseif type_of_var(var) = TYPE_STRING then
-            imm_stack(sp).s = left$(readline$, comma - 1)
+            v1.s = left$(readline$, comma - 1)
         else
-            imm_stack(sp).n = val(left$(readline$, comma - 1))
+            v1.n = val(left$(readline$, comma - 1))
         end if
-        imm_enforce_type imm_stack(sp), type_of_var(var)
+        imm_enforce_type v1, type_of_var(var)
+        imm_set_at_addr var_addr, v1
         readline$ = mid$(readline$, comma + 1)
         if readline$ = "" then nomoredata = TRUE
     next i

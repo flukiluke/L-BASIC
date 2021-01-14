@@ -112,6 +112,7 @@ error_handler:
         else
             print "Internal error" + str$(err) + " on line" + str$(_errorline)
         end if
+        print Error_message$
     end select
     if options.terminal_mode then system 1 else end 1
 

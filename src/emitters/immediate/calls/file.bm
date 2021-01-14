@@ -105,27 +105,29 @@ case TOK_GET
     if ast_is_none(dest_var) then
         get #v1.n, v2.n
     else
-        sp = imm_var_stack_pos(dest_var)
+        dest_addr = imm_get_addr(dest_var)
         select case type_of_var(dest_var)
         case TYPE_INTEGER
             get #v1.n, v2.n, getvar_int%
-            imm_stack(sp).n = getvar_int%
+            imm_set_at_addr_n dest_addr, getvar_int%
         case TYPE_LONG
             get #v1.n, v2.n, getvar_long&
-            imm_stack(sp).n = getvar_long&
+            imm_set_at_addr_n dest_addr, getvar_long&
         case TYPE_INTEGER64
             get #v1.n, v2.n, getvar_int64&&
-            imm_stack(sp).n = getvar_int64&&
+            imm_set_at_addr_n dest_addr, getvar_int64&&
         case TYPE_SINGLE
             get #v1.n, v2.n, getvar_single!
-            imm_stack(sp).n = getvar_single!
+            imm_set_at_addr_n dest_addr, getvar_single!
         case TYPE_DOUBLE
             get #v1.n, v2.n, getvar_double#
-            imm_stack(sp).n = getvar_double#
+            imm_set_at_addr_n dest_addr, getvar_double#
         case TYPE_QUAD
             get #v1.n, v2.n, getvar_quad##
-            imm_stack(sp).n = getvar_quad##
+            imm_set_at_addr_n dest_addr, getvar_quad##
         case TYPE_STRING
-            get #v1.n, v2.n, imm_stack(sp).s
+            getvar_string$ = space$(len(imm_get_at_addr_s(dest_var)))
+            get #v1.n, v2.n, getvar_string$
+            imm_set_at_addr_s dest_addr, getvar_string$
         end select
     end if

@@ -7,11 +7,11 @@ sub imm_do_for(node)
     dim end_val as imm_value_t
     dim step_val as imm_value_t
 
-    sp = imm_var_stack_pos(ast_get_child(node, 1))
+    iterator_addr = imm_get_addr(ast_get_child(node, 1))
     if imm_next_jump = 0 then
         'If we're GOTOing the middle of the loop, the start value isn't even evaluated
         imm_eval ast_get_child(node, 2), start_val
-        imm_stack(sp).n = start_val.n
+        imm_set_at_addr iterator_addr, start_val
     end if
     imm_eval ast_get_child(node, 3), end_val
     imm_eval ast_get_child(node, 4), step_val
@@ -19,7 +19,9 @@ sub imm_do_for(node)
     block = ast_get_child(node, 5)
     direction = sgn(step_val.n)
     if direction = 0 then direction = 1
-    do while (direction = 1 and imm_stack(sp).n <= end_val.n) or (direction = -1 and imm_stack(sp).n >= end_val.n) or imm_next_jump > 0
+    do while (direction = 1 and imm_get_at_addr_n(iterator_addr) <= end_val.n) or _
+             (direction = -1 and imm_get_at_addr_n(iterator_addr) >= end_val.n) or _
+             imm_next_jump > 0
         imm_run block
         if imm_next_jump then exit sub
         if imm_exit_node > 0 and imm_exit_node = node then
@@ -28,6 +30,6 @@ sub imm_do_for(node)
         elseif imm_exit_node > 0 then
             exit sub
         end if
-        imm_stack(sp).n = imm_stack(sp).n + step_val.n
+        imm_set_at_addr_n iterator_addr, imm_get_at_addr_n(iterator_addr) + step_val.n
     loop
 end sub

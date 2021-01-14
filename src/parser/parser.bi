@@ -8,6 +8,7 @@
 'Next available slot for variables, used by immediate mode to know how many
 'data slots to allocate. Eventually this will need to be per-scope.
 dim shared ps_next_var_index as long
+ps_next_var_index = 1
 
 'actual as opposed to any explicit old-timey line numbers/labels in the program
 dim shared ps_actual_linenum as long

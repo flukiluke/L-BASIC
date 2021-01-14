@@ -6,16 +6,19 @@ sub imm_do_assign(node)
     dim rvalue as imm_value_t
     lvalue = ast_get_child(node, 1)
     imm_eval ast_get_child(node, 2), rvalue
-    dest_addr = imm_var_stack_pos(lvalue)  
-    src_addr = rvalue.n
+    dest_addr = imm_get_addr(lvalue)  
     typ = type_of_lvalue(lvalue)
     if symtab(typ).v2 = SYM_TYPE_UDT then
-        for i = 0 to type_fixed_size(typ) - 1
-            imm_stack(dest_addr + i) = imm_stack(src_addr + i)
+        src_addr = rvalue.n
+        for i = 1 to type_fixed_size(typ)
+            'TODO: Deep copy
+            dim temp as imm_value_t
+            imm_get_at_addr src_addr, temp
+            imm_set_at_addr dest_addr, temp
+            src_addr = imm_add_offset(src_addr, 1)
+            dest_addr = imm_add_offset(dest_addr, 1)
         next i
-    elseif typ = TYPE_STRING then
-        imm_stack(dest_addr ).s = rvalue.s
     else
-        imm_stack(dest_addr).n = rvalue.n
+        imm_set_at_addr dest_addr, rvalue
     end if
 end sub

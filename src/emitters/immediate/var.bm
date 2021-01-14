@@ -25,16 +25,106 @@ sub imm_enforce_type(result as imm_value_t, typ)
     end select
 end sub
 
-function imm_var_stack_pos(node)
+function imm_add_offset(base_addr, offset)
+    'The base_addr might be negative if it is a heap address, so "pass through"
+    'the negative sign. e.g. base_addr = -10, offset = 2, result = -12
+    imm_add_offset = (abs(base_addr) + offset) * sgn(base_addr)
+end function
+
+'Get the address of a variable. Handles simple scalars, elments of nested UDTs & arrays,
+'and entire UDTs & arrays. If the returned value is < 0, it is a heap address. Otherwise,
+'it is a stack address.
+function imm_get_addr(node)
     select case ast_nodes(node).typ
     case AST_VAR
-        imm_var_stack_pos = symtab(ast_nodes(node).ref).v2
+        'Always a stack address. Even arrays, because a reference to the entire array
+        'refers to the dimension info block that sits on the stack (unless it's an
+        'array in a UDT in an array, but that wouldn't be an AST_VAR).
+        imm_get_addr = symtab(ast_nodes(node).ref).v2
     case AST_UDT_ACCESS
-        imm_var_stack_pos = imm_var_stack_pos(ast_get_child(node, 1)) + symtab(ast_nodes(node).ref).v2
+        base_addr = imm_get_addr(ast_get_child(node, 1))
+        offset = symtab(ast_nodes(node).ref).v2
+        imm_get_addr = imm_add_offset(base_addr, offset)
     case AST_ARRAY_ACCESS
-        print "Array access unsupported"
-    case else
-        print "Cannot get stack position of"; node
+        array = ast_get_child(node, 1)
+        array_type = type_of_lvalue(array)
+        info_base_addr = imm_get_addr(array)
+        element_type = symtab(array_type).v3
+        dimensions = symtab(array_type).v4
+        'Data pointer is at info_base_addr + 0. lbound & ubound of leftmost dimension
+        'are base info_base_addr + 1 & info_base_addr + 2 then continues in similarly for other dimensions.
+        block_size = 1
+        for i = 1 to dimensions
+            dim index as imm_value_t
+            lower_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2 - 1))
+            upper_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2))
+            imm_eval ast_get_child(node, i + 1), index
+            'TODO: bounds checking
+            offset = offset + (index.n - lower_bound) * block_size
+            block_size = upper_bound - lower_bound + 1
+        next i
+        offset = offset * type_fixed_size(element_type)
+        imm_get_addr = imm_add_offset(imm_get_at_addr_n(info_base_addr), offset)
     end select
 end function
 
+sub imm_set_at_addr(addr, v as imm_value_t)
+    
+    if addr < 0 then
+        imm_heap(-addr) = v
+    elseif addr > 0 then
+        imm_stack(addr) = v
+    else
+        imm_error "Null pointer value write"
+    end if
+end sub
+
+sub imm_set_at_addr_s(addr, v$)
+    if addr < 0 then
+        imm_heap(-addr).s = v$
+    elseif addr > 0 then
+        imm_stack(addr).s = v$
+    else
+        imm_error "Null pointer string write"
+    end if
+end sub
+
+sub imm_set_at_addr_n(addr, n as _float)
+    if addr < 0 then
+        imm_heap(-addr).n = n
+    elseif addr > 0 then
+        imm_stack(addr).n = n
+    else
+        imm_error "Null pointer numeric write"
+    end if
+end sub
+
+sub imm_get_at_addr(addr, v as imm_value_t)
+    if addr < 0 then
+        v = imm_heap(-addr)
+    elseif addr > 0 then
+        v = imm_stack(addr)
+    else
+        imm_error "Null pointer value read"
+    end if
+end sub
+
+function imm_get_at_addr_s$(addr)
+    if addr < 0 then
+        imm_get_at_addr_s$ = imm_heap(-addr).s
+    elseif addr > 0 then
+        imm_get_at_addr_s$ = imm_stack(addr).s
+    else
+        imm_error "Null pointer string read"
+    end if
+end sub
+
+function imm_get_at_addr_n##(addr)
+    if addr < 0 then
+        imm_get_at_addr_n## = imm_heap(-addr).n
+    elseif addr > 0 then
+        imm_get_at_addr_n## = imm_stack(addr).n
+    else
+        imm_error "Null pointer numeric read"
+    end if
+end function
