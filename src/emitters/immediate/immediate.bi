@@ -17,7 +17,9 @@ dim shared imm_stack_last
 '(but are made positive just before heap access, so the array below grows
 'in the positive direction). We'd like to grow the array negatively too, but
 'that would force a copy on each reallocation which isn't desired.
-dim shared imm_heap(1 to 100) as imm_value_t
+dim shared imm_heap(1) as imm_value_t
+dim shared imm_heap_next_free
+const IMM_HEAP_HEADER_SIZE = 2
 
 'Instead of executing the next statement, execution should begin at
 'this node if it is > 0 (used to support GOTO)

@@ -1,3 +1,7 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'array.bm - Parse rules for array declaration and usage
+
 'Expects: (
 'Results: token after ) or sigil, if present
 'This sub produced AST_ARRAY_RESIZE operations for each dimension

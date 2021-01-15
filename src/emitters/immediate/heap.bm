@@ -1,0 +1,109 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'heap.bm - Heap data management
+
+'The heap is used for allocating dynamically sized objects, or objects
+'that are not necessarily tied to a single function's scope.
+'
+'Block header:
+' - size of region in multiples of header size, including header
+' - pointer to next free region
+'Blocks are in a cyclic linked list.
+'
+'The list of free blocks is searched until a suitable sized block is found.
+'If the block is bigger than needed, the tail end is returned. Blocks are
+'always allocated in sizes a multiple of IMM_HEAP_HEADER_SIZE. Freed blocks
+'will be coalesced with an adjacent free block if possible.
+'
+'This is based on the allocator presented in Chapter 8.7 of K&R C.
+
+'Allocate 'nelems' elements on the heap and return start address.
+'Values are initialised to 0 / "".
+function imm_heap_alloc(nelems)
+    'Calculate needed size in multiples of IMM_HEAP_HEADER_SIZE, including +1 for
+    'the header itself.
+    nunits = (nelems + IMM_HEAP_HEADER_SIZE - 1) \ IMM_HEAP_HEADER_SIZE + 1
+    prevp = imm_heap_next_free
+    p = imm_heap(prevp + 1).n
+    print "Allocating"; nunits; "units"
+    print "Allocation search at"; p
+    do
+        if (imm_heap(p).n >= nunits) then 'big enough
+            if (imm_heap(p).n = nunits) then 'exactly
+                print "Exactly sized block found"
+                imm_heap(prevp + 1).n = imm_heap(p + 1).n
+            else 'split block, allocate tail end
+                print "Splitting block"
+                imm_heap(p).n = imm_heap(p).n - nunits
+                p = p + imm_heap(p).n * IMM_HEAP_HEADER_SIZE
+                imm_heap(p).n = nunits
+            end if
+            imm_heap_next_free = prevp
+            imm_heap_alloc = -(p + IMM_HEAP_HEADER_SIZE)
+            exit function
+        end if
+        if p = imm_heap_next_free then 'wrapped around free list
+            p = imm_heap_expand(nunits)
+        end if
+        prevp = p
+        p = imm_heap(p + 1).n
+        print "Allocation search now at"; p
+    loop
+end function
+
+'Free allocation at 'address'
+sub imm_heap_free(address)
+    data_addr = -address 
+    print "Freeing memory at"; data_addr
+    addr = data_addr - IMM_HEAP_HEADER_SIZE
+    print "Block begins at"; addr
+    p = imm_heap_next_free 'Start at next free block
+    'Search for p s.t. addr is between p and next block address
+    while not (addr > p and addr < imm_heap(p + 1).n)
+        print "Check at block"; p
+        if p >= imm_heap(p + 1).n and (addr > p or addr < imm_heap(p + 1).n) then
+            'Freed block at start or end of memory region
+            print "Freed block at start or end"
+            exit while
+        end if
+        p = imm_heap(p + 1).n
+    wend
+    if addr + imm_heap(addr).n * IMM_HEAP_HEADER_SIZE = imm_heap(p + 1).n then
+        'Adjacent to upper block
+        print "Adjacent to upper block"
+        imm_heap(addr).n = imm_heap(addr).n + imm_heap(imm_heap(addr + 1).n).n
+        imm_heap(addr + 1).n = imm_heap(imm_heap(addr + 1).n + 1).n
+    else
+        imm_heap(addr + 1).n = imm_heap(p + 1).n
+    end if
+    if p + imm_heap(p).n * IMM_HEAP_HEADER_SIZE = addr then
+        'Adjacent to lower block
+        print "Adjacent to lower block"
+        imm_heap(p).n = imm_heap(p).n + imm_heap(addr).n
+        imm_heap(p + 1).n = imm_heap(addr + 1).n
+    else
+        imm_heap(p + 1).n = addr
+    end if
+    imm_heap_next_free = p
+end sub
+
+'Setup initial heap
+sub imm_heap_init
+    redim imm_heap(1 to 2) as imm_value_t
+    imm_heap(1).n = 0
+    imm_heap(2).n = 1
+    imm_heap_next_free = 1
+end sub
+
+'Increase the total heap size by adding new memory to list
+function imm_heap_expand(nu)
+    const IMM_HEAP_MIN_ALLOC = 1024 'Value from K&R, rather arbitrary
+    nunits = nu
+    if nunits < IMM_HEAP_MIN_ALLOC then nunits = IMM_HEAP_MIN_ALLOC
+    print "Expanding heap by"; nunits; "units"
+    new_mem = ubound(imm_heap) + 1
+    redim _preserve imm_heap(1 to ubound(imm_heap) + nunits * IMM_HEAP_HEADER_SIZE) as imm_value_t
+    imm_heap(new_mem).n = nunits
+    imm_heap_free -(new_mem + IMM_HEAP_HEADER_SIZE)
+    imm_heap_expand = imm_heap_next_free
+end sub

@@ -14,6 +14,7 @@ sub imm_init
         imm_stack(i).n = 0
     next i
     imm_filehandle_offset = freefile - 1
+    imm_heap_init
 end sub
 
 sub imm_reinit
@@ -43,6 +44,7 @@ end sub
 '$include: 'eval.bm'
 '$include: 'for.bm'
 '$include: 'goto.bm'
+'$include: 'heap.bm'
 '$include: 'if.bm'
 '$include: 'loop.bm'
 '$include: 'var.bm'

@@ -1,6 +1,6 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'eval.bm - Top level executor function
+'array.bm - Array handling functions
 
 sub imm_do_array_resize(node)
     array = ast_get_child(node, 1)
@@ -24,8 +24,7 @@ sub imm_do_array_resize(node)
             block_size = upper_bound - lower_bound + 1
         next i
         data_size = data_size * type_fixed_size(element_type)
-        'TODO: actually request a block of heap memory
-        data_addr = -1
+        data_addr = imm_heap_alloc(data_size)
         imm_set_at_addr_n info_base_addr, data_addr
     else
         imm_error "Array resize not implemented"
