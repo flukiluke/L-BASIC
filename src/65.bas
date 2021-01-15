@@ -24,7 +24,7 @@ const FALSE = 0, TRUE = not FALSE
 on error goto error_handler
 
 dim shared VERSION$
-VERSION$ = "0.0.2"
+VERSION$ = "0.0.3"
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
