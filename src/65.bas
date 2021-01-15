@@ -75,7 +75,7 @@ if not options.terminal_mode then
 end if
 
 if options.interactive_mode then
-    interactive_mode
+    interactive_mode FALSE
 elseif options.command_mode then
     command_mode
 elseif options.compile_mode then
@@ -90,6 +90,9 @@ end if
 
 if options.terminal_mode then system else end
 
+interactive_recovery:
+    interactive_mode TRUE
+
 error_handler:
     if options.debug then
         close
@@ -100,12 +103,19 @@ error_handler:
     case 1 'Parsing code
         print "Parser: ";
         if err <> 101 then goto internal_error
-        print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
+        if options.interactive_mode then
+            print Error_message$
+            resume interactive_recovery
+        else
+            print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
+        end if
     case 2 'Immediate mode
         'We have no good way of distinguishing between user program errors and internal errors
-        print "Runtime error:" + str$(err)
-        if err <> 101 then goto internal_error
-        print Error_message$
+        'Of course, the internal code is perfect so it *must* be a user program error
+        print "Runtime error: ";
+        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
+        resume interactive_recovery
     case 3 'Dump mode
         print "Dump: ";
         if err <> 101 then goto internal_error
@@ -157,11 +167,17 @@ function general_eof
     end if
 end function
 
-sub interactive_mode
-    open "SCRN:" for output as #1
-    imm_init
-    Error_context = 1
-    tok_init
+sub interactive_mode(recovery)
+    if recovery then
+        do until tok_token = TOK_NEWLINE
+            tok_advance
+        loop
+    else
+        open "SCRN:" for output as #1
+        imm_init
+        Error_context = 1
+        tok_init
+    end if
     do
         Error_context = 0
         ast_init 'Clear the tree each time
@@ -312,6 +328,7 @@ end sub
 '$include: 'type.bm'
 '$include: 'ast.bm'
 '$include: 'symtab.bm'
+'$include: 'errors.bm'
 '$include: 'parser/parser.bm'
 '$include: 'emitters/dump/dump.bm'
 '$include: 'emitters/immediate/immediate.bm'
