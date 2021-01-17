@@ -166,7 +166,6 @@ infix   ^(power)        14  left    double    double,double       ; direct
 infix   ^(power)        14  left    quad      quad,quad           ; direct
 
 # Basic language constructs
-generic dim
 generic as
 generic const
 generic goto
@@ -251,6 +250,7 @@ function date           string
 # def seg
 # def*
 function _deflate       string    string
+function dim            integer   any_array
 function draw           none      string
 
 function end            none      integer?

@@ -37,8 +37,15 @@ sub ps_new_array(var_name$, sigil, block)
     if array_type_sym = 0 then
         sym.identifier = array_type_name$
         sym.typ = SYM_TYPE
-        'The fixed size is each of the bounds plus a pointer to the data.
-        sym.v1 = 1 + len(dims$) / 4
+        'Array descriptor:
+        ' - pointer to data
+        ' - number of dimensions
+        ' - lbound of leftmost dimension
+        ' - ubound of leftmost dimension
+        ' - etc.
+        ' - lbound of rightmost dimension
+        ' - ubound of rightmost dimension
+        sym.v1 = 2 + len(dims$) / 4
         sym.v2 = SYM_TYPE_ARRAY
         sym.v3 = sigil
         sym.v4 = len(dims$) / 4 / 2

@@ -1,6 +1,6 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'memory.bm - Various memory management and allocation functions
+'var.bm - Various variable interrogation function
 
 case TOK_LEN
     child = ast_get_child(node, 1)
@@ -22,3 +22,9 @@ case TOK_LEN
     case TYPE_STRING
         result.n = len(v1.s)
     end select
+
+case TOK_DIM
+    'This is the DIM function
+    child = ast_get_child(node, 1)
+    imm_eval child, v1
+    result.n = imm_get_at_addr_n(imm_add_offset(v1.n, 1))
