@@ -18,6 +18,8 @@ sub imm_do_assign(node)
             src_addr = imm_add_offset(src_addr, 1)
             dest_addr = imm_add_offset(dest_addr, 1)
         next i
+    elseif symtab(typ).v2 = SYM_TYPE_ARRAY then
+        imm_error "Cannot assign entire array"
     else
         imm_set_at_addr dest_addr, rvalue
     end if
