@@ -24,7 +24,7 @@ sub imm_do_call(node, result as imm_value_t)
     '$include: 'calls/sound.bm'
     '$include: 'calls/string.bm'
     '$include: 'calls/time.bm'
-    '$include: 'calls/var.bm'
+    '$include: 'calls/varinfo.bm'
     case else
         imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
     end select

@@ -47,4 +47,4 @@ end sub
 '$include: 'heap.bm'
 '$include: 'if.bm'
 '$include: 'loop.bm'
-'$include: 'var.bm'
+'$include: 'memory.bm'

@@ -46,3 +46,26 @@ sub imm_eval(node, result as imm_value_t)
         imm_exit_node = ast_nodes(node).ref
     end select
 end sub
+
+sub imm_do_cast(node, result as imm_value_t)
+    imm_eval ast_get_child(node, 1), result
+    imm_enforce_type result, ast_nodes(node).ref
+end sub
+
+sub imm_enforce_type(result as imm_value_t, typ)
+    select case typ
+    case TYPE_INTEGER
+        result.n = cint(result.n)
+    case TYPE_LONG
+        result.n = clng(result.n)
+    case TYPE_INTEGER64
+        result.n = _round(result.n)
+        if result.n < -2147483648 or result.n > 2147483647 then error 6
+    case TYPE_SINGLE
+        result.n = csng(result.n)
+    case TYPE_DOUBLE
+        result.n = cdbl(result.n)
+    case TYPE_QUAD, TYPE_STRING
+        'Nothing to do here
+    end select
+end sub
