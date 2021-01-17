@@ -15,7 +15,7 @@ function ps_assignment
     expr = ps_expr
     lvalue_type = type_of_lvalue(lval)
     rvalue_type = type_of_expr(expr)
-    if not type_can_cast(lvalue_type, rvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
+    if not type_can_cast(rvalue_type, lvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
     expr = ast_add_cast(expr, lvalue_type)
     ast_attach root, expr
 

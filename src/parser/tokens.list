@@ -31,6 +31,10 @@ type none       ; nosym
 type list       ; nosym
 #Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
 type flags      ; nosym
+# Generic type that can be cast to anything
+type any        ; nosym
+# Generic array type
+arraytype any_array any 0 ; nosym
 # 16 bits
 type integer
 # 32 bits
@@ -300,7 +304,7 @@ function int            quad      quad
 # key
 function kill           none      string
 
-# lbound
+function lbound         integer   any_array,integer?
 function lcase          string    string
 function left           string    string,integer64
 function len            integer64 string
@@ -421,7 +425,7 @@ function timer          double    single?
 function _trim          string    string
 # type
 
-# ubound
+function ubound         integer   any_array,integer?
 function ucase          string    string
 # uevent
 # unlock
