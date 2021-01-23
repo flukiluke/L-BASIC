@@ -79,6 +79,16 @@ sub ast_attach(parent, child)
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
 
+sub ast_pre_attach(parent, child)
+    if child = 0 or child = -1 then
+        debuginfo "Not adding child node because it is " + ltrim$(str$(child))
+        exit sub
+    end if
+    if ast_nodes(child).parent then debuginfo "Warning: changing node parent"
+    ast_nodes(child).parent = parent
+    ast_children(parent) = mkl$(child) + ast_children(parent)
+end sub
+
 function ast_num_children(node)
     ast_num_children = len(ast_children(node)) / len(dummy&)
 end function

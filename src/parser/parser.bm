@@ -109,6 +109,7 @@ end function
 '$include: 'open.bm'
 '$include: 'pratt.bm'
 '$include: 'print.bm'
+'$include: 'subfuncs.bm'
 '$include: 'statement.bm'
 '$include: 'tokeng.bm'
 '$include: 'udt.bm'

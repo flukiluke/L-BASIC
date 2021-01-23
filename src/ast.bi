@@ -49,7 +49,7 @@ const AST_SELECT = 7
 const AST_CALL = 8
 'ref is a reference to an entry in the constants table
 const AST_CONSTANT = 9
-'(assign | if | do_pre | do_post | for | select | call)*
+'group of statements
 const AST_BLOCK = 10
 'For now casts are first-class AST elements instead of just CALLs. We'll see if this is a good idea or not. ref is a type, child is a CALL, CONSTANT or VAR.
 const AST_CAST = 11
@@ -61,6 +61,8 @@ const AST_GOTO = 13
 const AST_NONE = 14
 'The EXIT statement. ref is the loop statement we're exiting.
 const AST_EXIT = 15
+'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to right.
+const AST_USERFUNC = 16
 
 'These nodes may appear where-ever an lvalue is required
 'ref is reference to symtab

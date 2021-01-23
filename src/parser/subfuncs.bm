@@ -1,0 +1,78 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'subfuncs.bm - Parse rules for SUB and FUNCTION definitions
+
+'Expects: token after FUNCTION or SUB
+'Results: NEWLINE
+'Returns -1 always. This is so the first function after the main program causes the
+'main block to end.
+function ps_userfunc
+    debuginfo "Start userfunc"
+    root = ast_add_node(AST_USERFUNC)
+    if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
+    
+    dim sym as symtab_entry_t
+    sym.identifier = ucase$(tok_content$)
+    sym.typ = SYM_FUNCTION
+    print "@"; tok_content$
+    tok_advance
+
+    ps_add_nested_structure root
+    ps_scope$ = sym.identifier
+
+    if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
+    if return_type = 0 then return_type = ps_default_type
+    sym.v1 = type_add_sig(0, type_sig_create$(return_type)) 
+    if ps_consumed(TOK_OPAREN) then
+        ps_add_formal_args root, sym.v1
+        ps_consume TOK_CPAREN
+    end if
+    sym.v2 = SYM_FUNCTION_USER
+    sym.v3 = root
+    symtab_add_entry sym
+
+    'TODO: STATIC and other modifiers
+
+    ps_consume TOK_NEWLINE
+    ast_pre_attach root, ps_block
+    ps_consume TOK_END
+    if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
+
+    ps_scope$ = ""
+    ps_remove_nested_structure
+
+    ps_userfunc = -1
+    debuginfo "Completed userfunc"
+end function
+
+'Expects: token after OPAREN
+'Result: CPAREN
+'Adds formal args to root node, adds args to sig index.
+sub ps_add_formal_args(root, sig_index)
+    do
+        flags = 0
+        do
+            select case tok_token
+            case TOK_BYREF
+                if flags and TYPE_BYREF then ps_error "Duplicate modifier"
+                flags = flags OR TYPE_BYREF
+                tok_advance
+            case TOK_BYVAL
+                if flags and TYPE_BYVAL then ps_error "Duplicate modifier"
+                flags = flags OR TYPE_BYVAL
+                tok_advance
+            case TOK_OPTION
+                if flags and TYPE_OPTIONAL then ps_error "Duplicate modifier"
+                flags = flags OR TYPE_OPTIONAL
+                tok_advance
+            case else
+                tok_advance
+                exit do
+            end select
+        loop
+        if tok_token <> TOK_UNKOWN then ps_error "Expected new variable name"
+        var = ps_simple_variable
+        ast_attach root, var
+        type_add_sig_arg sig_index, type_of_var(var), flags
+    loop while ps_consumed(TOK_COMMA)
+end sub

@@ -192,6 +192,8 @@ generic case
 generic is
 
 generic type
+generic sub
+generic function
 
 # functions with return type none are subs
 function abs            integer   integer
@@ -274,7 +276,6 @@ function fix            double    double
 function fix            quad      quad
 # fre
 function freefile       long
-# function
 
 function get            none      %long,integer64?,@string?
 function get            none      %long,integer64?,@integer?
@@ -412,7 +413,6 @@ function _strcmp        integer   string,string
 function _stricmp       integer   string,string
 # strig
 # string
-# sub
 # swap
 function system         none      integer?
 

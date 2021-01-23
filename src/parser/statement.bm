@@ -28,6 +28,8 @@ function ps_stmt
             stmt = ps_exit
         case TOK_FOR
             stmt = ps_for
+        case TOK_FUNCTION
+            stmt = ps_userfunc
         case TOK_GOTO
             stmt = ps_goto
         case TOK_IF
@@ -40,6 +42,8 @@ function ps_stmt
             stmt = ps_print
         case TOK_SELECT
             stmt = ps_select
+        case TOK_SUB
+            stmt = ps_userfunc
         case TOK_TYPE
             stmt = ps_udt
         case TOK_WHILE
@@ -53,10 +57,15 @@ function ps_stmt
         'ending token, but we check it's syntactically valid here.
         case TOK_END
             'We can't check tok_next_token because it does not always contain correct look-ahead information
-            if ucase$(tok_next_content$) <> "IF" and ucase$(tok_next_content$) <> "SELECT" then
+            next_content$ = ucase$(tok_next_content$)
+            nesting = ast_nodes(ps_final_nested).typ
+            if next_content$ <> "IF" and _
+                next_content$ <> "SELECT" and _
+                next_content$ <> "SUB" and _
+                next_content$ <> "FUNCTION" then
                 'Handle regular END command
                 stmt = ps_stmtreg
-            elseif ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then
+            elseif nesting <> AST_IF and nesting <> AST_SELECT and nesting <> AST_USERFUNC then
                 ps_error "Unexpected END"
             else
                 stmt = -1

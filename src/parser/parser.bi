@@ -25,6 +25,9 @@ dim shared ps_unattached_labels$
 'because the label hadn't been positioned yet.
 dim shared ps_unresolved_jumps$
 
-'mkl$ list of nodes that are DO, WHILE or FOR for the purposes of
-'parsing EXIT statements
+'mkl$ list of nodes that are DO, WHILE, FOR, SUB/FUNCTION for the purposes of
+'parsing EXIT statements.
 dim shared ps_nested_structures$
+
+'Name of the containing function, used as a prefix for local objects.
+dim shared ps_scope$

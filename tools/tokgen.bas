@@ -145,7 +145,10 @@ do while not eof(1)
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         end if
         cur_toknum = toknum
-        if previous$(0) <> "FUNCTION" then print #3, "sym.typ = SYM_FUNCTION"
+        if previous$(0) <> "FUNCTION" then
+            print #3, "sym.typ = SYM_FUNCTION"
+            print #3, "sym.v2 = SYM_FUNCTION_INTRINSIC"
+        end if
         process_return_type previous$(1), parts$(1), parts$(2)
         if ubound(parts$) = 3 then
             process_arg_list parts$(3)

@@ -30,6 +30,8 @@ const SYM_PREFIX = 3
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature
+'v2 -> One of SYM_FUNCTION_*, see below
+'v3 -> If SYM_FUNCTION_USER, the AST_USERFUNC holding the executable code
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
 'v1 -> AST node that is labelled.
@@ -53,6 +55,12 @@ const SYM_TYPE_INTERNAL = 0
 const SYM_TYPE_UDT = 1
 'Stored as the element type followed by parentheses and the number of dimensions, e.g. INTEGER(2)
 const SYM_TYPE_ARRAY = 2
+
+'Further categorisation of SYM_FUNCTION
+'Functions that are handled directly based on their name
+const SYM_FUNCTION_INTRINSIC = 1
+'SUBs and FUNCTIONs defined by the processed source code
+const SYM_FUNCTION_USER = 2
 
 dim shared symtab(1000) as symtab_entry_t
 dim shared symtab_last_entry
