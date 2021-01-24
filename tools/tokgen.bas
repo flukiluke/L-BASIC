@@ -24,6 +24,10 @@
 'arraytype NAME ELEMENTTYPE DIMENSIONS ; FLAGS
 'Generate a SYM_TYPE with SYM_TYPE_ARRAY. Use DIMENSIONS = 0 to mean an unspecified number.
 '
+'meta NAME ; FLAGS
+'Like generic, but generate the name as META_ instead of TOK_ and SYM_META instead of SYM_GENERIC.
+'No need to add a leading $, this is added implicitly.
+
 'literal NAME ; FLAGS
 'Represent a literal. Does not generate a symtab entry.
 '
@@ -102,6 +106,7 @@ do while not eof(1)
         toksym$ = tokname$
     end if
 
+    if parts$(0) = "META" then toksym$ = "$" + toksym$
     if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
     toksym$ = chr$(34) + toksym$ + chr$(34)
 
@@ -136,6 +141,14 @@ do while not eof(1)
         if previous$(0) <> "ARRAYTYPE" then print #3, "sym.v2 = SYM_TYPE_ARRAY"
         if previous$(2) <> parts$(2) then print #3, "sym.v3 = TYPE_"; ucase$(parts$(2))
         if previous$(3) <> parts$(3) then print #3, "sym.v4 = "; parts$(3)
+        print #3, "sym.identifier = "; toksym$
+        print #3, "symtab_add_entry sym"
+    case "META"
+        assertsize 2
+        toknum = toknum + 1
+        cur_toknum = toknum
+        print #2, "CONST META_" + tokname$ + " =" + str$(toknum)
+        if previous$(0) <> "META" then print #3, "sym.typ = SYM_META"
         print #3, "sym.identifier = "; toksym$
         print #3, "symtab_add_entry sym"
     case "FUNCTION"

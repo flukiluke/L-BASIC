@@ -1,0 +1,28 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'metacommands.bm - Process $metacommands in parser
+
+'Expects: META_LIST
+'Results: TOK_NEWLINE
+function ps_meta_list
+    ps_consume META_LIST
+    category$ = "SYMTAB"
+    if tok_token = TOK_METAPARAM then
+        category$ = _trim$(ucase$(tok_content$))
+        ps_consume TOK_METAPARAM
+    end if
+    select case left$(category$, 1)
+    case "S" 'SYMTAB
+        symtab_dump
+    case "F" 'FUNCTIONS
+        type_dump_functions
+    case "P" 'PROGRAM
+        ast_dump_pretty 0, 0
+    case "C" 'CONSTANTS
+        ast_dump_constants
+    case else
+        ps_error "$dump [SFPC]"
+    end select
+    'Never generate any ast nodes
+    ps_meta_list = 0
+end function

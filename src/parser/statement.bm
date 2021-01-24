@@ -16,6 +16,8 @@ function ps_stmt
     select case tok_token
         case is < 0
             ps_error "Unexpected literal " + tok_content$
+        case META_LIST
+            stmt = ps_meta_list
         case TOK_CIRCLE
             stmt = ps_circle
         case TOK_CONST
