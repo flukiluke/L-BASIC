@@ -21,7 +21,7 @@ function ps_meta_list
     case "C" 'CONSTANTS
         ast_dump_constants
     case else
-        ps_error "$dump [SFPC]"
+        ps_error "$LIST [SFPC]"
     end select
     'Never generate any ast nodes
     ps_meta_list = 0
