@@ -17,7 +17,9 @@ function ps_stmt
         case is < 0
             ps_error "Unexpected literal " + tok_content$
         case META_LIST
-            stmt = ps_meta_list
+            ps_meta_list
+        case META_DEBUG
+            ps_meta_debug
         case TOK_CIRCLE
             stmt = ps_circle
         case TOK_CONST

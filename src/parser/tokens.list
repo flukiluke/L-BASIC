@@ -17,6 +17,7 @@ generic linenum   ; nosym
 
 # Metacommands
 meta list
+meta debug
 
 # The meta parameter is everything after the first : or space.
 # It is up to the implementation of each metacommand to break apart this content.

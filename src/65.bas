@@ -94,17 +94,13 @@ interactive_recovery:
     interactive_mode TRUE
 
 error_handler:
-    if options.debug then
-        close
-        open "SCRN:" as #1
-        symtab_dump
-    end if
     select case Error_context
     case 1 'Parsing code
         print "Parser: ";
         if err <> 101 then goto internal_error
         if options.interactive_mode then
             print Error_message$
+            Error_message$ = ""
             resume interactive_recovery
         else
             print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
