@@ -58,7 +58,7 @@ function ps_for
 
     ps_consume TOK_NEXT
     'TODO: Check this lvalue matches the one at the top of the loop
-    dummy = ps_lvalue_mutable
+    if tok_token <> TOK_NEWLINE then dummy = ps_lvalue_mutable
 
     ps_remove_nested_structure
     ps_for = root
