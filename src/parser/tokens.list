@@ -15,6 +15,14 @@ generic .(dot)    ; direct
 generic rem
 generic linenum   ; nosym
 
+# Metacommands
+meta list
+meta debug
+
+# The meta parameter is everything after the first : or space.
+# It is up to the implementation of each metacommand to break apart this content.
+literal metaparam       ; direct
+
 # Type symbols
 generic integer_sfx     ; direct nosym
 generic long_sfx        ; direct nosym

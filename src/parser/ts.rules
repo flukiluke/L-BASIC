@@ -15,7 +15,7 @@
 Begin: $letter ~ Id
 Begin: $number ~ Linenum
 Begin: "' ~ Comment
-Begin: "$ ~ Metacmd1
+Begin: "$ ~ Metacmd
 Begin: "? ~ General ! ID
 Begin: $sp ~ Begin ! SKIP
 Begin: $nl ~ Begin ! NEWLINE
@@ -26,14 +26,19 @@ Linenum: $sp ~ General & LINENUM
 Linenum: "' ~ Comment & LINENUM
 Linenum: $nl ~ Begin & LINENUM
 
-Metacmd1: * ~ Error
-Metacmd1: $letter ~ Metacmd1
-Metacmd1: ": ~ Metacmd2 ! METACMD
-Metacmd1: $sp ~ Metacmd1 ! SKIP
-Metacmd1: $nl ~ Begin & METACMD
+Metacmd: * ~ Error
+Metacmd: $letter ~ Metacmd
+Metacmd: $number ~ Metacmd
+Metacmd: ": ~ Metagap & METACMD
+Metacmd: $sp ~ Metagap & METACMD
+Metacmd: $nl ~ Begin & METACMD
 
-Metacmd2: * ~ Metacmd2
-Metacmd2: $nl ~ Begin & METAPARAM
+Metagap: * ~ Metaparam
+Metagap: $sp ~ Metaparam ! SKIP
+Metagap: ": ~ Metaparam ! SKIP
+
+Metaparam: * ~ Metaparam
+Metaparam: $nl ~ Begin & METAPARAM
 
 Id: $letter ~ Id
 Id: $number ~ Id

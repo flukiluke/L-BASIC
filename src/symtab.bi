@@ -47,6 +47,8 @@ const SYM_TYPE = 7
 'v1 -> the data type
 'v2 -> position of element in udt (first is 0, then incrementing by the fixed size of previous values)
 const SYM_UDT_ELEMENT = 8
+'A metacommand, stored with its characteristic leading $ in the name
+const SYM_META = 9
 
 'Further categorisation of SYM_TYPE
 'e.g. INTEGER, STRING

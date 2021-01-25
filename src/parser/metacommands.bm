@@ -1,0 +1,45 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'metacommands.bm - Process $metacommands in parser
+
+'Expects: META_LIST
+'Results: TOK_NEWLINE
+sub ps_meta_list
+    ps_consume META_LIST
+    category$ = "SYMTAB"
+    if tok_token = TOK_METAPARAM then
+        category$ = _trim$(ucase$(tok_content$))
+        ps_consume TOK_METAPARAM
+    end if
+    select case left$(category$, 1)
+    case "S" 'SYMTAB
+        symtab_dump
+    case "F" 'FUNCTIONS
+        type_dump_functions
+    case "P" 'PROGRAM
+        ast_dump_pretty 0, 0
+    case "C" 'CONSTANTS
+        ast_dump_constants
+    case else
+        ps_error "$LIST [SFPC]"
+    end select
+end sub
+
+'Expects: META_DEBUG
+'Results: TOK_NEWLINE
+sub ps_meta_debug
+    ps_consume META_DEBUG
+    action$ = "ON"
+    if tok_token = TOK_METAPARAM then
+        action$ = _trim$(ucase$(tok_content$))
+        ps_consume TOK_METAPARAM
+    end if
+    select case action$
+    case "ON"
+        options.debug = TRUE
+    case "OFF"
+        options.debug = FALSE
+    case else
+        ps_error "$DEBUG [ON|OFF]"
+    end select
+end sub

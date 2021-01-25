@@ -81,6 +81,10 @@ sub tok_read_next_token
             tokeng_state.linestart = FALSE
             'tok_next_token is not properly set here; see comments in tok_advance
             tok_next_token = 0
+        
+        case TS_METACMD
+            tok_next_token = symtab_get_id(ucase$(tok_next_content$))
+            if tok_next_token = 0 then ps_error "Unknown metacommand"
 
         case TS_LINENUM
             if not tokeng_state.linestart then ps_error "Line number must be at start of line"
@@ -96,7 +100,7 @@ sub tok_read_next_token
             tokeng_state.has_data = FALSE
             tokeng_state.linestart = TRUE
             tok_next_token = TOK_NEWLINE
-
+        
         case else
             if tok_direct(ts_type) then
                 tok_next_token = tok_direct(ts_type)
