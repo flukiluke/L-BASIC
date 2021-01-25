@@ -80,7 +80,9 @@ function ps_simple_variable_p(head, content$)
     else
         'Existing variable
         sigil = ps_opt_sigil
-        if sigil and sigil <> symtab(head).v1 then ps_error "Type suffix does not match existing variable type"
+        current_type = symtab(head).v1
+        if symtab(current_type).v2 = SYM_TYPE_ARRAY then current_type = symtab(current_type).v3
+        if sigil and sigil <> current_type then ps_error "Type suffix does not match existing variable type"
         ast_nodes(node).ref = head
     end if
 
