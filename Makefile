@@ -4,8 +4,8 @@
 
 # This should point to your QB64 installation
 QB64 := /home/luke/comp/git_qb64/qb64 -q -w
-OUTPUT_BINARY := $(CURDIR)/65
-MERGED_SOURCE := $(CURDIR)/65-merged.bas
+OUTPUT_BINARY := $(CURDIR)/lbasic
+MERGED_SOURCE := $(CURDIR)/lbasic-merged.bas
 
 SRC_DIR := $(CURDIR)/src
 TOOLS_DIR := $(CURDIR)/tools
@@ -33,12 +33,12 @@ $(TOKEN_FILES): $(SRC_DIR)/parser/tokens.list $(TOOLS_DIR)/tokgen.tool
 	$(TOOLS_DIR)/tokgen.tool $(SRC_DIR)/parser/tokens.list $(TOKEN_FILES)
 
 # Main binary
-$(OUTPUT_BINARY): $(SRC_DIR)/65.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi')
+$(OUTPUT_BINARY): $(SRC_DIR)/lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi')
 	$(QB64) -x $< -o $@
 
 # Source for distribution
 $(MERGED_SOURCE): $(OUTPUT_BINARY) $(TOOLS_DIR)/incmerge.tool
-	$(TOOLS_DIR)/incmerge.tool $(SRC_DIR)/65.bas $(MERGED_SOURCE)
+	$(TOOLS_DIR)/incmerge.tool $(SRC_DIR)/lbasic.bas $(MERGED_SOURCE)
 
 .PHONY: clean
 clean:

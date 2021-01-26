@@ -1,6 +1,6 @@
 /*.bas
-/65
-/65-merged.bas
+/lbasic
+/lbasic-merged.bas
 src/parser/token_data.bi
 src/parser/token_registrations.bm
 src/parser/ts_data.bi

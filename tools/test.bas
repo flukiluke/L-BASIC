@@ -1,6 +1,6 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'test.bas - Run test programs though 65
+'test.bas - Run test programs though lbasic
 
 deflng a-z
 $console:only

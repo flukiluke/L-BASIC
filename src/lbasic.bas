@@ -12,7 +12,7 @@
 'See the License for the specific language governing permissions and
 'limitations under the License.
 '
-'65.bas - Main file for 65 BASIC Compiler
+'lbasic.bas - Main file for L-BASIC Compiler
 
 '$dynamic
 $console
@@ -24,7 +24,7 @@ const FALSE = 0, TRUE = not FALSE
 on error goto error_handler
 
 dim shared VERSION$
-VERSION$ = "0.0.4"
+VERSION$ = "0.0.5"
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
@@ -116,6 +116,10 @@ error_handler:
         print "Dump: ";
         if err <> 101 then goto internal_error
         print Error_message$
+    case 4 'Run mode
+        print "Runtime error: ";
+        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
     case else
         internal_error:
         if _inclerrorline then
@@ -245,7 +249,7 @@ sub run_mode
     Error_context = 0
     close #input_file_handle
     imm_init
-    Error_context = 2
+    Error_context = 4
     imm_run root
     Error_context = 0
 end sub
@@ -261,11 +265,11 @@ function remove_ext$(fullname$)
 end function
 
 sub show_version
-    print "The 65 BASIC compiler version " + VERSION$
+    print "The L-BASIC compiler version " + VERSION$
 end sub
 
 sub show_help
-    print "The 65 BASIC compiler"
+    print "The L-BASIC compiler"
     print "Usage: " + command$(0) + " [OPTIONS] [FILE]"
     print "Execute FILE if given, otherwise launch an interactive session."
     print '                                                                                '80 columns
@@ -274,7 +278,7 @@ sub show_help
     print "  -c FILE, --compile FILE          Compile FILE instead of executing"
     print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
     print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
-    print "  -d, --debug                      For debugging 65 itself"
+    print "  -d, --debug                      For internal debugging"
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
 end sub
