@@ -116,6 +116,10 @@ error_handler:
         print "Dump: ";
         if err <> 101 then goto internal_error
         print Error_message$
+    case 4 'Run mode
+        print "Runtime error: ";
+        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
     case else
         internal_error:
         if _inclerrorline then
@@ -245,7 +249,7 @@ sub run_mode
     Error_context = 0
     close #input_file_handle
     imm_init
-    Error_context = 2
+    Error_context = 4
     imm_run root
     Error_context = 0
 end sub
