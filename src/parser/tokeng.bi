@@ -10,6 +10,7 @@ type tokeniser_state_t
     curstate as long
     has_data as long
     linestart as long
+    recovery_mode as long
     raw_line_in as string
 end type
 

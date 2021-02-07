@@ -17,6 +17,7 @@ sub tok_init
     tokeng_state.curstate = 1
     tokeng_state.has_data = FALSE
     tokeng_state.linestart = TRUE
+    tokeng_state.recovery_mode = FALSE
     'Fill the 'next' buffer and propagate to tok_token
     tok_read_next_token
     tok_advance
@@ -25,7 +26,9 @@ end sub
 sub tok_advance
     'We defer symbol table lookups to now (instead of in tok_read_next_token) so
     'we can correctly find any recently declared symbols.
-    if tok_next_token = 0 then
+    'Also avoid ever doing lookups in recovery mode, because results are likely
+    'garbage.
+    if tok_next_token = 0 and not tokeng_state.recovery_mode then
         id = symtab_get_id(ucase$(tok_next_content$))
         if id = 0 then
             tok_token = TOK_UNKNOWN
@@ -52,6 +55,16 @@ sub tok_advance
         end if
     end if
     debuginfo ">>> " + tok_content$
+end sub
+
+'Advance token stream until reaching end_marker, but do no processing of
+'incoming data. Used to recover from errors. Results in tok_token = end_marker.
+sub tok_recover(end_marker)
+    tokeng_state.recovery_mode = TRUE
+    do until tok_token = end_marker
+        tok_advance
+    loop
+    tokeng_state.recovery_mode = FALSE
 end sub
 
 sub tok_read_next_token

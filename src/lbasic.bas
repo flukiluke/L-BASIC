@@ -14,6 +14,10 @@
 '
 'lbasic.bas - Main file for L-BASIC Compiler
 
+$if VERSION < 1.5 then
+    $error QB64 V1.5 or greater required
+$end if
+
 '$dynamic
 $console
 $screenhide
@@ -109,7 +113,7 @@ error_handler:
         'We have no good way of distinguishing between user program errors and internal errors
         'Of course, the internal code is perfect so it *must* be a user program error
         print "Runtime error: ";
-        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
         resume interactive_recovery
     case 3 'Dump mode
@@ -118,7 +122,7 @@ error_handler:
         print Error_message$
     case 4 'Run mode
         print "Runtime error: ";
-        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
     case else
         internal_error:
@@ -169,9 +173,7 @@ end function
 
 sub interactive_mode(recovery)
     if recovery then
-        do until tok_token = TOK_NEWLINE
-            tok_advance
-        loop
+        tok_recover TOK_NEWLINE
     else
         open "SCRN:" for output as #1
         imm_init
@@ -345,7 +347,6 @@ end sub
 '$include: 'type.bm'
 '$include: 'ast.bm'
 '$include: 'symtab.bm'
-'$include: 'errors.bm'
 '$include: 'parser/parser.bm'
 '$include: 'emitters/dump/dump.bm'
 '$include: 'emitters/immediate/immediate.bm'
