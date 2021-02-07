@@ -175,27 +175,44 @@ sub interactive_mode(recovery)
     else
         open "SCRN:" for output as #1
         imm_init
+        ast_init
         Error_context = 1
         tok_init
     end if
     do
-        Error_context = 0
-        ast_init 'Clear the tree each time
         Error_context = 1
         node = ps_stmt
-        'Could return 0 if statement does not generate ast nodes
-        if node then
+        select case node
+        case -2
+            'A SUB or FUNCTION was defined, we want to keep that.
+            symtab_commit
+            ast_commit
+        case -1
+            '-1 is an end block, this should never happen
+            ps_error "Block end at top-level"
+        case 0
+            'No ast nodes were generated (DIM etc.), but save any
+            'symbols created.
+            symtab_commit
+        case else
             Error_context = 0
+            ast_attach ast_get_child(AST_MAIN_PROCEDURE, 1), node
             if options.debug then
                 Error_context = 3
-                ast_dump_pretty node, 0
+                ast_dump_pretty AST_MAIN_PROCEDURE, 0
                 Error_context = 0
                 print #1,
             end if
             imm_reinit
             Error_context = 2
-            imm_run node
-        end if
+            imm_run ast_get_child(AST_MAIN_PROCEDURE, 1)
+            'Keep any symbols that were defined
+            symtab_commit
+            'But don't keep any nodes generated
+            ast_rollback
+            'And clear the main program
+            ast_clear_main_procedure
+        end select
         Error_context = 1
         ps_consume TOK_NEWLINE
     loop

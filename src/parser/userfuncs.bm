@@ -1,20 +1,19 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'subfuncs.bm - Parse rules for SUB and FUNCTION definitions
+'userfuncs.bm - Parse rules for SUB and FUNCTION definitions
 
-'Expects: token after FUNCTION or SUB
+'Expects: TOK_FUNCTION or TOK_SUB
 'Results: NEWLINE
 'Returns -1 always. This is so the first function after the main program causes the
 'main block to end.
 function ps_userfunc
     debuginfo "Start userfunc"
-    root = ast_add_node(AST_USERFUNC)
+    root = ast_add_node(AST_PROCEDURE)
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     
     dim sym as symtab_entry_t
     sym.identifier = ucase$(tok_content$)
     sym.typ = SYM_FUNCTION
-    print "@"; tok_content$
     tok_advance
 
     ps_add_nested_structure root

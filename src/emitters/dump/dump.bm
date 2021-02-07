@@ -43,6 +43,15 @@ sub ast_dump_pretty(root, indent_level)
         Error_message$ = "Node" + str$(root) + " is invalid": error 101
     end if
     select case ast_nodes(root).typ
+    case AST_PROCEDURE
+        print #1, "PROCEDURE (";
+        for i = 2 to ast_num_children(root) - 1
+            ast_dump_pretty ast_get_child(root, i), 0
+            if i < ast_num_children(root) - 1 then print #1, ", ";
+        next i
+        print #1, ")"
+        ast_dump_pretty ast_get_child(root, 1), indent_level
+        print #1, "END PROCEDURE"
     case AST_ASSIGN
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, " = ";

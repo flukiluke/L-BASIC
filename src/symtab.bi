@@ -70,4 +70,6 @@ dim shared symtab_map(1750)
 
 'The symtab optionally supports transactions; calling symtab_rollback will
 'remove all items added since the last call to symtab_commit.
+'WARNING: transaction rollbacks only undo adding entries. Changes to entries
+'are always immediately permanent.
 dim shared symtab_last_commit_id

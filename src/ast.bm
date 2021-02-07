@@ -9,6 +9,8 @@ sub ast_init
     redim ast_nodes(10) as ast_node_t
     redim ast_children(10) as string
     ast_last_node = 0
+    AST_MAIN_PROCEDURE = ast_add_node(AST_PROCEDURE)
+    ast_attach AST_MAIN_PROCEDURE, ast_add_node(AST_BLOCK)
     redim ast_constants(10) as string
     redim ast_constant_types(10) as long
     ast_constants(AST_FALSE) = "0"
@@ -18,6 +20,27 @@ sub ast_init
     ast_constants(AST_ONE) = "1"
     ast_constant_types(AST_ONE) = TYPE_INTEGER
     ast_last_constant = 3
+    ast_commit
+end sub
+
+sub ast_commit
+    ast_last_commit_id = ast_last_node
+    ast_last_constant_commit_id = ast_last_constant
+end sub
+
+sub ast_rollback
+    for i = ast_last_commit_id + 1 to ast_last_node
+        ast_children(i) = ""
+    next i
+    ast_last_node = ast_last_commit_id
+    ast_last_constant = ast_last_constant_commit_id
+end sub
+
+sub ast_clear_main_procedure
+    'Sets the main procedure's block to have 0 nodes.
+    'This doesn't actually delete the nodes, use ast_rollback for that.
+    block = ast_get_child(AST_MAIN_PROCEDURE, 1)
+    ast_children(block) = ""
 end sub
 
 function ast_add_constant(token, content$, force_type)
@@ -74,7 +97,6 @@ sub ast_attach(parent, child)
         debuginfo "Not adding child node because it is " + ltrim$(str$(child))
         exit sub
     end if
-    if ast_nodes(child).parent then debuginfo "Warning: changing node parent"
     ast_nodes(child).parent = parent
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
@@ -84,7 +106,6 @@ sub ast_pre_attach(parent, child)
         debuginfo "Not adding child node because it is " + ltrim$(str$(child))
         exit sub
     end if
-    if ast_nodes(child).parent then debuginfo "Warning: changing node parent"
     ast_nodes(child).parent = parent
     ast_children(parent) = mkl$(child) + ast_children(parent)
 end sub

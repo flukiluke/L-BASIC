@@ -5,6 +5,7 @@
 'Expects: first token of statement
 'Results: NEWLINE or block end marker
 'Returns:
+'   -2 -> a SUB or FUNCTION was defined (useful for interactive mode to know)
 '   -1 ->  end of a block
 '   0 -> statement did not generate any ast nodes
 '   > 0 -> ast node
