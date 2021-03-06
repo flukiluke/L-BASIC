@@ -18,7 +18,7 @@ all: $(OUTPUT_BINARY) $(MERGED_SOURCE)
 TESTS := $(shell find $(TEST_DIR) -type f -name '*.test')
 test: $(TESTS:.test=.testresult)
 %.testresult: $(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) %.test
-	$(TOOLS_DIR)/test.tool $(OUTPUT_BINARY) $(word 3,$^)
+	$(TOOLS_DIR)/test.tool "$(OUTPUT_BINARY) -t" $(word 3,$^)
 
 $(TOOLS_DIR)/%.tool: $(TOOLS_DIR)/%.bas
 	$(QB64) -x $< -o $@.tool

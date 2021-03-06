@@ -1,6 +1,6 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'test.bas - Run test programs though lbasic
+'test.bas - Run test suite
 
 deflng a-z
 $console:only
@@ -19,11 +19,15 @@ dim active_section '0 = none, 1 = program, 2 = output
 on error goto ehandler
 
 if _commandcount < 2 then
-    print "Usage: "; command$(0); " <test binary> <test files>"
+    print "Usage: "; command$(0); " <test program> <test files>"
     system 1
 end if
 
-tmpdir$ = "/tmp/"
+if instr(_os$, "WINDOWS") then
+    tmpdir$ = environ$("TEMP") + "\"
+else
+    tmpdir$ = "/tmp/"
+end if
 
 testbinary$ = command$(1)
 chdir _startdir$
@@ -65,11 +69,11 @@ for active_test = 1 to ubound(tests)
     'print "EXPECT: "; tests(active_test).expect
     'print tests(active_test).expected_output;
     
-    filename$ = tmpdir$ + "test-" + date$ + time$ + "-" + rndhex$(4)
+    filename$ = tmpdir$ + "test-" + rndhex$(4)
     open filename$ + ".bas" for output as #1
     print #1, tests(active_test).program
     close #1
-    retcode = shell(testbinary$ + " -t " + filename$ + ".bas > " + filename$ + ".output")
+    retcode = shell(testbinary$ + " " + filename$ + ".bas > " + filename$ + ".output")
     print tests(active_test).title; ": ";
     select case tests(active_test).expect
     case "error"
@@ -84,6 +88,9 @@ for active_test = 1 to ubound(tests)
         actual_output$ = space$(lof(1))
         get #1, , actual_output$
         close #1
+        'These two lines deal with Windows-specific behaviour
+        actual_output$ = remove_char$(actual_output$, chr$(13))
+        tests(active_test).expected_output = remove_char$(tests(active_test).expected_output, chr$(13))
         if tests(active_test).expect = "stdout_nonl" then actual_output$ = actual_output$ + chr$(10)
         if retcode > 0 then
             print "Failed with error, output was: "; actual_output$
@@ -122,4 +129,17 @@ function rndhex$(length)
         result$ = result$ + hex$(int(rnd * 256))
     next i
     rndhex$ = result$
+end function
+
+function remove_char$(s$, c$)
+  dim s2$
+  dim i as integer
+
+  s2$ = ""
+  for i = 1 to len(s$)
+    if mid$(s$, i, 1) <> c$ then
+      s2$ = s2$ + mid$(s$, i, 1)
+    end if
+  next
+  remove_char$ = s2$
 end function
