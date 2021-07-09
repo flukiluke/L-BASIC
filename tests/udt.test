@@ -10,7 +10,7 @@ q.b = "hello"
 q.c = 2.3
 print q.a; q.c; q.b
 $expect: stdout
- 3  2.3 hello
+3  2.3 hello
 $finish
 
 $title: nested udt
@@ -55,5 +55,5 @@ q.b = p
 r = q
 print r.a; r.b.a; r.b.b; r.c
 $expect: stdout
-hello 4 rain 1.1 
+hello 4 rain 1.1
 $finish

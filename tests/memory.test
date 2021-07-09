@@ -1,6 +1,6 @@
 $title: len
 'len(f##) is 32 in QB64, but should be 16
-print len(a%); len(b&); len(c&&); len(d!); len(e#); len(f##); len("hello"); "."
+print len(a%); len(b&); len(c&&); len(d!); len(e#); len(f##); len("hello")
 $expect: stdout
- 2  4  8  4  8  32  5 .
+2  4  8  4  8  32  5
 $finish

@@ -2,72 +2,69 @@ $title: ascending counter
 for i = 1 to 3
     print i;
 next i
-$expect: stdout_nonl
- 1  2  3 
+$expect: stdout
+1  2  3
 $finish
 
 $title: ascending counter, explicit step
 for i = 1 to 3 step 1
     print i;
 next i
-$expect: stdout_nonl
- 1  2  3 
+$expect: stdout
+1  2  3
 $finish
 
 $title: ascending counter, imperfect step divisor
 for i = 1 to 5 step 3
     print i;
 next i
-$expect: stdout_nonl
- 1  4 
+$expect: stdout
+1  4
 $finish
 
 $title: descending counter
 for i = 3 to 1 step -1
     print i;
 next i
-$expect: stdout_nonl
- 3  2  1 
+$expect: stdout
+3  2  1
 $finish
 
 $title: descending counter, no step
 for i = 3 to 1
     print i;
 next i
-$expect: stdout_nonl
-
+$expect: stdout
 $finish
 
 $title: ascending range, negative step
 for i = 1 to 3 step -1
     print i;
 next i
-$expect: stdout_nonl
-
+$expect: stdout
 $finish
 
 $title: singular range, positive step
 for i = 1 to 1 step 1
     print i;
 next i
-$expect: stdout_nonl
- 1 
+$expect: stdout
+1
 $finish
 
 $title: singular range, negative step
 for i = 1 to 1 step -1
     print i;
 next i
-$expect: stdout_nonl
- 1 
+$expect: stdout
+1
 $finish
 
 $title: descending range, zero step
 for i = 2 to 1 step 0
     print i;
 next i
-$expect: stdout_nonl
-
+$expect: stdout
 $finish
 
 $title: singluar range, zero step
@@ -76,8 +73,8 @@ for i = 1 to 2 step 0
     print i;
     if lim = 4 then system
 next i
-$expect: stdout_nonl
- 1  1  1  1 
+$expect: stdout
+1  1  1  1
 $finish
 
 $title: nested
@@ -87,18 +84,18 @@ for i = 1 to 3
     next j
 next i
 $expect: stdout
- 1  1 
- 2  1 
- 2  2 
- 3  1 
- 3  2 
- 3  3 
+1  1
+2  1
+2  2
+3  1
+3  2
+3  3
 $finish
 
 $title: implicit variable name
 for i = 1 to 3
     print i;
 next
-$expect: stdout_nonl
- 1  2  3 
+$expect: stdout
+1  2  3
 $finish

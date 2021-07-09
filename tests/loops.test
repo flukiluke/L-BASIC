@@ -4,9 +4,9 @@ while x < 3
     x = x + 1
 wend
 $expect: stdout
- 0 
- 1 
- 2 
+0
+1
+2
 $finish
 
 $title: do while
@@ -15,9 +15,9 @@ do while x < 3
     x = x + 1
 loop
 $expect: stdout
- 0 
- 1 
- 2 
+0
+1
+2
 $finish
 
 $title: do until
@@ -26,9 +26,9 @@ do until x >= 3
     x = x + 1
 loop
 $expect: stdout
- 0 
- 1 
- 2 
+0
+1
+2
 $finish
 
 $title: loop while
@@ -37,9 +37,9 @@ do
     x = x + 1
 loop while x < 3
 $expect: stdout
- 0 
- 1 
- 2 
+0
+1
+2
 $finish
 
 $title: loop until
@@ -48,9 +48,9 @@ do
     x = x + 1
 loop until x >= 3
 $expect: stdout
- 0 
- 1 
- 2 
+0
+1
+2
 $finish
 
 $title: do with dual conditions illegal
@@ -71,10 +71,10 @@ do while x < 2
     x = x + 1
 loop
 $expect: stdout
- 0  0 
- 0  1 
- 1  0 
- 1  1 
+0  0
+0  1
+1  0
+1  1
 $finish
 
 $title: nested while & do
@@ -87,8 +87,8 @@ do while x < 2
     x = x + 1
 loop
 $expect: stdout
- 0  0 
- 0  1 
- 1  0 
- 1  1 
+0  0
+0  1
+1  0
+1  1
 $finish

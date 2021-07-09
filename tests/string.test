@@ -2,16 +2,16 @@ $title: equality
 a$ = "hello"
 b$ = "world"
 c$ = "hello"
-print a$ = b$; a$ = c$; a$ <> b$; a$ <> c$; "."
+print a$ = b$; a$ = c$; a$ <> b$; a$ <> c$
 $expect: stdout
- 0 -1 -1  0 .
+0 -1 -1  0
 $finish
 
 $title: asc
 a$ = "hello world"
-print asc(a$); asc(a$, 2); "."
+print asc(a$); asc(a$, 2)
 $expect: stdout
- 104  101 .
+104  101
 $finish
 
 $title: asc past end of string illegal
@@ -34,19 +34,19 @@ print chr$(-40)
 $expect: error
 
 $title: binary instr
-print instr("hello", "h"); instr("hello", "lo"); instr("hello", "asdf"); "."
-print instr("hello", ""); instr("", "h"); instr("", ""); "."
+print instr("hello", "h"); instr("hello", "lo"); instr("hello", "asdf")
+print instr("hello", ""); instr("", "h"); instr("", "")
 $expect: stdout
- 1  4  0 .
- 1  0  0 .
+1  4  0
+1  0  0
 $finish
 
 $title: ternary instr
-print instr(1, "hello", "h"); instr(-2, "hello", "e"); instr(4, "hello", "l"); "."
-print instr(10, "hello", "h"); "."
+print instr(1, "hello", "h"); instr(-2, "hello", "e"); instr(4, "hello", "l")
+print instr(10, "hello", "h")
 $expect: stdout
- 1  2  4 .
- 0 .
+1  2  4
+0
 $finish
 
 $title: lcase

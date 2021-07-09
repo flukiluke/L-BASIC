@@ -69,12 +69,12 @@ for active_test = 1 to ubound(tests)
     'print "EXPECT: "; tests(active_test).expect
     'print tests(active_test).expected_output;
     
+    print tests(active_test).title; ": ";
     filename$ = tmpdir$ + "test-" + rndhex$(4)
     open filename$ + ".bas" for output as #1
     print #1, tests(active_test).program
     close #1
     retcode = shell(testbinary$ + " " + filename$ + ".bas > " + filename$ + ".output")
-    print tests(active_test).title; ": ";
     select case tests(active_test).expect
     case "error"
         if retcode > 0 then
@@ -83,15 +83,17 @@ for active_test = 1 to ubound(tests)
         else
             print "Failed, expected error but ran successfully."
         end if
-    case "stdout", "stdout_nonl"
+    case "stdout", "stdout_exact"
         open filename$ + ".output" for binary as #1
         actual_output$ = space$(lof(1))
         get #1, , actual_output$
         close #1
-        'These two lines deal with Windows-specific behaviour
         actual_output$ = remove_char$(actual_output$, chr$(13))
         tests(active_test).expected_output = remove_char$(tests(active_test).expected_output, chr$(13))
-        if tests(active_test).expect = "stdout_nonl" then actual_output$ = actual_output$ + chr$(10)
+        if tests(active_test).expect <> "stdout_exact" then
+            actual_output$ = strip$(actual_output$)
+            tests(active_test).expected_output = strip$(tests(active_test).expected_output)
+        end if
         if retcode > 0 then
             print "Failed with error, output was: "; actual_output$
         elseif actual_output$ = tests(active_test).expected_output then
@@ -131,6 +133,7 @@ function rndhex$(length)
     rndhex$ = result$
 end function
 
+'Courtesy Ed Davis
 function remove_char$(s$, c$)
   dim s2$
   dim i as integer
@@ -142,4 +145,52 @@ function remove_char$(s$, c$)
     end if
   next
   remove_char$ = s2$
+end function
+
+'Remove whitespace from start and end of every line
+function strip$ (s$)
+    whitespace$ = chr$(9) + chr$(32)
+    redim lines(0) as string
+    split s$, chr$(10), lines()
+    for i = lbound(lines) to ubound(lines)
+        start = 0
+        do
+            start = start + 1
+        loop while start <= len(lines(i)) and instr(whitespace$, mid$(lines(i), start, 1))
+        finish = len(lines(i)) + 1
+        do
+            finish = finish - 1
+        loop while finish >=1 and instr(whitespace$, mid$(lines(i), finish, 1))
+        lines(i) = mid$(lines(i), start, finish - start + 1)
+    next i
+    strip$ = join(lines(), chr$(10))
+end function
+
+'Split in$ into pieces, chopping at every occurrence of delimiter$. Multiple consecutive occurrences
+'of delimiter$ are treated as a single instance. The chopped pieces are stored in result$().
+'
+'result$() must have been REDIMmed previously.
+sub split(in$, delimiter$, result$())
+    redim result$(-1)
+    start = 1
+    do
+        while mid$(in$, start, len(delimiter$)) = delimiter$
+            start = start + len(delimiter$)
+            if start > len(in$) then exit sub
+        wend
+        finish = instr(start, in$, delimiter$)
+        if finish = 0 then finish = len(in$) + 1
+        redim _preserve result$(0 to ubound(result$) + 1)
+        result$(ubound(result$)) = mid$(in$, start, finish - start)
+        start = finish + len(delimiter$)
+    loop while start <= len(in$)
+end sub
+
+'Combine all elements of in$() into a single string with delimiter$ separating the elements.
+function join$(in$(), delimiter$)
+    result$ = in$(lbound(in$))
+    for i = lbound(in$) + 1 to ubound(in$)
+        result$ = result$ + delimiter$ + in$(i)
+    next i
+    join$ = result$
 end function

@@ -8,21 +8,21 @@ f## = e
 g$ = "hello"
 print a; b&; c; d!; e; f##; g
 $expect: stdout
- 1  1  1  1  1  1 hello
+1  1  1  1  1  1 hello
 $finish
 
 $title: expression
 a = 1 + 7 - 5
 print a
 $expect: stdout
- 3 
+3
 $finish
 
 $title: comparison
 a = 1 = 1
 print a
 $expect: stdout
--1 
+-1
 $finish
 
 $title: self-referential
@@ -31,7 +31,7 @@ a = a + 1
 b = b + 1
 print a; b
 $expect: stdout
- 3  1 
+3  1
 $finish
 
 $title: string to number illegal

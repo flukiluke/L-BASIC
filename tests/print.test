@@ -20,8 +20,8 @@ $finish
 $title: semicolon joined
 print "hello"; "world"
 print "the"; "rain"; ; "in";
-print ;"spain"; "fal" + "ls"; "mainly";
-$expect: stdout_nonl
+print ;"spain"; "fal" + "ls"; "mainly"
+$expect: stdout_exact
 helloworld
 theraininspainfallsmainly
 $finish
@@ -31,7 +31,7 @@ $title: semicolons and commas
 print "hello", "world"
 print ,"the rain",,"in";,"spain",
 print "falls"
-$expect: stdout
+$expect: stdout_exact
 hello world
  the rain  in spain falls
 $finish
@@ -44,14 +44,14 @@ smallestlong& = -2147483648
 smallsingle! = 1234567
 bigsingle! = 12345678
 print 134; -7; biggestint%; smallestint%; biggestlong&; smallestlong&; smallsingle!; bigsingle!
-$expect: stdout
+$expect: stdout_exact
  134 -7  32767 -32768  2147483647 -2147483648  1234567  1.234568E+07 
 $finish
 
 $title: ? shortcut
 ?"a"
 ?1
-$expect: stdout
+$expect: stdout_exact
 a
  1 
 $finish

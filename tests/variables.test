@@ -13,11 +13,11 @@ y& = 2
 z$ = "hello"
 print x%; y&; z$
 $expect: stdout
- 1  2 hello
+1  2 hello
 $finish
 
 $title: default to 0 and empty string
 print x%; y!; "{"; z$; "}"
 $expect: stdout
- 0  0 {}
+0  0 {}
 $finish
