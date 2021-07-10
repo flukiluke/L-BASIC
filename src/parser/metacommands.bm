@@ -16,10 +16,13 @@ sub ps_meta_list
         symtab_dump
     case "F" 'FUNCTIONS
         type_dump_functions
+    case "P" 'PROGRAM
+        ast_dump_pretty AST_ENTRYPOINT, 0
+        dump_subprocedures
     case "C" 'CONSTANTS
         ast_dump_constants
     case else
-        ps_error "$LIST [SFC]"
+        ps_error "$LIST [SFPC]"
     end select
 end sub
 

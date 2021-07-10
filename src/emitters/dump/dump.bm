@@ -14,10 +14,7 @@ sub dump_program
     print #1,
     print #1, "Program:"
     ast_dump_pretty AST_ENTRYPOINT, 0
-    'Search the symtab for subprocedures
-    for i = 1 to symtab_last_entry
-        if symtab(i).typ = SYM_FUNCTION and symtab(i).v2 = SYM_FUNCTION_USER then dump_procedure i
-    next i
+    dump_subprocedures
 end sub
 
 sub type_dump_functions
@@ -41,23 +38,27 @@ sub symtab_dump
     next i
 end sub
 
-sub dump_procedure(sym)
-    return_type = type_sig_return(symtab(sym).v1)
-    if return_type = TYPE_NONE then is_sub = TRUE
-    print #1,
-    if is_sub then
-        print #1, "SUB "; symtab(sym).identifier; " (";
-    else
-        print #1, "FUNCTION "; symtab(sym).identifier; " AS "; type_human_readable$(return_type); " (";
-    end if
-    root = symtab(sym).v3
-    for i = 2 to ast_num_children(root) - 1
-        ast_dump_pretty ast_get_child(root, i), 0
-        if i < ast_num_children(root) - 1 then print #1, ", ";
+sub dump_subprocedures
+    for i = 1 to symtab_last_entry
+        if symtab(i).typ = SYM_FUNCTION and symtab(i).v2 = SYM_FUNCTION_USER then
+            return_type = type_sig_return(symtab(i).v1)
+            if return_type = TYPE_NONE then is_sub = TRUE else is_sub = FALSE
+            print #1,
+            if is_sub then
+                print #1, "SUB "; symtab(i).identifier; " (";
+            else
+                print #1, "FUNCTION "; symtab(i).identifier; " AS "; type_human_readable$(return_type); " (";
+            end if
+            root = symtab(i).v3
+            for j = 2 to ast_num_children(root)
+                ast_dump_pretty ast_get_child(root, j), 0
+                if j < ast_num_children(root) then print #1, ", ";
+            next j
+            print #1, ")"
+            ast_dump_pretty ast_get_child(root, 1), 1
+            if is_sub then print #1, "END SUB" else print #1, "END FUNCTION"
+        end if
     next i
-    print #1, ")"
-    ast_dump_pretty ast_get_child(root, 1), 1
-    if is_sub then print #1, "END SUB" else print #1, "END FUNCTION"
 end sub
 
 sub ast_dump_pretty(root, indent_level)

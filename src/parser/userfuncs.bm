@@ -10,14 +10,15 @@ function ps_userfunc
     if ps_final_nested then
         ps_error "SUB and FUNCTION must appear at top level"
     end if
-    root = ast_add_node(AST_PROCEDURE)
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     
+    if tok_token <> TOK_UNKNOWN then ps_error "Name already in use"
     dim sym as symtab_entry_t
     sym.identifier = ucase$(tok_content$)
     sym.typ = SYM_FUNCTION
     tok_advance
 
+    root = ast_add_node(AST_PROCEDURE)
     ps_add_nested_structure root
     ps_scope$ = sym.identifier
 
@@ -67,11 +68,10 @@ sub ps_add_formal_args(root, sig_index)
                 flags = flags OR TYPE_OPTIONAL
                 tok_advance
             case else
-                tok_advance
                 exit do
             end select
         loop
-        if tok_token <> TOK_UNKOWN then ps_error "Expected new variable name"
+        if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
         var = ps_simple_variable
         ast_attach root, var
         type_add_sig_arg sig_index, type_of_var(var), flags
