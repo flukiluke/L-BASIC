@@ -70,7 +70,7 @@ function ps_stmt
                 next_content$ <> "FUNCTION" then
                 'Handle regular END command
                 stmt = ps_stmtreg
-            elseif nesting <> AST_IF and nesting <> AST_SELECT and nesting <> AST_USERFUNC then
+            elseif nesting <> AST_IF and nesting <> AST_SELECT and nesting <> AST_PROCEDURE then
                 ps_error "Unexpected END"
             else
                 stmt = -1

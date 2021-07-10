@@ -173,11 +173,17 @@ end function
 
 sub interactive_mode(recovery)
     if recovery then
+        ps_nested_structures$ = ""
         tok_recover TOK_NEWLINE
+        symtab_commit
+        ast_rollback
+        ast_clear_entrypoint
     else
         open "SCRN:" for output as #1
         imm_init
         ast_init
+        AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
+        ast_commit
         Error_context = 1
         tok_init
     end if
@@ -198,22 +204,22 @@ sub interactive_mode(recovery)
             symtab_commit
         case else
             Error_context = 0
-            ast_attach ast_get_child(AST_MAIN_PROCEDURE, 1), node
+            ast_attach AST_ENTRYPOINT, node
             if options.debug then
                 Error_context = 3
-                ast_dump_pretty AST_MAIN_PROCEDURE, 0
+                ast_dump_pretty AST_ENTRYPOINT, 0
                 Error_context = 0
                 print #1,
             end if
             imm_reinit
             Error_context = 2
-            imm_run ast_get_child(AST_MAIN_PROCEDURE, 1)
+            imm_run AST_ENTRYPOINT
             'Keep any symbols that were defined
             symtab_commit
             'But don't keep any nodes generated
             ast_rollback
             'And clear the main program
-            ast_clear_main_procedure
+            ast_clear_entrypoint
         end select
         Error_context = 1
         ps_consume TOK_NEWLINE
@@ -246,12 +252,13 @@ sub compile_mode
     open options.mainarg for input as #input_file_handle
     tok_init
     Error_context = 1
-    root = ps_block
+    AST_ENTRYPOINT = ps_block
+    ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
     close #input_file_handle
     open options.outputfile for output as #1
     Error_context = 3
-    dump_program root
+    dump_program AST_ENTRYPOINT
     Error_context = 0
     close #1
 end sub
@@ -263,13 +270,13 @@ sub run_mode
     open options.mainarg for input as #input_file_handle
     tok_init
     Error_context = 1
-    root = ps_block
-    ps_finish_labels root
+    AST_ENTRYPOINT = ps_block
+    ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
     close #input_file_handle
     imm_init
     Error_context = 4
-    imm_run root
+    imm_run AST_ENTRYPOINT
     Error_context = 0
 end sub
 

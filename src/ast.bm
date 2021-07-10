@@ -9,8 +9,6 @@ sub ast_init
     redim ast_nodes(10) as ast_node_t
     redim ast_children(10) as string
     ast_last_node = 0
-    AST_MAIN_PROCEDURE = ast_add_node(AST_PROCEDURE)
-    ast_attach AST_MAIN_PROCEDURE, ast_add_node(AST_BLOCK)
     redim ast_constants(10) as string
     redim ast_constant_types(10) as long
     ast_constants(AST_FALSE) = "0"
@@ -36,11 +34,10 @@ sub ast_rollback
     ast_last_constant = ast_last_constant_commit_id
 end sub
 
-sub ast_clear_main_procedure
-    'Sets the main procedure's block to have 0 nodes.
+sub ast_clear_entrypoint
+    'Sets the main block to have 0 nodes.
     'This doesn't actually delete the nodes, use ast_rollback for that.
-    block = ast_get_child(AST_MAIN_PROCEDURE, 1)
-    ast_children(block) = ""
+    ast_children(AST_ENTRYPOINT) = ""
 end sub
 
 function ast_add_constant(token, content$, force_type)

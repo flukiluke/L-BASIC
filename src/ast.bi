@@ -33,14 +33,15 @@ const AST_FALSE = 1
 const AST_TRUE = 2
 const AST_ONE = 3
 
-'This is an AST_PROCEDURE added by ast_init.
-dim shared AST_MAIN_PROCEDURE
+'This is an AST_BLOCK that is the main program.
+dim shared AST_ENTRYPOINT
 
 'The types of node.
 'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, any of the lvalue types or NONE (if allowed).
 
-'Every SUB and FUNCTION is rooted in an AST_PROCEDURE (including the main program).
+'Every SUB and FUNCTION is rooted in an AST_PROCEDURE.
 'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to right.
+'Note: the main program is not an AST_PROCEDURE, it is just an AST_BLOCK. See ast_init.
 const AST_PROCEDURE = 1
 'group of statements
 const AST_BLOCK = 2
@@ -76,11 +77,11 @@ const AST_EXIT = 16
 
 'These nodes may appear where-ever an lvalue is required
 'ref is reference to symtab
-const AST_VAR = 16
+const AST_VAR = 17
 'Access to a UDT element. First child is the lvalue we're accessing an element of, ref is the UDT element symbol.
-const AST_UDT_ACCESS = 17
+const AST_UDT_ACCESS = 18
 'Access to an array element. First child is the lvalue to be indexed. Second child is expression for the index in leftmost dimension, then so on for other dimensions.
-const AST_ARRAY_ACCESS = 18
+const AST_ARRAY_ACCESS = 19
 
 'Emitted by DIM/REDIM statements. first child is lvalue to be resized, then each pair of children after are expr for the lower and upper bound of each dimension.
-const AST_ARRAY_RESIZE = 19
+const AST_ARRAY_RESIZE = 20

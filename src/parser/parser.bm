@@ -87,8 +87,9 @@ function ps_block
             ps_consume TOK_NEWLINE
         loop
         stmt = ps_stmt
+        ' -2 -> SUB or FUNCTION definition, continue processing input
         if stmt = -1 then exit do 'use -1 to signal the end of a block
-        if stmt then ast_attach root, stmt '0 means that statement did not generate any ast nodes
+        if stmt > 0 then ast_attach root, stmt '0 means that statement did not generate any ast nodes
     loop
     ps_block = root
     debuginfo "End block"

@@ -4,10 +4,12 @@
 
 'Expects: TOK_FUNCTION or TOK_SUB
 'Results: NEWLINE
-'Returns -1 always. This is so the first function after the main program causes the
-'main block to end.
+'Return -2, which is handled particularly by ps_block, ps_stmt and interactive_mode
 function ps_userfunc
     debuginfo "Start userfunc"
+    if ps_final_nested then
+        ps_error "SUB and FUNCTION must appear at top level"
+    end if
     root = ast_add_node(AST_PROCEDURE)
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     
@@ -40,7 +42,7 @@ function ps_userfunc
     ps_scope$ = ""
     ps_remove_nested_structure
 
-    ps_userfunc = -1
+    ps_userfunc = -2
     debuginfo "Completed userfunc"
 end function
 
