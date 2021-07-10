@@ -258,7 +258,7 @@ sub compile_mode
     close #input_file_handle
     open options.outputfile for output as #1
     Error_context = 3
-    dump_program AST_ENTRYPOINT
+    dump_program
     Error_context = 0
     close #1
 end sub

@@ -2,7 +2,7 @@
 'SPDX-License-Identifier: Apache-2.0
 'dump.bm - Produce human readable representation of parsed program
 
-sub dump_program(root)
+sub dump_program
     print #1, "Table of identifiers:"
     symtab_dump
     print #1,
@@ -13,7 +13,11 @@ sub dump_program(root)
     ast_dump_constants
     print #1,
     print #1, "Program:"
-    ast_dump_pretty root, 0
+    ast_dump_pretty AST_ENTRYPOINT, 0
+    'Search the symtab for subprocedures
+    for i = 1 to symtab_last_entry
+        if symtab(i).typ = SYM_FUNCTION and symtab(i).v2 = SYM_FUNCTION_USER then dump_procedure i
+    next i
 end sub
 
 sub type_dump_functions
@@ -37,6 +41,25 @@ sub symtab_dump
     next i
 end sub
 
+sub dump_procedure(sym)
+    return_type = type_sig_return(symtab(sym).v1)
+    if return_type = TYPE_NONE then is_sub = TRUE
+    print #1,
+    if is_sub then
+        print #1, "SUB "; symtab(sym).identifier; " (";
+    else
+        print #1, "FUNCTION "; symtab(sym).identifier; " AS "; type_human_readable$(return_type); " (";
+    end if
+    root = symtab(sym).v3
+    for i = 2 to ast_num_children(root) - 1
+        ast_dump_pretty ast_get_child(root, i), 0
+        if i < ast_num_children(root) - 1 then print #1, ", ";
+    next i
+    print #1, ")"
+    ast_dump_pretty ast_get_child(root, 1), 1
+    if is_sub then print #1, "END SUB" else print #1, "END FUNCTION"
+end sub
+
 sub ast_dump_pretty(root, indent_level)
     indent$ = space$(indent_level * 4)
     if ast_nodes(root).typ = 0 then
@@ -44,14 +67,7 @@ sub ast_dump_pretty(root, indent_level)
     end if
     select case ast_nodes(root).typ
     case AST_PROCEDURE
-        print #1, "PROCEDURE (";
-        for i = 2 to ast_num_children(root) - 1
-            ast_dump_pretty ast_get_child(root, i), 0
-            if i < ast_num_children(root) - 1 then print #1, ", ";
-        next i
-        print #1, ")"
-        ast_dump_pretty ast_get_child(root, 1), indent_level
-        print #1, "END PROCEDURE"
+        print "Invalid nested procedure"
     case AST_ASSIGN
         ast_dump_pretty ast_get_child(root, 1), 0
         print #1, " = ";
