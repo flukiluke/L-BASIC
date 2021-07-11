@@ -85,3 +85,5 @@ const AST_ARRAY_ACCESS = 19
 
 'Emitted by DIM/REDIM statements. first child is lvalue to be resized, then each pair of children after are expr for the lower and upper bound of each dimension.
 const AST_ARRAY_RESIZE = 20
+'Sets the return value of the current function. first child is expr to return.
+const AST_SET_RETURN = 21

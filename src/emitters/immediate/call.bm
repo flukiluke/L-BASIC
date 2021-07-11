@@ -42,6 +42,12 @@ end sub
 sub imm_do_call_userfunc(node, result as imm_value_t)
     proc_id = ast_nodes(node).ref
     num_locals = symtab(proc_id).v4
+    'If we're expected to return a value, allocate an extra stack slot
+    'after the formal arguments to hold that value.
+    if type_sig_return(ast_nodes(node).ref2) <> 0 then
+        has_return_value = TRUE
+        num_locals = num_locals + 1
+    end if
     'Create new stack frame
     debuginfo "New stack frame at" + str$(imm_stack_last + 1)
     debuginfo "Allocate"  + str$(num_locals) + " slots"
@@ -49,6 +55,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     old_stack_base = imm_stack_base
     imm_reinit imm_stack_last + num_locals
     'Evaluate and store arguments, left to right
+    'TODO: Proper value passing semantics
     dim arg as imm_value_t
     for i = 1 to ast_num_children(node)
         imm_eval ast_get_child(node, i), arg
@@ -58,7 +65,9 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     imm_stack_base = old_stack_last
     imm_eval ast_get_child(symtab(proc_id).v3, 1), result
     'TODO: Free heap allocations
-    debuginfo ""
+    'Collect return value if relevant
+    if has_return_value then imm_get_at_addr imm_stack_last, result
+    'Restore previous stack frame
     imm_stack_last = imm_stack_base
     imm_stack_base = old_stack_base
 end sub

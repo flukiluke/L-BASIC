@@ -115,12 +115,15 @@ end function
 'Results: token after last argument
 function ps_stmtreg
     debuginfo "Start stmtreg"
-    root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = tok_token
-
-    tok_advance
-    ps_funcargs root
-
+    'Is this in fact assigning the return value of a function?
+    root = ps_func_return
+    if root = 0 then
+        'Nope, it's just a statement
+        root = ast_add_node(AST_CALL)
+        ast_nodes(root).ref = tok_token
+        tok_advance
+        ps_funcargs root
+    end if
     ps_stmtreg = root
     debuginfo "Completed stmtreg"
 end function

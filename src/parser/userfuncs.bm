@@ -85,3 +85,31 @@ sub ps_add_formal_args(root, sig_index)
     loop while ps_consumed(TOK_COMMA)
     debuginfo "Completed formal args"
 end sub
+
+'Expects: function name token
+'Result: NEWLINE if valid return assignment, unchanged otherwise
+'Returns node if this is a function return value assignment, 0 otherwise
+function ps_func_return
+    debuginfo "Start func return"
+    'Are we in a procedure with a matching name?
+    u$ = ucase$(tok_content$)
+    if u$ <> ps_scope_identifier$ then exit function
+    proc_id = symtab_get_id(u$)
+    'Is this actually a function, not a sub?
+    return_type = type_sig_return(symtab(proc_id).v1)
+    if return_type = 0 then exit function
+    'Ensure any type sigils match
+    sigil = ps_opt_sigil
+    if sigil <> 0 and return_type <> sigil then ps_error "Function return type not consistent"
+    'Ok, definitely setting the return value
+    tok_advance
+    ps_consume TOK_EQUALS
+    root = ast_add_node(AST_SET_RETURN)
+    expr = ps_expr
+    expr_type = type_of_expr(expr)
+    if not type_can_cast(expr_type, return_type) then ps_error "Function return type does not match that of expression"
+    expr = ast_add_cast(expr, return_type)
+    ast_attach root, expr
+    ps_func_return = root
+    debuginfo "Completed func return"
+end function
