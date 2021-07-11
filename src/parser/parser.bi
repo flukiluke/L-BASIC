@@ -5,8 +5,9 @@
 '$include: 'tokeng.bi'
 '$include: 'token_registrations.bm'
 
-'Next available slot for variables, used by immediate mode to know how many
-'data slots to allocate. Eventually this will need to be per-scope.
+'Next available slot for variables, used to know how many data slots to allocate.
+'This applies to the current scope - the parser for subs/functions will save and
+'restore this value so it is preserved for the main program.
 dim shared ps_next_var_index as long
 ps_next_var_index = 1
 
@@ -29,5 +30,5 @@ dim shared ps_unresolved_jumps$
 'parsing EXIT statements.
 dim shared ps_nested_structures$
 
-'Name of the containing function, used as a prefix for local objects.
-dim shared ps_scope$
+'Name of the containing function, used as part of a prefix for local objects.
+dim shared ps_scope_identifier$

@@ -32,6 +32,7 @@ const SYM_VARIABLE = 4
 'v1 -> reference to the type signature
 'v2 -> One of SYM_FUNCTION_*, see below
 'v3 -> If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
+'v4 -> IF SYM_FUNCTION_USER, the number of local variables in this function including arguments
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
 'v1 -> AST node that is labelled.

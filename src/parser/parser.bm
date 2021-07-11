@@ -72,6 +72,11 @@ sub ps_remove_nested_structure
     ps_nested_structures$ = left$(ps_nested_structures$, len(ps_nested_structures$) - 4)
 end sub
 
+function ps_scope$
+    'TODO: Think about how to handle globals (just use no @ at all?)
+    ps_scope$ = ps_scope_identifier$ + "@"
+end function
+
 sub ps_error(msg$)
     Error_message$ = msg$
     error 101

@@ -29,7 +29,11 @@ sub tok_advance
     'Also avoid ever doing lookups in recovery mode, because results are likely
     'garbage.
     if tok_next_token = 0 and not tokeng_state.recovery_mode then
-        id = symtab_get_id(ucase$(tok_next_content$))
+        'First check local scope
+        id = symtab_get_id(ucase$(ps_scope$ + tok_next_content$))
+        'Then check global scope
+        if id = 0 then id = symtab_get_id(ucase$(tok_next_content$))
+        'Did we find anything?
         if id = 0 then
             tok_token = TOK_UNKNOWN
         else

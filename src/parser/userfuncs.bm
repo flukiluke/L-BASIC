@@ -20,7 +20,10 @@ function ps_userfunc
 
     root = ast_add_node(AST_PROCEDURE)
     ps_add_nested_structure root
-    ps_scope$ = sym.identifier
+    ps_scope_identifier$ = sym.identifier
+    'Save this value so we can restore it later
+    saved_var_index = ps_next_var_index
+    ps_next_var_index = 1
 
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
     if return_type = 0 then return_type = ps_default_type
@@ -32,6 +35,7 @@ function ps_userfunc
     sym.v2 = SYM_FUNCTION_USER
     sym.v3 = root
     symtab_add_entry sym
+    proc_id = symtab_last_entry
 
     'TODO: STATIC and other modifiers
 
@@ -39,8 +43,10 @@ function ps_userfunc
     ast_pre_attach root, ps_block
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
+    symtab(proc_id).v4 = ps_next_var_index - 1
+    ps_next_var_index = saved_var_index
 
-    ps_scope$ = ""
+    ps_scope_identifier$ = ""
     ps_remove_nested_structure
 
     ps_userfunc = -2
