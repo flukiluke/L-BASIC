@@ -73,7 +73,7 @@ sub ps_remove_nested_structure
 end sub
 
 function ps_scope$
-    'TODO: Think about how to handle globals (just use no @ at all?)
+    'Note: global symbols (functions, SHARED vars) have no @ at all
     ps_scope$ = ps_scope_identifier$ + "@"
 end function
 

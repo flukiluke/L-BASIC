@@ -3,6 +3,14 @@
 'call.bm - Executor for CALLs
 
 sub imm_do_call(node, result as imm_value_t)
+    if symtab(ast_nodes(node).ref).v2 = SYM_FUNCTION_USER then
+        imm_do_call_userfunc node, result
+    else
+        imm_do_call_internal node, result
+    end if
+end sub
+
+sub imm_do_call_internal(node, result as imm_value_t)
     dim v1 as imm_value_t
     dim v2 as imm_value_t
     dim v3 as imm_value_t
@@ -29,4 +37,29 @@ sub imm_do_call(node, result as imm_value_t)
         imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
     end select
     imm_enforce_type result, type_of_call(node)
+end sub
+
+sub imm_do_call_userfunc(node, result as imm_value_t)
+    proc_id = ast_nodes(node).ref
+    num_locals = symtab(proc_id).v4
+    'Create new stack frame
+    debuginfo "New stack frame at" + str$(imm_stack_last + 1)
+    debuginfo "Allocate"  + str$(num_locals) + " slots"
+    old_stack_last = imm_stack_last
+    old_stack_base = imm_stack_base
+    imm_reinit imm_stack_last + num_locals
+    'Evaluate and store arguments, left to right
+    'TODO: Proper value passing semantics
+    dim arg as imm_value_t
+    for i = 1 to ast_num_children(node)
+        imm_eval ast_get_child(node, i), arg
+        imm_set_at_addr old_stack_last + i, arg
+    next i
+    'Set frame pointer appropriately
+    imm_stack_base = old_stack_last
+    imm_eval ast_get_child(symtab(proc_id).v3, 1), result
+    'TODO: Free heap allocations
+    debuginfo ""
+    imm_stack_last = imm_stack_base
+    imm_stack_base = old_stack_base
 end sub

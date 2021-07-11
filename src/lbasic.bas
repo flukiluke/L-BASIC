@@ -174,6 +174,7 @@ end function
 sub interactive_mode(recovery)
     if recovery then
         ps_nested_structures$ = ""
+        ps_scope_identifier$ = ""
         tok_recover TOK_NEWLINE
         symtab_commit
         ast_rollback
@@ -211,7 +212,7 @@ sub interactive_mode(recovery)
                 Error_context = 0
                 print #1,
             end if
-            imm_reinit
+            imm_reinit ps_next_var_index - 1
             Error_context = 2
             imm_run AST_ENTRYPOINT
             'Keep any symbols that were defined
