@@ -49,7 +49,6 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     old_stack_base = imm_stack_base
     imm_reinit imm_stack_last + num_locals
     'Evaluate and store arguments, left to right
-    'TODO: Proper value passing semantics
     dim arg as imm_value_t
     for i = 1 to ast_num_children(node)
         imm_eval ast_get_child(node, i), arg

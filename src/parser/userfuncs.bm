@@ -57,6 +57,7 @@ end function
 'Result: CPAREN
 'Adds formal args to root node, adds args to sig index.
 sub ps_add_formal_args(root, sig_index)
+    debuginfo "Start formal args"
     do
         flags = 0
         do
@@ -82,4 +83,5 @@ sub ps_add_formal_args(root, sig_index)
         ast_attach root, var
         type_add_sig_arg sig_index, type_of_var(var), flags
     loop while ps_consumed(TOK_COMMA)
+    debuginfo "Completed formal args"
 end sub

@@ -224,7 +224,8 @@ function beep           none
 generic binary
 # bload
 # bsave
-# byval
+generic byref
+generic byval
 
 # call
 # calls
@@ -355,7 +356,7 @@ function mid            string    string,integer64,integer64?
 # off
 # on com|error|key|pen|play|strig|timer|uevent|gosub
 function open           none      string,flags,%long,long?
-# option
+generic option
 # out
 generic output
 
