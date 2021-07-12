@@ -356,7 +356,7 @@ function mid            string    string,integer64,integer64?
 # off
 # on com|error|key|pen|play|strig|timer|uevent|gosub
 function open           none      string,flags,%long,long?
-generic option
+function option         long      @any
 # out
 generic output
 

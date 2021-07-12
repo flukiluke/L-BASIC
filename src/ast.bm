@@ -79,7 +79,9 @@ function ast_add_node(typ)
 end function
 
 function ast_add_cast(expr, vartyp)
-    if vartyp = type_of_expr(expr) then
+    if vartyp = type_of_expr(expr) or vartyp = TYPE_ANY then
+        'Don't cast to TYPE_ANY because that's just a shorthand
+        'for a function that can handle any type.
         ast_add_cast = expr
         exit function
     end if

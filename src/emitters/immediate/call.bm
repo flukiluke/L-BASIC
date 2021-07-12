@@ -52,15 +52,13 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
 
     'Evaluate and store arguments, left to right
     dim arg as imm_value_t
-    for i = 1 to ast_num_children(proc_node) - 1
-        'Iterate over all arguments the callee is expecting.
-        'Optional arguments mean not all might be supplied.
-        if i > ast_num_children(node) then
+    for i = 1 to ast_num_children(node)
+        arg_node = ast_get_child(node, i)
+        if ast_nodes(arg_node).typ = AST_NONE then
             'Not supplied optional argument, pass a null pointer
             imm_set_at_addr_n old_stack_last + i, 0
         elseif symtab(ast_nodes(ast_get_child(proc_node, i + 1)).ref).v4 then
             'Callee needs a reference. Can we just provide a pointer to a passed variable?
-            arg_node = ast_get_child(node, i)
             if ast_is_lvalue(arg_node) then
                 'Yes, passed argument is an lvalue so we can get a reference to it
                 imm_set_at_addr_n old_stack_last + i, imm_get_addr(arg_node)
