@@ -196,6 +196,9 @@ sub ast_dump_pretty(root, indent_level)
         end select
     case AST_NONE
         print #1, "[NONE]";
+    case AST_SET_RETURN
+        print #1, "return ";
+        ast_dump_pretty ast_get_child(root, 1), 0
     case else
         print "Unknown AST type"; ast_nodes(root).typ
     end select
