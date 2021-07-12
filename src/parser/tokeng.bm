@@ -6,6 +6,7 @@ deflng a-z
 
 sub tok_init
     'Read in the state machine
+    restore tokeng_data
     for s = 1 to ubound(t_states~%, 2)
         read t_statenames$(s)
         for b = 1 to 127
@@ -21,6 +22,9 @@ sub tok_init
     'Fill the 'next' buffer and propagate to tok_token
     tok_read_next_token
     tok_advance
+
+    tokeng_data:
+    '$include: 'ts_data.bm'
 end sub
 
 sub tok_advance
@@ -172,4 +176,3 @@ function tok_human_readable$(token)
     end if
 end function
 
-'$include: 'ts_data.bm'

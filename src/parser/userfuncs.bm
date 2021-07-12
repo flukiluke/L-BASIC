@@ -12,7 +12,13 @@ function ps_userfunc
     end if
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     
-    if tok_token <> TOK_UNKNOWN then ps_error "Name already in use"
+    if ps_is_preload and tok_token <> TOK_UNKNOwN then
+        if symtab(tok_token).typ <> SYM_FUNCTION then ps_error "Can only override functions"
+        override_sym = tok_token
+    elseif tok_token <> TOK_UNKNOWN then
+        ps_error "Name already in use"
+    end if
+
     dim sym as symtab_entry_t
     sym.identifier = ucase$(tok_content$)
     sym.typ = SYM_FUNCTION
@@ -32,10 +38,19 @@ function ps_userfunc
         ps_add_formal_args root, sym.v1
         ps_consume TOK_CPAREN
     end if
-    sym.v2 = SYM_FUNCTION_USER
-    sym.v3 = root
-    symtab_add_entry sym
-    proc_id = symtab_last_entry
+
+    if override_sym then
+        'Overriding existing function
+        'TODO: Be more smart about the type signature
+        symtab(override_sym).v2 = SYM_FUNCTION_USER
+        symtab(override_sym).v3 = root
+        proc_id = override_sym
+    else
+        sym.v2 = SYM_FUNCTION_USER
+        sym.v3 = root
+        symtab_add_entry sym
+        proc_id = symtab_last_entry
+    end if
 
     'TODO: STATIC and other modifiers
 

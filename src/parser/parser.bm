@@ -115,6 +115,7 @@ end function
 '$include: 'metacommands.bm'
 '$include: 'open.bm'
 '$include: 'pratt.bm'
+'$include: 'preload.bm'
 '$include: 'print.bm'
 '$include: 'statement.bm'
 '$include: 'tokeng.bm'

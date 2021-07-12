@@ -49,9 +49,11 @@ dim shared Error_message$
 '$include: 'emitters/immediate/immediate.bi'
 
 dim shared input_file_handle
+dim shared logging_file_handle
 
 type options_t
     mainarg as string
+    preload as string
     outputfile as string
     run_mode as integer
     interactive_mode as integer
@@ -78,6 +80,12 @@ if not options.terminal_mode then
     _dest 0
 end if
 
+logging_file_handle = freefile
+open "SCRN:" for output as #logging_file_handle
+ast_init
+if options.preload <> "" then preload_file
+
+Error_context = 1
 if options.interactive_mode then
     interactive_mode FALSE
 elseif options.command_mode then
@@ -102,11 +110,12 @@ error_handler:
     case 1 'Parsing code
         print "Parser: ";
         if err <> 101 then goto internal_error
-        if options.interactive_mode then
+        if options.interactive_mode and options.preload = "" then
             print Error_message$
             Error_message$ = ""
             resume interactive_recovery
         else
+            if options.preload <> "" then print "In preload file: ";
             print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
         end if
     case 2 'Immediate mode
@@ -142,13 +151,15 @@ sub fatalerror(msg$)
 end sub
 
 sub debuginfo(msg$)
-    if options.debug then print msg$
+    if options.debug then print #logging_file_handle, msg$
 end sub
 
 'This function and the next are called from tokeng.
 'They provide a uniform way of loading the next line.
 function general_next_line$
-    if options.interactive_mode then
+    if options.preload <> "" then
+        line input #input_file_handle, s$
+    elseif options.interactive_mode then
         print "> ";
         line input s$
     elseif options.command_mode then
@@ -161,7 +172,9 @@ function general_next_line$
 end function
 
 function general_eof
-    if options.interactive_mode then
+    if options.preload <> "" then
+        general_eof = eof(input_file_handle)
+    elseif options.interactive_mode then
         'Hopefully one day we'll be able to handle ^D/^Z here
         general_eof = FALSE
     elseif options.command_mode then
@@ -170,6 +183,16 @@ function general_eof
         general_eof = eof(input_file_handle)
     end if
 end function
+
+sub preload_file
+    input_file_handle = freefile
+    open options.preload for input as #input_file_handle
+    tok_init
+    Error_context = 1
+    ps_preload_file
+    close #input_file_handle
+    options.preload = ""
+end sub    
 
 sub interactive_mode(recovery)
     if recovery then
@@ -180,12 +203,9 @@ sub interactive_mode(recovery)
         ast_rollback
         ast_clear_entrypoint
     else
-        open "SCRN:" for output as #1
         imm_init
-        ast_init
         AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
         ast_commit
-        Error_context = 1
         tok_init
     end if
     do
@@ -228,9 +248,6 @@ sub interactive_mode(recovery)
 end sub
 
 sub command_mode
-    open "SCRN:" for output as #1
-    ast_init
-    Error_context = 1
     tok_init
     root = ps_block
     Error_context = 0
@@ -247,17 +264,17 @@ sub command_mode
 end sub
     
 sub compile_mode
-    ast_init
     if options.mainarg = "" then fatalerror "No input file"
     input_file_handle = freefile
     open options.mainarg for input as #input_file_handle
     tok_init
-    Error_context = 1
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
     close #input_file_handle
-    open options.outputfile for output as #1
+    close #logging_file_handle
+    logging_file_handle = freefile
+    open options.outputfile for output as #logging_file_handle
     Error_context = 3
     dump_program
     Error_context = 0
@@ -265,12 +282,10 @@ sub compile_mode
 end sub
 
 sub run_mode
-    ast_init
     if options.mainarg = "" then fatalerror "No input file"
     input_file_handle = freefile
     open options.mainarg for input as #input_file_handle
     tok_init
-    Error_context = 1
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
@@ -305,6 +320,7 @@ sub show_help
     print "  -c FILE, --compile FILE          Compile FILE instead of executing"
     print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
     print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
+    print "  --preload FILE                   Load FILE before parsing main program"
     print "  -d, --debug                      For internal debugging"
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
@@ -337,6 +353,13 @@ sub parse_cmd_line_args()
                 options.terminal_mode = TRUE
             case "-e", "--execute"
                 options.command_mode = TRUE
+            case "--preload"
+                if i = _commandcount then
+                    options.terminal_mode = TRUE
+                    fatalerror arg$ + " requires argument"
+                end if
+                options.preload = command$(i + 1)
+                i = i + 1
             case else
                 if left$(arg$, 1) = "-" then
                     options.terminal_mode = TRUE
