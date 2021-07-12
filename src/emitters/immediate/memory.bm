@@ -17,8 +17,12 @@ function imm_get_addr(node)
         'Always a stack address. Even arrays, because a reference to the entire array
         'refers to the dimension info block that sits on the stack (unless it's an
         'array in a UDT in an array, but that wouldn't be an AST_VAR).
-        imm_get_addr = imm_stack_base + symtab(ast_nodes(node).ref).v2
+        addr = imm_stack_base + symtab(ast_nodes(node).ref).v2
+        'Dereference if needed
+        if symtab(ast_nodes(node).ref).v4 then addr = imm_get_at_addr_n(addr)
+        imm_get_addr = addr
     case AST_UDT_ACCESS
+        'TODO: Is a dereference check needed here?
         base_addr = imm_get_addr(ast_get_child(node, 1))
         offset = symtab(ast_nodes(node).ref).v2
         imm_get_addr = imm_add_offset(base_addr, offset)
@@ -48,6 +52,8 @@ function imm_get_addr(node)
         next i
         offset = offset * type_fixed_size(element_type)
         imm_get_addr = imm_add_offset(imm_get_at_addr_n(info_base_addr), offset)
+    case else
+        imm_error "Attempt to take address of something not an lvalue"
     end select
 end function
 

@@ -115,6 +115,13 @@ function ast_is_none(node)
     ast_is_none = ast_nodes(node).typ = AST_NONE
 end function
 
+function ast_is_lvalue(node)
+    select case ast_nodes(node).typ
+    case AST_VAR, AST_ARRAY_ACCESS, AST_UDT_ACCESS
+        ast_is_lvalue = TRUE
+    end select
+end function
+
 function ast_get_child(node, index)
     ast_get_child = cvl(mid$(ast_children(node), len(dummy&) * (index - 1) + 1, len(dummy&)))
 end function

@@ -27,6 +27,7 @@ const SYM_PREFIX = 3
 'v1 -> the data type
 'v2 -> index in this scope (in each scope, first variable has 1, second has 2 etc.)
 'v3 -> constant (cannot be reassigned)
+'v4 -> TRUE if variable needs to be dereferenced before access (to support pass-by-reference)
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature

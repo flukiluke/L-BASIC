@@ -79,7 +79,15 @@ sub ps_add_formal_args(root, sig_index)
             end select
         loop
         if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
+        'Our calling convention can't handle optional byval arguments
+        if ((flags AND TYPE_BYVAL) <> 0) and ((flags AND TYPE_OPTIONAL) <> 0) then
+            ps_error "Optional arguments cannot be BYVAL"
+        end if
         var = ps_simple_variable
+        if (flags AND TYPE_BYVAL) = 0 then
+            'Default to making the argument pass-by-reference
+            symtab(ast_nodes(var).ref).v4 = TRUE
+        end if
         ast_attach root, var
         type_add_sig_arg sig_index, type_of_var(var), flags
     loop while ps_consumed(TOK_COMMA)

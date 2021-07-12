@@ -41,28 +41,54 @@ end sub
 
 sub imm_do_call_userfunc(node, result as imm_value_t)
     proc_id = ast_nodes(node).ref
+    proc_node = symtab(proc_id).v3
     num_locals = symtab(proc_id).v4
-    'If we're expected to return a value, allocate an extra stack slot
-    'after the formal arguments to hold that value.
-    if type_sig_return(ast_nodes(node).ref2) <> 0 then
-        has_return_value = TRUE
-        num_locals = num_locals + 1
-    end if
     'Create new stack frame
     debuginfo "New stack frame at" + str$(imm_stack_last + 1)
     debuginfo "Allocate"  + str$(num_locals) + " slots"
     old_stack_last = imm_stack_last
     old_stack_base = imm_stack_base
     imm_reinit imm_stack_last + num_locals
+
     'Evaluate and store arguments, left to right
-    'TODO: Proper value passing semantics
     dim arg as imm_value_t
-    for i = 1 to ast_num_children(node)
-        imm_eval ast_get_child(node, i), arg
-        imm_set_at_addr old_stack_last + i, arg
+    for i = 1 to ast_num_children(proc_node) - 1
+        'Iterate over all arguments the callee is expecting.
+        'Optional arguments mean not all might be supplied.
+        if i > ast_num_children(node) then
+            'Not supplied optional argument, pass a null pointer
+            imm_set_at_addr_n old_stack_last + i, 0
+        elseif symtab(ast_nodes(ast_get_child(proc_node, i + 1)).ref).v4 then
+            'Callee needs a reference. Can we just provide a pointer to a passed variable?
+            arg_node = ast_get_child(node, i)
+            if ast_is_lvalue(arg_node) then
+                'Yes, passed argument is an lvalue so we can get a reference to it
+                imm_set_at_addr_n old_stack_last + i, imm_get_addr(arg_node)
+            else
+                'No, we need to make a shadow copy and pass a reference to that.
+                'The shadow copy will also be on the stack.
+                imm_reinit imm_stack_last + 1
+                imm_eval arg_node, arg
+                imm_set_at_addr imm_stack_last, arg
+                imm_set_at_addr_n old_stack_last + i, imm_stack_last
+            end if
+        else
+            'Force pass-by-value
+            arg_node = ast_get_child(node, i)
+            imm_eval arg_node, arg
+            imm_set_at_addr old_stack_last + i, arg
+        end if
     next i
-    'Set frame pointer appropriately
+    'If we're expected to return a value, allocate an extra stack slot
+    'after the formal arguments and shadow copies to hold that value
+    if type_sig_return(ast_nodes(node).ref2) <> 0 then
+        has_return_value = TRUE
+        imm_reinit imm_stack_last + 1
+    end if
+    'Set frame pointer appropriately (delayed to here so argument evaluation
+    'occurs in the caller's stack frame)
     imm_stack_base = old_stack_last
+    'Do the call!
     imm_eval ast_get_child(symtab(proc_id).v3, 1), result
     'TODO: Free heap allocations
     'Collect return value if relevant
