@@ -6,6 +6,7 @@ RUN apt-get update && \
     useradd -m lbasic
 
 COPY lbasic /usr/local/bin/lbasic
+COPY stubs /usr/local/share/lbasic/stubs
 WORKDIR /home/lbasic
 USER lbasic
-ENTRYPOINT ["/usr/local/bin/lbasic", "-t"]
+ENTRYPOINT ["/usr/local/bin/lbasic", "-t", "--preload", "/usr/local/share/lbasic/stubs/console-only.bas"]
