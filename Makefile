@@ -40,6 +40,12 @@ $(OUTPUT_BINARY): $(SRC_DIR)/lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find 
 $(MERGED_SOURCE): $(OUTPUT_BINARY) $(TOOLS_DIR)/incmerge.tool
 	$(TOOLS_DIR)/incmerge.tool $(SRC_DIR)/lbasic.bas $(MERGED_SOURCE)
 
+DOCKER_TAG?=lbasic
+.PHONY: docker
+docker: $(MERGED_SOURCE)
+	#if ! grep --silent 'console:only' $(SRC_DIR)/buildinfo.bi; then echo '$$console:only' >> $(SRC_DIR)/buildinfo.bi; fi
+	docker build -t $(DOCKER_TAG) .
+
 .PHONY: clean
 clean:
 	rm -r $(TS_FILES) $(TOKEN_FILES) $(TOOLS_DIR)/*.tool $(OUTPUT_BINARY) $(MERGED_SOURCE) 2> /dev/null || true
