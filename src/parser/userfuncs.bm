@@ -1,0 +1,138 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'userfuncs.bm - Parse rules for SUB and FUNCTION definitions
+
+'Expects: TOK_FUNCTION or TOK_SUB
+'Results: NEWLINE
+'Return -2, which is handled particularly by ps_block, ps_stmt and interactive_mode
+function ps_userfunc
+    debuginfo "Start userfunc"
+    if ps_final_nested then
+        ps_error "SUB and FUNCTION must appear at top level"
+    end if
+    if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
+    
+    if ps_is_preload and tok_token <> TOK_UNKNOwN then
+        if symtab(tok_token).typ <> SYM_FUNCTION then ps_error "Can only override functions"
+        override_sym = tok_token
+    elseif tok_token <> TOK_UNKNOWN then
+        ps_error "Name already in use"
+    end if
+
+    dim sym as symtab_entry_t
+    sym.identifier = ucase$(tok_content$)
+    sym.typ = SYM_FUNCTION
+    tok_advance
+
+    root = ast_add_node(AST_PROCEDURE)
+    ps_add_nested_structure root
+    ps_scope_identifier$ = sym.identifier
+    'Save this value so we can restore it later
+    saved_var_index = ps_next_var_index
+    ps_next_var_index = 1
+
+    if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
+    if return_type = 0 then return_type = ps_default_type
+    sym.v1 = type_add_sig(0, type_sig_create$(return_type)) 
+    if ps_consumed(TOK_OPAREN) then
+        ps_add_formal_args root, sym.v1
+        ps_consume TOK_CPAREN
+    end if
+
+    if override_sym then
+        'Overriding existing function
+        'TODO: Be more smart about the type signature
+        symtab(override_sym).v2 = SYM_FUNCTION_USER
+        symtab(override_sym).v3 = root
+        proc_id = override_sym
+    else
+        sym.v2 = SYM_FUNCTION_USER
+        sym.v3 = root
+        symtab_add_entry sym
+        proc_id = symtab_last_entry
+    end if
+
+    'TODO: STATIC and other modifiers
+
+    ps_consume TOK_NEWLINE
+    ast_pre_attach root, ps_block
+    ps_consume TOK_END
+    if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
+    symtab(proc_id).v4 = ps_next_var_index - 1
+    ps_next_var_index = saved_var_index
+
+    ps_scope_identifier$ = ""
+    ps_remove_nested_structure
+
+    ps_userfunc = -2
+    debuginfo "Completed userfunc"
+end function
+
+'Expects: token after OPAREN
+'Result: CPAREN
+'Adds formal args to root node, adds args to sig index.
+sub ps_add_formal_args(root, sig_index)
+    debuginfo "Start formal args"
+    do
+        flags = 0
+        do
+            select case tok_token
+            case TOK_BYREF
+                if flags and TYPE_BYREF then ps_error "Duplicate modifier"
+                flags = flags OR TYPE_BYREF
+                tok_advance
+            case TOK_BYVAL
+                if flags and TYPE_BYVAL then ps_error "Duplicate modifier"
+                flags = flags OR TYPE_BYVAL
+                tok_advance
+            case TOK_OPTION
+                if flags and TYPE_OPTIONAL then ps_error "Duplicate modifier"
+                flags = flags OR TYPE_OPTIONAL
+                tok_advance
+            case else
+                exit do
+            end select
+        loop
+        if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
+        'Our calling convention can't handle optional byval arguments
+        if ((flags AND TYPE_BYVAL) <> 0) and ((flags AND TYPE_OPTIONAL) <> 0) then
+            ps_error "Optional arguments cannot be BYVAL"
+        end if
+        var = ps_simple_variable
+        if (flags AND TYPE_BYVAL) = 0 then
+            'Default to making the argument pass-by-reference
+            symtab(ast_nodes(var).ref).v4 = TRUE
+        end if
+        ast_attach root, var
+        type_add_sig_arg sig_index, type_of_var(var), flags
+    loop while ps_consumed(TOK_COMMA)
+    debuginfo "Completed formal args"
+end sub
+
+'Expects: function name token
+'Result: NEWLINE if valid return assignment, unchanged otherwise
+'Returns node if this is a function return value assignment, 0 otherwise
+function ps_func_return
+    debuginfo "Start func return"
+    'Are we in a procedure with a matching name?
+    u$ = ucase$(tok_content$)
+    if u$ <> ps_scope_identifier$ then exit function
+    proc_id = symtab_get_id(u$)
+    'Is this actually a function, not a sub?
+    return_type = type_sig_return(symtab(proc_id).v1)
+    if return_type = 0 then exit function
+    'Ensure any type sigils match
+    sigil = ps_opt_sigil
+    if sigil <> 0 and return_type <> sigil then ps_error "Function return type not consistent"
+    'Ok, definitely setting the return value
+    tok_advance
+    ps_consume TOK_EQUALS
+    root = ast_add_node(AST_SET_RETURN)
+    expr = ps_expr
+    expr_type = type_of_expr(expr)
+    if not type_can_cast(expr_type, return_type) then ps_error "Function return type does not match that of expression"
+    expr = ast_add_cast(expr, return_type)
+    ast_attach root, expr
+    ps_func_return = root
+    debuginfo "Completed func return"
+end function

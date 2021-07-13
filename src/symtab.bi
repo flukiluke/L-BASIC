@@ -27,9 +27,13 @@ const SYM_PREFIX = 3
 'v1 -> the data type
 'v2 -> index in this scope (in each scope, first variable has 1, second has 2 etc.)
 'v3 -> constant (cannot be reassigned)
+'v4 -> TRUE if variable needs to be dereferenced before access (to support pass-by-reference)
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature
+'v2 -> One of SYM_FUNCTION_*, see below
+'v3 -> If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
+'v4 -> IF SYM_FUNCTION_USER, the number of local variables in this function including arguments
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
 'v1 -> AST node that is labelled.
@@ -56,10 +60,18 @@ const SYM_TYPE_UDT = 1
 'Stored as the element type followed by parentheses and the number of dimensions, e.g. INTEGER(2)
 const SYM_TYPE_ARRAY = 2
 
+'Further categorisation of SYM_FUNCTION
+'Functions that are handled directly based on their name
+const SYM_FUNCTION_INTRINSIC = 1
+'SUBs and FUNCTIONs defined by the processed source code
+const SYM_FUNCTION_USER = 2
+
 dim shared symtab(1000) as symtab_entry_t
 dim shared symtab_last_entry
 dim shared symtab_map(1750)
 
 'The symtab optionally supports transactions; calling symtab_rollback will
 'remove all items added since the last call to symtab_commit.
+'WARNING: transaction rollbacks only undo adding entries. Changes to entries
+'are always immediately permanent.
 dim shared symtab_last_commit_id

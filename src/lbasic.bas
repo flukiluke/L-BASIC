@@ -14,6 +14,10 @@
 '
 'lbasic.bas - Main file for L-BASIC Compiler
 
+$if VERSION < 1.5 then
+    $error QB64 V1.5 or greater required
+$end if
+
 '$dynamic
 $console
 $screenhide
@@ -45,9 +49,11 @@ dim shared Error_message$
 '$include: 'emitters/immediate/immediate.bi'
 
 dim shared input_file_handle
+dim shared logging_file_handle
 
 type options_t
     mainarg as string
+    preload as string
     outputfile as string
     run_mode as integer
     interactive_mode as integer
@@ -74,6 +80,12 @@ if not options.terminal_mode then
     _dest 0
 end if
 
+logging_file_handle = freefile
+open "SCRN:" for output as #logging_file_handle
+ast_init
+if options.preload <> "" then preload_file
+
+Error_context = 1
 if options.interactive_mode then
     interactive_mode FALSE
 elseif options.command_mode then
@@ -98,18 +110,19 @@ error_handler:
     case 1 'Parsing code
         print "Parser: ";
         if err <> 101 then goto internal_error
-        if options.interactive_mode then
+        if options.interactive_mode and options.preload = "" then
             print Error_message$
             Error_message$ = ""
             resume interactive_recovery
         else
+            if options.preload <> "" then print "In preload file: ";
             print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
         end if
     case 2 'Immediate mode
         'We have no good way of distinguishing between user program errors and internal errors
         'Of course, the internal code is perfect so it *must* be a user program error
         print "Runtime error: ";
-        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
         resume interactive_recovery
     case 3 'Dump mode
@@ -118,7 +131,7 @@ error_handler:
         print Error_message$
     case 4 'Run mode
         print "Runtime error: ";
-        if err = 101 then print Error_message$; else print lookup_builtin_error$(err);
+        if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
     case else
         internal_error:
@@ -138,13 +151,15 @@ sub fatalerror(msg$)
 end sub
 
 sub debuginfo(msg$)
-    if options.debug then print msg$
+    if options.debug then print #logging_file_handle, msg$
 end sub
 
 'This function and the next are called from tokeng.
 'They provide a uniform way of loading the next line.
 function general_next_line$
-    if options.interactive_mode then
+    if options.preload <> "" then
+        line input #input_file_handle, s$
+    elseif options.interactive_mode then
         print "> ";
         line input s$
     elseif options.command_mode then
@@ -157,7 +172,9 @@ function general_next_line$
 end function
 
 function general_eof
-    if options.interactive_mode then
+    if options.preload <> "" then
+        general_eof = eof(input_file_handle)
+    elseif options.interactive_mode then
         'Hopefully one day we'll be able to handle ^D/^Z here
         general_eof = FALSE
     elseif options.command_mode then
@@ -167,44 +184,70 @@ function general_eof
     end if
 end function
 
+sub preload_file
+    input_file_handle = freefile
+    open options.preload for input as #input_file_handle
+    tok_init
+    Error_context = 1
+    ps_preload_file
+    close #input_file_handle
+    options.preload = ""
+end sub    
+
 sub interactive_mode(recovery)
     if recovery then
-        do until tok_token = TOK_NEWLINE
-            tok_advance
-        loop
+        ps_nested_structures$ = ""
+        ps_scope_identifier$ = ""
+        tok_recover TOK_NEWLINE
+        symtab_commit
+        ast_rollback
+        ast_clear_entrypoint
     else
-        open "SCRN:" for output as #1
         imm_init
-        Error_context = 1
+        AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
+        ast_commit
         tok_init
     end if
     do
-        Error_context = 0
-        ast_init 'Clear the tree each time
         Error_context = 1
         node = ps_stmt
-        'Could return 0 if statement does not generate ast nodes
-        if node then
+        select case node
+        case -2
+            'A SUB or FUNCTION was defined, we want to keep that.
+            symtab_commit
+            ast_commit
+        case -1
+            '-1 is an end block, this should never happen
+            ps_error "Block end at top-level"
+        case 0
+            'No ast nodes were generated (DIM etc.), but save any
+            'symbols created.
+            symtab_commit
+        case else
             Error_context = 0
+            ast_attach AST_ENTRYPOINT, node
             if options.debug then
                 Error_context = 3
-                ast_dump_pretty node, 0
+                ast_dump_pretty AST_ENTRYPOINT, 0
                 Error_context = 0
                 print #1,
             end if
-            imm_reinit
+            imm_reinit ps_next_var_index - 1
             Error_context = 2
-            imm_run node
-        end if
+            imm_run AST_ENTRYPOINT
+            'Keep any symbols that were defined
+            symtab_commit
+            'But don't keep any nodes generated
+            ast_rollback
+            'And clear the main program
+            ast_clear_entrypoint
+        end select
         Error_context = 1
         ps_consume TOK_NEWLINE
     loop
 end sub
 
 sub command_mode
-    open "SCRN:" for output as #1
-    ast_init
-    Error_context = 1
     tok_init
     root = ps_block
     Error_context = 0
@@ -221,36 +264,35 @@ sub command_mode
 end sub
     
 sub compile_mode
-    ast_init
     if options.mainarg = "" then fatalerror "No input file"
     input_file_handle = freefile
     open options.mainarg for input as #input_file_handle
     tok_init
-    Error_context = 1
-    root = ps_block
+    AST_ENTRYPOINT = ps_block
+    ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
     close #input_file_handle
-    open options.outputfile for output as #1
+    close #logging_file_handle
+    logging_file_handle = freefile
+    open options.outputfile for output as #logging_file_handle
     Error_context = 3
-    dump_program root
+    dump_program
     Error_context = 0
     close #1
 end sub
 
 sub run_mode
-    ast_init
     if options.mainarg = "" then fatalerror "No input file"
     input_file_handle = freefile
     open options.mainarg for input as #input_file_handle
     tok_init
-    Error_context = 1
-    root = ps_block
-    ps_finish_labels root
+    AST_ENTRYPOINT = ps_block
+    ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
     close #input_file_handle
     imm_init
     Error_context = 4
-    imm_run root
+    imm_run AST_ENTRYPOINT
     Error_context = 0
 end sub
 
@@ -278,6 +320,7 @@ sub show_help
     print "  -c FILE, --compile FILE          Compile FILE instead of executing"
     print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
     print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
+    print "  --preload FILE                   Load FILE before parsing main program"
     print "  -d, --debug                      For internal debugging"
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
@@ -310,6 +353,13 @@ sub parse_cmd_line_args()
                 options.terminal_mode = TRUE
             case "-e", "--execute"
                 options.command_mode = TRUE
+            case "--preload"
+                if i = _commandcount then
+                    options.terminal_mode = TRUE
+                    fatalerror arg$ + " requires argument"
+                end if
+                options.preload = command$(i + 1)
+                i = i + 1
             case else
                 if left$(arg$, 1) = "-" then
                     options.terminal_mode = TRUE
@@ -328,7 +378,6 @@ end sub
 '$include: 'type.bm'
 '$include: 'ast.bm'
 '$include: 'symtab.bm'
-'$include: 'errors.bm'
 '$include: 'parser/parser.bm'
 '$include: 'emitters/dump/dump.bm'
 '$include: 'emitters/immediate/immediate.bm'

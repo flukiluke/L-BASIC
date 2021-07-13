@@ -30,7 +30,7 @@ sub imm_eval(node, result as imm_value_t)
         imm_do_block node, result
     case AST_VAR, AST_UDT_ACCESS, AST_ARRAY_ACCESS
         addr = imm_get_addr(node)
-        'Store address for a full UDT or array reference
+        'Take address for a full UDT or array
         if symtab(type_of_lvalue(node)).v2 then
             result.n = addr
         else
@@ -44,6 +44,10 @@ sub imm_eval(node, result as imm_value_t)
         imm_do_goto node
     case AST_EXIT
         imm_exit_node = ast_nodes(node).ref
+    case AST_SET_RETURN
+        dim temp as imm_value_t
+        imm_eval ast_get_child(node, 1), temp
+        imm_set_at_addr imm_stack_last, temp
     end select
 end sub
 

@@ -1,0 +1,14 @@
+sub ps_preload_file
+    debuginfo "Start preload file"
+    ps_is_preload = TRUE
+    do
+        do while tok_token = TOK_NEWLINE
+            ps_consume TOK_NEWLINE
+        loop
+        stmt = ps_stmt
+        if stmt > 0 then ps_error "Preload cannot contain executable code in main program"
+        if stmt = -1 then exit do
+    loop
+    ps_is_preload = FALSE
+    debuginfo "Completed preload file"
+end sub

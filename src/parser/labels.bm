@@ -28,6 +28,10 @@ sub ps_label
     debuginfo "Completed label"
 end sub
 
+'There may have been 0 or more labels since the last statement that produced
+'nodes (some non-executable statements may not produce nodes). This attaches
+'those labels to a node. It also resolves any jumps to those labels to point
+'to the node.
 sub ps_attach_labels(node)
     if node > 0 then
         for i = 1 to len(ps_unattached_labels$) step 4

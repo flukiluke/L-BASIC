@@ -11,6 +11,10 @@ end type
 dim shared imm_stack(1) as imm_value_t
 dim shared imm_stack_last
 
+'Used as an offset for stack value access, allowing support for
+'stack frames.
+dim shared imm_stack_base
+
 'Heap holds dynamically allocated objects i.e. arrays. See heap.bm
 'for the allocation strategy. Note that pointers to heap locations are
 'always stored as negative values, to distinguish them from stack addresses

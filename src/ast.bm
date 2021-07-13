@@ -18,6 +18,26 @@ sub ast_init
     ast_constants(AST_ONE) = "1"
     ast_constant_types(AST_ONE) = TYPE_INTEGER
     ast_last_constant = 3
+    ast_commit
+end sub
+
+sub ast_commit
+    ast_last_commit_id = ast_last_node
+    ast_last_constant_commit_id = ast_last_constant
+end sub
+
+sub ast_rollback
+    for i = ast_last_commit_id + 1 to ast_last_node
+        ast_children(i) = ""
+    next i
+    ast_last_node = ast_last_commit_id
+    ast_last_constant = ast_last_constant_commit_id
+end sub
+
+sub ast_clear_entrypoint
+    'Sets the main block to have 0 nodes.
+    'This doesn't actually delete the nodes, use ast_rollback for that.
+    ast_children(AST_ENTRYPOINT) = ""
 end sub
 
 function ast_add_constant(token, content$, force_type)
@@ -59,7 +79,9 @@ function ast_add_node(typ)
 end function
 
 function ast_add_cast(expr, vartyp)
-    if vartyp = type_of_expr(expr) then
+    if vartyp = type_of_expr(expr) or vartyp = TYPE_ANY then
+        'Don't cast to TYPE_ANY because that's just a shorthand
+        'for a function that can handle any type.
         ast_add_cast = expr
         exit function
     end if
@@ -74,9 +96,17 @@ sub ast_attach(parent, child)
         debuginfo "Not adding child node because it is " + ltrim$(str$(child))
         exit sub
     end if
-    if ast_nodes(child).parent then debuginfo "Warning: changing node parent"
     ast_nodes(child).parent = parent
     ast_children(parent) = ast_children(parent) + mkl$(child)
+end sub
+
+sub ast_pre_attach(parent, child)
+    if child = 0 or child = -1 then
+        debuginfo "Not adding child node because it is " + ltrim$(str$(child))
+        exit sub
+    end if
+    ast_nodes(child).parent = parent
+    ast_children(parent) = mkl$(child) + ast_children(parent)
 end sub
 
 function ast_num_children(node)
@@ -85,6 +115,13 @@ end function
 
 function ast_is_none(node)
     ast_is_none = ast_nodes(node).typ = AST_NONE
+end function
+
+function ast_is_lvalue(node)
+    select case ast_nodes(node).typ
+    case AST_VAR, AST_ARRAY_ACCESS, AST_UDT_ACCESS
+        ast_is_lvalue = TRUE
+    end select
 end function
 
 function ast_get_child(node, index)

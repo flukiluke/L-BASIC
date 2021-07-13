@@ -17,8 +17,12 @@ function imm_get_addr(node)
         'Always a stack address. Even arrays, because a reference to the entire array
         'refers to the dimension info block that sits on the stack (unless it's an
         'array in a UDT in an array, but that wouldn't be an AST_VAR).
-        imm_get_addr = symtab(ast_nodes(node).ref).v2
+        addr = imm_stack_base + symtab(ast_nodes(node).ref).v2
+        'Dereference if needed
+        if symtab(ast_nodes(node).ref).v4 then addr = imm_get_at_addr_n(addr)
+        imm_get_addr = addr
     case AST_UDT_ACCESS
+        'TODO: Is a dereference check needed here?
         base_addr = imm_get_addr(ast_get_child(node, 1))
         offset = symtab(ast_nodes(node).ref).v2
         imm_get_addr = imm_add_offset(base_addr, offset)
@@ -48,11 +52,13 @@ function imm_get_addr(node)
         next i
         offset = offset * type_fixed_size(element_type)
         imm_get_addr = imm_add_offset(imm_get_at_addr_n(info_base_addr), offset)
+    case else
+        imm_error "Attempt to take address of something not an lvalue"
     end select
 end function
 
 sub imm_set_at_addr(addr, v as imm_value_t)
-    'print "Set ["; addr; "] ="; v.n; v.s
+    debuginfo "Write [" + str$(addr) + " ] = " + str$(v.n) + " " + v.s
     if addr < 0 then
         imm_heap(-addr) = v
     elseif addr > 0 then
@@ -63,7 +69,7 @@ sub imm_set_at_addr(addr, v as imm_value_t)
 end sub
 
 sub imm_set_at_addr_s(addr, v$)
-    'print "Set ["; addr; "] ="; s
+    debuginfo "Write [" + str$(addr) + " ] =" + v$
     if addr < 0 then
         imm_heap(-addr).s = v$
     elseif addr > 0 then
@@ -74,7 +80,7 @@ sub imm_set_at_addr_s(addr, v$)
 end sub
 
 sub imm_set_at_addr_n(addr, n as _float)
-    'print "Set ["; addr; "] ="; n
+    debuginfo "Write [" + str$(addr) + " ] =" + str$(n)
     if addr < 0 then
         imm_heap(-addr).n = n
     elseif addr > 0 then
@@ -85,6 +91,7 @@ sub imm_set_at_addr_n(addr, n as _float)
 end sub
 
 sub imm_get_at_addr(addr, v as imm_value_t)
+    debuginfo "Read [" + str$(addr) + " ]"
     if addr < 0 then
         v = imm_heap(-addr)
     elseif addr > 0 then
@@ -92,24 +99,31 @@ sub imm_get_at_addr(addr, v as imm_value_t)
     else
         imm_error "Null pointer value read"
     end if
+    debuginfo "=" + str$(v.n) + " " + v.s
 end sub
 
 function imm_get_at_addr_s$(addr)
+    debuginfo "Read [" + str$(addr) + " ]"
     if addr < 0 then
-        imm_get_at_addr_s$ = imm_heap(-addr).s
+        r$ = imm_heap(-addr).s
     elseif addr > 0 then
-        imm_get_at_addr_s$ = imm_stack(addr).s
+        r$ = imm_stack(addr).s
     else
         imm_error "Null pointer string read"
     end if
+    imm_get_at_addr_s$ = r$
+    debuginfo "=" + r$
 end sub
 
 function imm_get_at_addr_n##(addr)
+    debuginfo "Read [" + str$(addr) + " ]"
     if addr < 0 then
-        imm_get_at_addr_n## = imm_heap(-addr).n
+        r## = imm_heap(-addr).n
     elseif addr > 0 then
-        imm_get_at_addr_n## = imm_stack(addr).n
+        r## = imm_stack(addr).n
     else
         imm_error "Null pointer numeric read"
     end if
+    imm_get_at_addr_n## = r##
+    debuginfo "=" + str$(r##)
 end function

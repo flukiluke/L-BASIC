@@ -72,6 +72,11 @@ sub ps_remove_nested_structure
     ps_nested_structures$ = left$(ps_nested_structures$, len(ps_nested_structures$) - 4)
 end sub
 
+function ps_scope$
+    'Note: global symbols (functions, SHARED vars) have no @ at all
+    ps_scope$ = ps_scope_identifier$ + "@"
+end function
+
 sub ps_error(msg$)
     Error_message$ = msg$
     error 101
@@ -87,8 +92,9 @@ function ps_block
             ps_consume TOK_NEWLINE
         loop
         stmt = ps_stmt
+        ' -2 -> SUB or FUNCTION definition, continue processing input
         if stmt = -1 then exit do 'use -1 to signal the end of a block
-        if stmt then ast_attach root, stmt '0 means that statement did not generate any ast nodes
+        if stmt > 0 then ast_attach root, stmt '0 means that statement did not generate any ast nodes
     loop
     ps_block = root
     debuginfo "End block"
@@ -109,8 +115,10 @@ end function
 '$include: 'metacommands.bm'
 '$include: 'open.bm'
 '$include: 'pratt.bm'
+'$include: 'preload.bm'
 '$include: 'print.bm'
 '$include: 'statement.bm'
 '$include: 'tokeng.bm'
 '$include: 'udt.bm'
+'$include: 'userfuncs.bm'
 '$include: 'var.bm'

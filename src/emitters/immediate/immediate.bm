@@ -3,6 +3,7 @@
 'immediate.bm - Execute a parsed program
 
 sub imm_init
+    'ps_next_var_index describes number of variables in the main program
     imm_stack_last = ps_next_var_index - 1
     redim imm_stack(1 to imm_stack_last) as imm_value_t
     'No, I'm not crazy - this explicit initialisation is to
@@ -17,9 +18,10 @@ sub imm_init
     imm_heap_init
 end sub
 
-sub imm_reinit
+sub imm_reinit(stack_size)
     u = ubound(imm_stack)
-    imm_stack_last = ps_next_var_index - 1
+    imm_stack_last = stack_size
+    if imm_stack_last <= u then exit sub
     redim _preserve imm_stack(1 to imm_stack_last) as imm_value_t
     for i = u + 1 to imm_stack_last
         imm_stack(i).s = ""

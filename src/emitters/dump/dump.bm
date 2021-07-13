@@ -2,18 +2,19 @@
 'SPDX-License-Identifier: Apache-2.0
 'dump.bm - Produce human readable representation of parsed program
 
-sub dump_program(root)
-    print #1, "Table of identifiers:"
+sub dump_program
+    print #logging_file_handle, "Table of identifiers:"
     symtab_dump
-    print #1,
-    'print #1, "Function type signatures:"
+    print #logging_file_handle,
+    'print #logging_file_handle, "Function type signatures:"
     'type_dump_functions
-    'print #1,
-    print #1, "Table of constants:"
+    'print #logging_file_handle,
+    print #logging_file_handle, "Table of constants:"
     ast_dump_constants
-    print #1,
-    print #1, "Program:"
-    ast_dump_pretty root, 0
+    print #logging_file_handle,
+    print #logging_file_handle, "Program:"
+    ast_dump_pretty AST_ENTRYPOINT, 0
+    dump_subprocedures
 end sub
 
 sub type_dump_functions
@@ -22,7 +23,7 @@ sub type_dump_functions
         if typ = SYM_FUNCTION or typ = SYM_INFIX or typ = SYM_PREFIX then
             sig_index = symtab(i).v1
             do
-                print #1, sig_index; " "; symtab(i).identifier; " "; type_human_sig$(type_signatures(sig_index).sig)
+                print #logging_file_handle, sig_index; " "; symtab(i).identifier; " "; type_human_sig$(type_signatures(sig_index).sig)
                 sig_index = type_signatures(sig_index).succ
             loop while sig_index <> 0
         end if
@@ -30,10 +31,33 @@ sub type_dump_functions
 end sub
 
 sub symtab_dump
-    print #1, " ID          Name     Typ     v1     v2     v3     v4"
+    print #logging_file_handle, " ID          Name     Typ     v1     v2     v3     v4"
     for i = 1 to symtab_last_entry
-        print #1, using "###    \            \ ###    ###    ###    ###    ###"; i; symtab(i).identifier; _
+        print #logging_file_handle, using "###    \            \ ###    ###    ###    ###    ###"; i; symtab(i).identifier; _
                         symtab(i).typ,symtab(i).v1; symtab(i).v2; symtab(i).v3; symtab(i).v4
+    next i
+end sub
+
+sub dump_subprocedures
+    for i = 1 to symtab_last_entry
+        if symtab(i).typ = SYM_FUNCTION and symtab(i).v2 = SYM_FUNCTION_USER then
+            return_type = type_sig_return(symtab(i).v1)
+            if return_type = TYPE_NONE then is_sub = TRUE else is_sub = FALSE
+            print #logging_file_handle,
+            if is_sub then
+                print #logging_file_handle, "SUB "; symtab(i).identifier; " (";
+            else
+                print #logging_file_handle, "FUNCTION "; symtab(i).identifier; " AS "; type_human_readable$(return_type); " (";
+            end if
+            root = symtab(i).v3
+            for j = 2 to ast_num_children(root)
+                ast_dump_pretty ast_get_child(root, j), 0
+                if j < ast_num_children(root) then print #logging_file_handle, ", ";
+            next j
+            print #logging_file_handle, ")"
+            ast_dump_pretty ast_get_child(root, 1), 1
+            if is_sub then print #logging_file_handle, "END SUB" else print #logging_file_handle, "END FUNCTION"
+        end if
     next i
 end sub
 
@@ -43,131 +67,146 @@ sub ast_dump_pretty(root, indent_level)
         Error_message$ = "Node" + str$(root) + " is invalid": error 101
     end if
     select case ast_nodes(root).typ
+    case AST_PROCEDURE
+        print "Invalid nested procedure"
     case AST_ASSIGN
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1, " = ";
+        print #logging_file_handle, " = ";
         ast_dump_pretty ast_get_child(root, 2), 0
     case AST_IF
         for clause = 1 to ast_num_children(root) \ 2
-            if clause = 1 then print #1, indent$; "IF "; else print #1, indent$; "ELSEIF ";
+            if clause = 1 then print #logging_file_handle, indent$; "IF "; else print #logging_file_handle, indent$; "ELSEIF ";
             ast_dump_pretty ast_get_child(root, clause * 2 - 1), 0
-            print #1, " THEN "
-            ast_dump_pretty ast_get_child(root, clause * 2), indent_level
+            print #logging_file_handle, " THEN "
+            ast_dump_pretty ast_get_child(root, clause * 2), indent_level + 1
         next clause
         if ast_num_children(root) mod 2 then
-            print #1, indent$; "ELSE"
-            ast_dump_pretty ast_get_child(root, ast_num_children(root)), indent_level
+            print #logging_file_handle, indent$; "ELSE"
+            ast_dump_pretty ast_get_child(root, ast_num_children(root)), indent_level + 1
         end if
-        print #1, indent$; "END IF";
+        print #logging_file_handle, indent$; "END IF";
     case AST_WHILE
-        print #1, indent$; "WHILE ";
+        print #logging_file_handle, indent$; "WHILE ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1,
-        ast_dump_pretty ast_get_child(root, 2), indent_level
-        print #1, indent$; "WEND";
+        print #logging_file_handle,
+        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
+        print #logging_file_handle, indent$; "WEND";
     case AST_DO_PRE
-        print #1, indent$; "DO WHILE ";
+        print #logging_file_handle, indent$; "DO WHILE ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1,
-        ast_dump_pretty ast_get_child(root, 2), indent_level
-        print #1, indent$; "LOOP";
+        print #logging_file_handle,
+        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
+        print #logging_file_handle, indent$; "LOOP";
     case AST_DO_POST
-        print #1, indent$; "DO"
-        ast_dump_pretty ast_get_child(root, 2), indent_level
-        print #1, indent$; "LOOP WHILE ";
+        print #logging_file_handle, indent$; "DO"
+        ast_dump_pretty ast_get_child(root, 2), indent_level + 1
+        print #logging_file_handle, indent$; "LOOP WHILE ";
         ast_dump_pretty ast_get_child(root, 1), 0
     case AST_FOR
-        print #1, indent$; "FOR ";
+        print #logging_file_handle, indent$; "FOR ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1, " = ";
+        print #logging_file_handle, " = ";
         ast_dump_pretty ast_get_child(root, 2), 0
-        print #1, " TO ";
+        print #logging_file_handle, " TO ";
         ast_dump_pretty ast_get_child(root, 3), 0
-        print #1, " STEP ";
+        print #logging_file_handle, " STEP ";
         ast_dump_pretty ast_get_child(root, 4), 0
-        print #1,
-        ast_dump_pretty ast_get_child(root, 5), indent_level
-        print #1, indent$; "NEXT ";
+        print #logging_file_handle,
+        ast_dump_pretty ast_get_child(root, 5), indent_level + 1
+        print #logging_file_handle, indent$; "NEXT ";
         ast_dump_pretty ast_get_child(root, 1), 0
     case AST_SELECT
-        print #1, indent$; "SELECT CASE ";
+        print #logging_file_handle, indent$; "SELECT CASE ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1,
+        print #logging_file_handle,
         for i = 2 to ast_num_children(root) step 2
-            print #1, indent$; "CASE ";
+            print #logging_file_handle, indent$; "CASE ";
             ast_dump_pretty ast_get_child(root, i), 0
-            print #1,
+            print #logging_file_handle,
             ast_dump_pretty ast_get_child(root, i + 1), indent_level + 1
         next i
-        print #1, indent$; "END SELECT";
+        print #logging_file_handle, indent$; "END SELECT";
     case AST_CALL
-        print #1, "call(";
-        print #1, symtab(ast_nodes(root).ref).identifier;
-        print #1, " ["; type_human_sig$(type_signatures(ast_nodes(root).ref2).sig); "]";
-        if len(ast_children(root)) then print #1, ", ";
+        print #logging_file_handle, "call(";
+        print #logging_file_handle, symtab(ast_nodes(root).ref).identifier;
+        print #logging_file_handle, " ["; type_human_sig$(type_signatures(ast_nodes(root).ref2).sig); "]";
+        if len(ast_children(root)) then print #logging_file_handle, ", ";
         for i = 1 to ast_num_children(root)
             ast_dump_pretty ast_get_child(root, i), 0
-            if i <> ast_num_children(root) then print #1, ", ";
+            if i <> ast_num_children(root) then print #logging_file_handle, ", ";
         next i
-        print #1, ")";
+        print #logging_file_handle, ")";
     case AST_CONSTANT
         if type_of_constant(root) = TYPE_STRING then
-            print #1, chr$(34); ast_constants(ast_nodes(root).ref); chr$(34);
+            print #logging_file_handle, chr$(34); ast_constants(ast_nodes(root).ref); chr$(34);
         else
-            print #1, ast_constants(ast_nodes(root).ref);
+            print #logging_file_handle, ast_constants(ast_nodes(root).ref);
         end if
     case AST_BLOCK
         for i = 1 to ast_num_children(root)
-            print #1, indent$;
+            print #logging_file_handle, indent$;
             ast_dump_pretty ast_get_child(root, i), indent_level + 1
-            print #1,
+            print #logging_file_handle,
         next i
     case AST_VAR
-        print #1, "var(";
+        print #logging_file_handle, "var(";
         var = ast_nodes(root).ref
-        if symtab(var).v3 then print #1, "CONST ";
-        print #1, symtab(var).identifier; ")";
+        if symtab(var).v3 then print #logging_file_handle, "CONST ";
+        print #logging_file_handle, symtab(var).identifier; ")";
     case AST_UDT_ACCESS
-        print #1, "udt(";
+        print #logging_file_handle, "udt(";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1, ", "; symtab(ast_nodes(root).ref).identifier; ")";
+        print #logging_file_handle, ", "; symtab(ast_nodes(root).ref).identifier; ")";
     case AST_ARRAY_ACCESS
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1, "(";
+        print #logging_file_handle, "(";
         for i = 2 to ast_num_children(root)
             ast_dump_pretty ast_get_child(root, i), 0
-            if i <> ast_num_children(root) then print #1, ", "
+            if i <> ast_num_children(root) then print #logging_file_handle, ", "
         next i
-        print #1, ")";
+        print #logging_file_handle, ")";
     case AST_ARRAY_RESIZE
-        print #1, "REDIM ";
+        print #logging_file_handle, "REDIM ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1, "(";
+        print #logging_file_handle, "(";
         for i = 2 to ast_num_children(root) step 2
             ast_dump_pretty ast_get_child(root, i), 0
-            print #1, " TO ";
+            print #logging_file_handle, " TO ";
             ast_dump_pretty ast_get_child(root, i + 1), 0
-            if i < ast_num_children(root) - 1 then print #1, ", ";
+            if i < ast_num_children(root) - 1 then print #logging_file_handle, ", ";
         next i
-        print #1, ")";
+        print #logging_file_handle, ")";
     case AST_CAST
-        print #1, "cast("; type_human_readable$(type_of_cast(root)); ", ";
+        print #logging_file_handle, "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #1, ")";
+        print #logging_file_handle, ")";
     case AST_FLAGS
-        print #1, "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
+        print #logging_file_handle, "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
     case AST_GOTO
-        print #1, indent$; "goto("; ast_nodes(root).ref; ")";
+        print #logging_file_handle, indent$; "goto("; ast_nodes(root).ref; ")";
+    case AST_EXIT
+        print #logging_file_handle, "EXIT ";
+        select case ast_nodes(ast_nodes(root).ref).typ
+        case AST_WHILE
+            print "WHILE";
+        case AST_DO_POST, AST_DO_PRE
+            print "DO";
+        case AST_FOR
+            print "FOR";
+        end select
     case AST_NONE
-        print #1, "[NONE]";
+        print #logging_file_handle, "[NONE]";
+    case AST_SET_RETURN
+        print #logging_file_handle, "return ";
+        ast_dump_pretty ast_get_child(root, 1), 0
     case else
         print "Unknown AST type"; ast_nodes(root).typ
     end select
 end sub
 
 sub ast_dump_constants
-    print #1, " ID    Type      Value"
+    print #logging_file_handle, " ID    Type      Value"
     for i = 1 to ast_last_constant
-        print #1, using "###    &    &"; i; type_human_readable(ast_constant_types(i)); ast_constants(i)
+        print #logging_file_handle, using "###    &    &"; i; type_human_readable(ast_constant_types(i)); ast_constants(i)
     next i
 end sub

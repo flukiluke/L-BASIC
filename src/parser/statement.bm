@@ -5,6 +5,7 @@
 'Expects: first token of statement
 'Results: NEWLINE or block end marker
 'Returns:
+'   -2 -> a SUB or FUNCTION was defined (useful for interactive mode to know)
 '   -1 ->  end of a block
 '   0 -> statement did not generate any ast nodes
 '   > 0 -> ast node
@@ -32,6 +33,8 @@ function ps_stmt
             stmt = ps_exit
         case TOK_FOR
             stmt = ps_for
+        case TOK_FUNCTION
+            stmt = ps_userfunc
         case TOK_GOTO
             stmt = ps_goto
         case TOK_IF
@@ -44,6 +47,8 @@ function ps_stmt
             stmt = ps_print
         case TOK_SELECT
             stmt = ps_select
+        case TOK_SUB
+            stmt = ps_userfunc
         case TOK_TYPE
             stmt = ps_udt
         case TOK_WHILE
@@ -57,10 +62,15 @@ function ps_stmt
         'ending token, but we check it's syntactically valid here.
         case TOK_END
             'We can't check tok_next_token because it does not always contain correct look-ahead information
-            if ucase$(tok_next_content$) <> "IF" and ucase$(tok_next_content$) <> "SELECT" then
+            next_content$ = ucase$(tok_next_content$)
+            nesting = ast_nodes(ps_final_nested).typ
+            if next_content$ <> "IF" and _
+                next_content$ <> "SELECT" and _
+                next_content$ <> "SUB" and _
+                next_content$ <> "FUNCTION" then
                 'Handle regular END command
                 stmt = ps_stmtreg
-            elseif ast_nodes(ps_final_nested).typ <> AST_IF and ast_nodes(ps_final_nested).typ <> AST_SELECT then
+            elseif nesting <> AST_IF and nesting <> AST_SELECT and nesting <> AST_PROCEDURE then
                 ps_error "Unexpected END"
             else
                 stmt = -1
@@ -105,12 +115,15 @@ end function
 'Results: token after last argument
 function ps_stmtreg
     debuginfo "Start stmtreg"
-    root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = tok_token
-
-    tok_advance
-    ps_funcargs root
-
+    'Is this in fact assigning the return value of a function?
+    root = ps_func_return
+    if root = 0 then
+        'Nope, it's just a statement
+        root = ast_add_node(AST_CALL)
+        ast_nodes(root).ref = tok_token
+        tok_advance
+        ps_funcargs root
+    end if
     ps_stmtreg = root
     debuginfo "Completed stmtreg"
 end function

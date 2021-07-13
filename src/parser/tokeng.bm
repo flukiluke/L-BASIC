@@ -6,6 +6,7 @@ deflng a-z
 
 sub tok_init
     'Read in the state machine
+    restore tokeng_data
     for s = 1 to ubound(t_states~%, 2)
         read t_statenames$(s)
         for b = 1 to 127
@@ -17,16 +18,26 @@ sub tok_init
     tokeng_state.curstate = 1
     tokeng_state.has_data = FALSE
     tokeng_state.linestart = TRUE
+    tokeng_state.recovery_mode = FALSE
     'Fill the 'next' buffer and propagate to tok_token
     tok_read_next_token
     tok_advance
+
+    tokeng_data:
+    '$include: 'ts_data.bm'
 end sub
 
 sub tok_advance
     'We defer symbol table lookups to now (instead of in tok_read_next_token) so
     'we can correctly find any recently declared symbols.
-    if tok_next_token = 0 then
-        id = symtab_get_id(ucase$(tok_next_content$))
+    'Also avoid ever doing lookups in recovery mode, because results are likely
+    'garbage.
+    if tok_next_token = 0 and not tokeng_state.recovery_mode then
+        'First check local scope
+        id = symtab_get_id(ucase$(ps_scope$ + tok_next_content$))
+        'Then check global scope
+        if id = 0 then id = symtab_get_id(ucase$(tok_next_content$))
+        'Did we find anything?
         if id = 0 then
             tok_token = TOK_UNKNOWN
         else
@@ -51,7 +62,17 @@ sub tok_advance
             tok_read_next_token
         end if
     end if
-    debuginfo ">>> " + tok_content$
+    'debuginfo ">>> " + tok_content$
+end sub
+
+'Advance token stream until reaching end_marker, but do no processing of
+'incoming data. Used to recover from errors. Results in tok_token = end_marker.
+sub tok_recover(end_marker)
+    tokeng_state.recovery_mode = TRUE
+    do until tok_token = end_marker
+        tok_advance
+    loop
+    tokeng_state.recovery_mode = FALSE
 end sub
 
 sub tok_read_next_token
@@ -155,4 +176,3 @@ function tok_human_readable$(token)
     end if
 end function
 
-'$include: 'ts_data.bm'

@@ -17,7 +17,8 @@ sub ps_meta_list
     case "F" 'FUNCTIONS
         type_dump_functions
     case "P" 'PROGRAM
-        ast_dump_pretty 0, 0
+        ast_dump_pretty AST_ENTRYPOINT, 0
+        dump_subprocedures
     case "C" 'CONSTANTS
         ast_dump_constants
     case else

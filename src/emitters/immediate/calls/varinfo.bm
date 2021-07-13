@@ -8,6 +8,27 @@ case TOK_DIM
     imm_eval child, v1
     result.n = imm_get_at_addr_n(imm_add_offset(v1.n, 1))
 
+case TOK_OPTION
+    'The OPTION function to check if an OPTION variable was passed
+    child = ast_get_child(node, 1)
+    if ast_nodes(child).typ <> AST_VAR then
+        'TODO: Implement
+        imm_error "OPTION check not supported on arrays & UDTs"
+    end if
+    sym = ast_nodes(child).ref
+    if symtab(sym).v4 = 0 then
+        'Not pass-by-reference, so could not have been optional
+        result.n = TRUE
+    else
+        'Don't use imm_get_addr because that'll attempt to dereference
+        addr = imm_stack_base + symtab(sym).v2
+        if imm_get_at_addr_n(addr) then
+            result.n = TRUE
+        else
+            result.n = FALSE
+        end if
+    end if
+
 case TOK_LEN
     child = ast_get_child(node, 1)
     imm_eval child, v1

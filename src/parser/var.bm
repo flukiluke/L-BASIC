@@ -129,7 +129,7 @@ end function
 
 function ps_new_var_pp(var_name$, sigil)
     dim sym as symtab_entry_t
-    sym.identifier = ucase$(var_name$)
+    sym.identifier = ps_scope$ + ucase$(var_name$)
     sym.typ = SYM_VARIABLE
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
     sym.v2 = ps_next_var_index

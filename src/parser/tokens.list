@@ -200,6 +200,8 @@ generic case
 generic is
 
 generic type
+generic sub
+generic function
 
 # functions with return type none are subs
 function abs            integer   integer
@@ -222,7 +224,8 @@ function beep           none
 generic binary
 # bload
 # bsave
-# byval
+generic byref
+generic byval
 
 # call
 # calls
@@ -282,7 +285,6 @@ function fix            double    double
 function fix            quad      quad
 # fre
 function freefile       long
-# function
 
 function get            none      %long,integer64?,@string?
 function get            none      %long,integer64?,@integer?
@@ -354,7 +356,7 @@ function mid            string    string,integer64,integer64?
 # off
 # on com|error|key|pen|play|strig|timer|uevent|gosub
 function open           none      string,flags,%long,long?
-# option
+function option         long      @any
 # out
 generic output
 
@@ -420,7 +422,6 @@ function _strcmp        integer   string,string
 function _stricmp       integer   string,string
 # strig
 # string
-# sub
 # swap
 function system         none      integer?
 
