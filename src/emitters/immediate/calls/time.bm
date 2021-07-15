@@ -5,6 +5,14 @@
 case TOK_DATE
     result.s = date$
 
+case TOK__DELAY
+    imm_eval ast_get_child(node, 1), v1
+    _delay v1.n
+
+case TOK__LIMIT
+    imm_eval ast_get_child(node, 1), v1
+    _limit v1.n
+
 case TOK_SLEEP
     period = ast_get_child(node, 1)
     if ast_is_none(period) then
