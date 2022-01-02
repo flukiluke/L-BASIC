@@ -7,6 +7,8 @@
 'This allows us to support declaring a function multiple times with different signatures by chaining each declaration's signature together.
 
 'type_signature_t.sig is an mkl$-encoded string. Its format is mkl$(return type) + mkl$(argument 1 type) + mkl$(argument 1 flags) + mkl$(argument 2 type) + mkl$(argument 2 flags) + ...
+'For each flag, the low 16 bits are one or more TYPE_* flags as defined below. If TYPE_TOKEN is set, the high 16 bits
+'of the flag contain the value that will be passed as an AST_FLAGS value in this position in the argument list.
 'Don't access them directly, use the type_sig_* functions.
 type type_signature_t
     sig as string

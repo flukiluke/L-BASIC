@@ -115,22 +115,62 @@ function type_can_safely_cast(a, b)
     end if
 end function
 
+'The following functions are helpers to extract data from type signatures. type_sig_*
+'variants take a numeric indentifier, type_sigt_* variants take a string holding the
+'signature itself. arg_index is one-indexed, so 1 is the first argument in the signature.
+
+'What is the return type of the given signature?
 function type_sig_return(sig_index)
-    type_sig_return = cvl(left$(type_signatures(sig_index).sig, 4))
+    type_sig_return = type_sigt_return(type_signatures(sig_index).sig)
 end function
 
+function type_sigt_return(sig$)
+    type_sigt_return = cvl(left$(sig$, 4))
+end function
+
+'How many arguments (passed parameters) does a signature have, including all optionals?
 function type_sig_numargs(sig_index)
-    type_sig_numargs = (len(type_signatures(sig_index).sig) - 4) / 8
+    type_sig_numargs = type_sigt_numargs(type_signatures(sig_index).sig)
 end function
 
+function type_sigt_numargs(sig$)
+    type_sigt_numargs = (len(sig$) - 4) / 8
+end function
+
+'What is the type of a particular argument in a signature?
 function type_sig_argtype(sig_index, arg_index)
-    type_sig_argtype = cvl(mid$(type_signatures(sig_index).sig, arg_index * 8 - 3, 4))
+    type_sig_argtype = type_sigt_argtype(type_signatures(sig_index).sig, arg_index)
 end function
 
+function type_sigt_argtype(sig$, arg_index)
+    type_sigt_argtype = cvl(mid$(sig$, arg_index * 8 - 3, 4))
+end function
+
+'What are the flags of a particular argument in a signature?
 function type_sig_argflags(sig_index, arg_index)
-    type_sig_argflags = cvl(mid$(type_signatures(sig_index).sig, arg_index * 8 + 1, 4))
+    type_sig_argflags = type_sigt_argflags(type_signatures(sig_index).sig, arg_index)
 end function
 
+function type_sigt_argflags(sig$, arg_index)
+    type_sigt_argflags = cvl(mid$(sig$, arg_index * 8 + 1, 4))
+end function
+
+'Append an argument of the given type and flags to a signature
+sub type_sig_add_arg(sig_index, typ, flags)
+    type_signatures(sig_index).sig = type_sigt_add_arg$(type_signatures(sig_index).sig, typ, flags)
+end sub
+
+function type_sigt_add_arg$(old$, new_argtype, new_argflags)
+    type_sigt_add_arg$ = old$ + mkl$(new_argtype) + mkl$(new_argflags)
+end function
+
+'Begin a new signature (no type_sig variant because it's unneeded)
+function type_sigt_create$(return_type)
+    type_sigt_create$ = mkl$(return_type)
+end function
+
+'Append a sig to the linked list ending in previous if previous > 0, otherwise start a
+'new list
 function type_add_sig(previous, sig$)
     type_last_signature = type_last_signature + 1
     if ubound(type_signatures) = type_last_signature then
@@ -142,12 +182,18 @@ function type_add_sig(previous, sig$)
     type_add_sig = type_last_signature
 end function
 
-sub type_add_sig_arg(sig_index, typ, flags)
-    type_signatures(sig_index).sig = type_sig_add_arg$(type_signatures(sig_index).sig, typ, flags)
-end sub
-    
-function type_sig_create$(return_type)
-    type_sig_create$ = mkl$(return_type)
+
+'Given a (possibly incomplete) candidate, find sigs for func that are compatible
+'Return format is list of mkl$(sig_index)
+function type_sig_prefix_compatibles$(func, candidate$)
+    sig_index = symtab(func).v1
+    while sig_index <> 0
+        if type_sig_is_prefix_compatible(sig_index, candidate$, 0) then
+            compatibles$ = compatibles$ + mkl$(sig_index)
+        end if
+        sig_index = type_signatures(sig_index).succ
+    wend
+    type_sig_prefix_compatibles$ = compatibles$
 end function
 
 function type_sig_add_arg$(old$, new_argtype, new_argflags)
