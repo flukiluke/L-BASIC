@@ -118,6 +118,8 @@ end function
 'The following functions are helpers to extract data from type signatures. type_sig_*
 'variants take a numeric indentifier, type_sigt_* variants take a string holding the
 'signature itself. arg_index is one-indexed, so 1 is the first argument in the signature.
+'The type signature format (mkl$ encoded type, flags pairs) is used more generally for
+'lists of types; in those cases the first component (return type) may be meaningless.
 
 'What is the return type of the given signature?
 function type_sig_return(sig_index)
@@ -183,22 +185,77 @@ function type_add_sig(previous, sig$)
 end function
 
 
+'Given an incomplete candidate, what types could we possibly expect to see next?
+'Return format is list of 4 bytes padding + mkl$(type) + mkl$(flags). Padding
+'allows using type_sigt_* functions to access. mkl$(0) + mkl$(0) means
+'"expect end of args".
+function type_sig_prefix_nexts$(func, candidate$)
+    result$ = type_sigt_create$(0) 'return type is meaningless
+    compatibles$ = type_sig_prefix_compatibles$(func, candidate$)
+    clen = type_sigt_numargs(candidate$)
+    'compatibles$ is list of possible sigs, but we can use type_sigt_* on it anyway
+    for i = 1 to type_sigt_numargs(compatibles$)
+        'For each sig, determine what token we would be added to the candiate next
+        'if it were the true signature being read
+        sig_index = type_sigt_argtype(compatibles$, i)
+        if type_sig_numargs(sig_index) = clen then
+            'there are no more tokens expected for this sig, candidate matches exactly
+            result$ = type_sigt_add_arg(result$, 0, 0)
+        elseif type_sig_numargs(sig_index) > clen then
+            'candidate currently only has a prefix-set of the arguments
+            result$ = type_sigt_add_arg(result$, type_sig_argtype(sig_index, clen + 1), type_sig_argflags(sig_index, clen + 1))
+        else
+            'Should never occur
+            ps_error "Impossible sig length"
+        end if
+    next i
+    type_sig_prefix_nexts$ = result$
+end function
+
 'Given a (possibly incomplete) candidate, find sigs for func that are compatible
 'Return format is list of mkl$(sig_index)
 function type_sig_prefix_compatibles$(func, candidate$)
+    compatibles$ = type_sigt_create$(0)
     sig_index = symtab(func).v1
     while sig_index <> 0
-        if type_sig_is_prefix_compatible(sig_index, candidate$, 0) then
-            compatibles$ = compatibles$ + mkl$(sig_index)
+        if type_sig_is_prefix_compatible(sig_index, candidate$) then
+            compatibles$ = type_sigt_add_arg(compatibles$, sig_index, 0)
         end if
         sig_index = type_signatures(sig_index).succ
     wend
     type_sig_prefix_compatibles$ = compatibles$
 end function
 
-function type_sig_add_arg$(old$, new_argtype, new_argflags)
-    type_sig_add_arg$ = old$ + mkl$(new_argtype) + mkl$(new_argflags)
+function type_sig_is_prefix_compatible(sig_index, candidate$)
+    debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig)
+    'candidate will generally have ANY or NONE return types for FUNCTION and SUB 
+    'contexts respectively. In the future though this may become more specific, 
+    'so ensure the actual return type can be cast to what is needed.
+    if not type_can_cast(type_sig_return(sig_index), type_sigt_return(candidate$)) then
+        debuginfo "No, return types not compatible"
+        exit function
+    end if
+    for argi = 1 to type_sigt_numargs(candidate$)
+        if argi > type_sig_numargs(sig_index) then
+            'Cannot possibly match, candidate has more args than sig can accept
+            debuginfo "No, candidate has too many arguments"
+            exit function
+        end if
+        sig_arg = type_sig_argtype(sig_index, argi)
+        sig_flags = type_sig_argflags(sig_index, argi)
+        c_arg = type_sigt_argtype(candidate$, argi)
+        c_flags = type_sigt_argflags(candidate$, argi)
+        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, 0) then
+            debuginfo "No, mismatch on arg" + str$(argi) + " (candidate has " + type_human_readable$(c_arg) + ")"
+            exit function
+        end if
+    next argi
+    debuginfo "All arguments match"
+    type_sig_is_prefix_compatible = TRUE
 end function
+
+
+
 
 'Function call resolution!
 'Each function name has one or more signatures. A signature gives the return type and the
