@@ -17,7 +17,7 @@ function ps_circle
         ps_consume TOK_STEP
     end if
     ast_attach root, flags
-    candidate$ = type_sigt_add_arg$("", TYPE_FLAGS, 0)
+    candidate$ = type_sigt_add_arg$(type_sigt_create$(TYPE_NONE), TYPE_FLAGS, 0)
 
     ps_consume TOK_OPAREN
     expr = ps_expr
@@ -30,7 +30,7 @@ function ps_circle
     ps_consume TOK_CPAREN
     ps_consume TOK_COMMA
 
-    ps_funcargs_tail root, candidate$
+    ps_funcargs root, candidate$
 
     ps_circle = root
     debuginfo "Completed circle"

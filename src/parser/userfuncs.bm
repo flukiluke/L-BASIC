@@ -117,11 +117,17 @@ function ps_func_return
     debuginfo "Start func return"
     'Are we in a procedure with a matching name?
     u$ = ucase$(tok_content$)
-    if u$ <> ps_scope_identifier$ then exit function
+    if u$ <> ps_scope_identifier$ then
+        debuginfo "Completed func return"
+        exit function
+    end if
     proc_id = symtab_get_id(u$)
     'Is this actually a function, not a sub?
     return_type = type_sig_return(symtab(proc_id).v1)
-    if return_type = 0 then exit function
+    if return_type = 0 then
+        debuginfo "Completed func return"
+        exit function
+    end if
     'Ensure any type sigils match
     sigil = ps_opt_sigil
     if sigil <> 0 and return_type <> sigil then ps_error "Function return type not consistent"
