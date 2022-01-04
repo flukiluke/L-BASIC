@@ -10,81 +10,15 @@ function ps_funccall
     ps_funccall = ps_funccall_p(token)
 end function
 
-'Expects: token after function, function token as arg
-'Results: token after last argument
-function ps_funccall_p(func)
-    debuginfo "Start function call"
-    root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = func
-    sigil = ps_opt_sigil
-    if tok_token = TOK_OPAREN then
-        ps_consume TOK_OPAREN
-        ps_funcargs root
-        ps_consume TOK_CPAREN
-    else
-        'function has no arguments
-        matching_sig = type_find_sig_match(func, "")
-        if matching_sig = 0 then ps_error "Cannot find matching type signature"
-        ast_nodes(root).ref2 = matching_sig
-        'Add any optional arguments at end
-        for i = 1 to type_sig_numargs(matching_sig)
-            ast_attach root, ast_add_node(AST_NONE)
-        next i
-    end if
-    if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
-    ps_funccall_p = root
-    debuginfo "Completed function call"
-end function
-
 'Expects: first token after function name
 'Results: token after argument list
-sub ps_funcargs(root)
-    ps_funcargs_tail root, ""
-end sub
-
-'Expects: token in argument list
-'Results: token after argument list
-'Note: This allows parsing an argument list that is already partially parsed by specialised functions
-sub ps_funcargs_tail(root, candidate$)
+sub ps_funcargs(root, candidate$)
     debuginfo "Start funcargs"
-    'This code first builds a candidate type signature, then tries to match that against an instance signature.
     func = ast_nodes(root).ref
-    if tok_token = TOK_COMMA then ps_funcarg root, candidate$
-    do
-        if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
-        select case tok_token
-        case TOK_COMMA
-            ps_consume TOK_COMMA
-            ps_funcarg root, candidate$
-        case else
-            ps_funcarg root, candidate$
-        end select
-    loop
-
-    'Now we need to find a signature of func that matches candidate$.
-    matching_sig = type_find_sig_match(func, candidate$)
-    if matching_sig = 0 then ps_error "Cannot find matching type signature"
-    ast_nodes(root).ref2 = matching_sig
-    'Modify argument nodes to add in casts where needed
-    for i = 1 to ast_num_children(root)
-        expr = ast_get_child(root, i)
-        expr_type = type_of_expr(expr)
-        arg_type = type_sig_argtype(matching_sig, i)
-        if expr_type <> arg_type and expr_type <> TYPE_NONE then
-            ast_replace_child root, i, ast_add_cast(expr, arg_type)
-        end if
-    next i
-    'Add any optional arguments at end
-    for i = ast_num_children(root) + 1 to type_sig_numargs(matching_sig)
-        ast_attach root, ast_add_node(AST_NONE)
-    next i
-    debuginfo "Completed funcargs"
+    ps_funcarg root, func, candidate$
 end sub
 
-'Expects: start of expression
-'Results: token after expression
-sub ps_funcarg(root, candidate$)
-    debuginfo "Start funcarg"
+sub ps_funcarg(root, func, candidate$)
     if ps_consumed(TOK_DOUBLE_SFX) then flags = TYPE_FILEHANDLE
     if tok_token = TOK_COMMA then
         'empty argument
@@ -93,10 +27,101 @@ sub ps_funcarg(root, candidate$)
     else
         expr = ps_expr
     end if
-    'Declare whether this expression would satisfy a BYREF argument
-    if type_is_lvalue(expr) then flags = flags or TYPE_BYREF
-    candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
-    ast_attach root, expr
-    debuginfo "Completed funcarg"
+    expects$ = type_sig_prefix_nexts$(func, candidate$)
+    for i = 1 to len(expects$) step 8
+        expected_type = cvl(mid$(expects$, i, 4))
+        expected_flags = cvl(mid$(expects$, i + 4, 4))
+    next i
 end sub
+
+
+' 'Expects: token after function, function token as arg
+' 'Results: token after last argument
+ function ps_funccall_p(func)
+'     debuginfo "Start function call"
+'     root = ast_add_node(AST_CALL)
+'     ast_nodes(root).ref = func
+'     sigil = ps_opt_sigil
+'     if tok_token = TOK_OPAREN then
+'         ps_consume TOK_OPAREN
+'         ps_funcargs root
+'         ps_consume TOK_CPAREN
+'     else
+'         'function has no arguments
+'         matching_sig = type_find_sig_match(func, "")
+'         if matching_sig = 0 then ps_error "Cannot find matching type signature"
+'         ast_nodes(root).ref2 = matching_sig
+'         'Add any optional arguments at end
+'         for i = 1 to type_sig_numargs(matching_sig)
+'             ast_attach root, ast_add_node(AST_NONE)
+'         next i
+'     end if
+'     if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
+'     ps_funccall_p = root
+'     debuginfo "Completed function call"
+ end function
+
+' 'Expects: first token after function name
+' 'Results: token after argument list
+' sub ps_funcargs(root)
+'     ps_funcargs_tail root, ""
+' end sub
+
+' 'Expects: token in argument list
+' 'Results: token after argument list
+' 'Note: This allows parsing an argument list that is already partially parsed by specialised functions
+ sub ps_funcargs_tail(root, candidate$)
+'     debuginfo "Start funcargs"
+'     'This code first builds a candidate type signature, then tries to match that against an instance signature.
+'     func = ast_nodes(root).ref
+'     if tok_token = TOK_COMMA then ps_funcarg root, candidate$
+'     do
+'         if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
+'         select case tok_token
+'         case TOK_COMMA
+'             ps_consume TOK_COMMA
+'             ps_funcarg root, candidate$
+'         case else
+'             ps_funcarg root, candidate$
+'         end select
+'     loop
+
+'     'Now we need to find a signature of func that matches candidate$.
+'     matching_sig = type_find_sig_match(func, candidate$)
+'     if matching_sig = 0 then ps_error "Cannot find matching type signature"
+'     ast_nodes(root).ref2 = matching_sig
+'     'Modify argument nodes to add in casts where needed
+'     for i = 1 to ast_num_children(root)
+'         expr = ast_get_child(root, i)
+'         expr_type = type_of_expr(expr)
+'         arg_type = type_sig_argtype(matching_sig, i)
+'         if expr_type <> arg_type and expr_type <> TYPE_NONE then
+'             ast_replace_child root, i, ast_add_cast(expr, arg_type)
+'         end if
+'     next i
+'     'Add any optional arguments at end
+'     for i = ast_num_children(root) + 1 to type_sig_numargs(matching_sig)
+'         ast_attach root, ast_add_node(AST_NONE)
+'     next i
+'     debuginfo "Completed funcargs"
+ end sub
+
+' 'Expects: start of expression
+' 'Results: token after expression
+' sub ps_funcarg(root, candidate$)
+'     debuginfo "Start funcarg"
+'     if ps_consumed(TOK_DOUBLE_SFX) then flags = TYPE_FILEHANDLE
+'     if tok_token = TOK_COMMA then
+'         'empty argument
+'         expr = ast_add_node(AST_NONE)
+'         flags = flags or TYPE_BYREF
+'     else
+'         expr = ps_expr
+'     end if
+'     'Declare whether this expression would satisfy a BYREF argument
+'     if type_is_lvalue(expr) then flags = flags or TYPE_BYREF
+'     candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
+'     ast_attach root, expr
+'     debuginfo "Completed funcarg"
+' end sub
 

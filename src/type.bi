@@ -25,4 +25,7 @@ dim shared type_last_signature as long
 const TYPE_OPTIONAL = 1
 const TYPE_BYREF = 2
 const TYPE_BYVAL = 4
+'This argument can have a leading # to indicate a file handle
 const TYPE_FILEHANDLE = 8
+'This argument is a literal token and the type refers to that token id
+const TYPE_TOKEN = 16

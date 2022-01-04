@@ -33,7 +33,8 @@ function ps_userfunc
 
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
     if return_type = 0 then return_type = ps_default_type
-    sym.v1 = type_add_sig(0, type_sig_create$(return_type)) 
+
+    sym.v1 = type_add_sig(0, type_sigt_create$(return_type)) 
     if ps_consumed(TOK_OPAREN) then
         ps_add_formal_args root, sym.v1
         ps_consume TOK_CPAREN
@@ -104,7 +105,7 @@ sub ps_add_formal_args(root, sig_index)
             symtab(ast_nodes(var).ref).v4 = TRUE
         end if
         ast_attach root, var
-        type_add_sig_arg sig_index, type_of_var(var), flags
+        type_sig_add_arg sig_index, type_of_var(var), flags
     loop while ps_consumed(TOK_COMMA)
     debuginfo "Completed formal args"
 end sub
