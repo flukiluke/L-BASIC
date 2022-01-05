@@ -135,6 +135,14 @@ function type_sig_numargs(sig_index)
     type_sig_numargs = type_sigt_numargs(type_signatures(sig_index).sig)
 end function
 
+'How many arguments excluding components that do not have an ast representation
+function type_sig_numargs_concrete(sig_index)
+    for i = 1 to type_sig_numargs(sig_index)
+        if type_sig_concrete_arg(sig_index, i) then result = result + 1
+    next i
+    type_sig_numargs_concrete = result
+end function
+
 function type_sigt_numargs(sig$)
     type_sigt_numargs = (len(sig$) - 4) / 8
 end function
@@ -159,6 +167,11 @@ end function
 
 function type_sigt_flagval(flags)
     type_sigt_flagval = _shr(flags, 16)
+end function
+
+function type_sig_concrete_arg(sig_index, arg_index)
+    flags = type_sig_argflags(sig_index, arg_index)
+    type_sig_concrete_arg = not ((flags AND TYPE_TOKEN) > 0 AND (type_sigt_flagval(flags) = -1))
 end function
 
 'Append an argument of the given type and flags to a signature
@@ -217,7 +230,7 @@ function type_sig_prefix_nexts$(func, candidate$)
     for i = 1 to type_sigt_numargs(result$)
         debugmsg$ = debugmsg$ + " " + type_human_readable$(type_sigt_argtype(result$, i))
     next i
-    debuginfo "Nexts list: " + debugmsg$
+    debuginfo "Nexts list:" + debugmsg$
 end function
 
 'Given a (possibly incomplete) candidate, find sigs for func that are compatible
@@ -258,7 +271,7 @@ function type_sig_is_prefix_compatible(sig_index, candidate$, checkmode)
             exit function
         end if
     next argi
-    debuginfo "(Prefix) All arguments match"
+    debuginfo "(Prefix) " + str$(type_sigt_numargs(candidate$)) + " arguments match"
     type_sig_is_prefix_compatible = TRUE
 end function
 
@@ -338,8 +351,8 @@ function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
     if c_arg = TYPE_NONE then
         result = (sig_flags and TYPE_OPTIONAL) > 0
     elseif sig_flags and TYPE_BYREF then
-        'Hardcoded check for TYPE_ANY to allow for functions that really take any variable
-        result = (c_flags and TYPE_BYREF) > 0 and (sig_arg = c_arg or sig_arg = TYPE_ANY)
+        'Hardcoded check for TYPE_ANY, TYPE_ANY_ARRAY to allow for functions that really take any variable, array
+        result = (c_flags and TYPE_BYREF) > 0 and (sig_arg = c_arg or sig_arg = TYPE_ANY or (sig_arg = TYPE_ANY_ARRAY and type_is_array(c_arg)))
     elseif checkmode = 0 then
         result = type_can_cast(c_arg, sig_arg)
     elseif checkmode = 1 then

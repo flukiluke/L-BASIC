@@ -123,7 +123,7 @@ function ps_stmtreg
         ast_nodes(root).ref = tok_token
         tok_advance
         'TYPE_NONE to indicate we have no return value
-        ps_funcargs root, type_sigt_create$(TYPE_NONE)
+        ps_funcargs root, type_sigt_create$(TYPE_NONE), TRUE
     end if
     ps_stmtreg = root
     debuginfo "Completed stmtreg"

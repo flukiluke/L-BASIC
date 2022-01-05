@@ -19,7 +19,7 @@ function ps_funccall_p(func)
     sigil = ps_opt_sigil
     if tok_token = TOK_OPAREN then
         ps_consume TOK_OPAREN
-        ps_funcargs root, type_sigt_create$(TYPE_ANY)
+        ps_funcargs root, type_sigt_create$(TYPE_ANY), FALSE
         ps_consume TOK_CPAREN
     else
        'function has no arguments
@@ -38,13 +38,14 @@ function ps_funccall_p(func)
 
 'Expects: first token after function name
 'Results: token after argument list
-sub ps_funcargs(root, candidate$)
+sub ps_funcargs(root, candidate$, is_statement)
     debuginfo "Start funcargs"
     'Handle empty argument at start
     if tok_token = TOK_COMMA then ps_funcarg root, candidate$, suppress_comma
     'Loop over arguments and build candidate$ as a list of argument types
     do
-        if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
+        'is_statement allows ) to appear in statements, whereas it terminates a function
+        if ps_is_terminator(tok_token) or (not is_statement and tok_token = TOK_CPAREN) then exit do
         select case tok_token
         case TOK_COMMA
             ps_consume TOK_COMMA
@@ -52,8 +53,8 @@ sub ps_funcargs(root, candidate$)
         case else
             ps_funcarg root, candidate$, suppress_comma
         end select
+    debuginfo "Candidate is now " + type_human_sig$(candidate$)
     loop
-    debuginfo "Parsed candidate: " + type_human_sig$(candidate$)
     'candidate$ may match multiple sigs; decide which fits "best". See type.bm for
     'details on what "best" means. This may still fail because the candidate has only
     'been checked as a prefix, never for an exect match on the number of arguments.
@@ -65,13 +66,21 @@ sub ps_funcargs(root, candidate$)
     for i = 1 to ast_num_children(root)
         expr = ast_get_child(root, i)
         expr_type = type_of_expr(expr)
-        arg_type = type_sig_argtype(best_sig, i)
-        if expr_type <> arg_type and expr_type <> TYPE_NONE and expr_type <> TYPE_FLAGS then
+        'The skip value allows us to skip over token that are in the sig but don't
+        'get a corresponding ast node.
+        do while not type_sig_concrete_arg(best_sig, i + skip)
+            skip = skip + 1
+        loop
+        if i + skip > type_sig_numargs(best_sig) then exit for
+        arg_type = type_sig_argtype(best_sig, i + skip)
+        if not (expr_type = arg_type or _
+                expr_type = TYPE_NONE or _
+                expr_type = TYPE_FLAGS) then
             ast_replace_child root, i, ast_add_cast(expr, arg_type)
         end if
     next i
     'Add any optional arguments at end
-    for i = ast_num_children(root) + 1 to type_sig_numargs(best_sig)
+    for i = ast_num_children(root) + 1 to type_sig_numargs_concrete(best_sig)
         ast_attach root, ast_add_node(AST_NONE)
     next i
     debuginfo "Completed funcargs"
@@ -97,7 +106,10 @@ sub ps_funcarg(root, candidate$, suppress_comma)
                 ast_nodes(expr).ref = type_sigt_flagval(expected_flags)
                 flags = TYPE_TOKEN
             else
-                print "!"; type_sigt_flagval(expected_flags)
+                'Don't generate any ast nodes, but add this to the candidate
+                expr = 0
+                typ = expected_type
+                flags = TYPE_TOKEN
             end if
             tok_advance
             suppress_comma = TRUE
@@ -126,7 +138,7 @@ sub ps_funcarg(root, candidate$, suppress_comma)
             ok = TRUE
         end if
     next i
-    if not ok then ps_error "Bad argument type"
+    if not ok then ps_error "Bad argument type " + type_human_readable$(typ)
 
     'Step 4 (TODO, not yet needed): See if that expression fits a later argument
     'with all the intermediate args being optional (and omitted) token literals/
