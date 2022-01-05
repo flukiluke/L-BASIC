@@ -66,7 +66,7 @@ sub ps_funcargs(root, candidate$)
         expr = ast_get_child(root, i)
         expr_type = type_of_expr(expr)
         arg_type = type_sig_argtype(best_sig, i)
-        if expr_type <> arg_type and expr_type <> TYPE_NONE then
+        if expr_type <> arg_type and expr_type <> TYPE_NONE and expr_type <> TYPE_FLAGS then
             ast_replace_child root, i, ast_add_cast(expr, arg_type)
         end if
     next i
@@ -82,6 +82,7 @@ sub ps_funcarg(root, candidate$, suppress_comma)
     func = ast_nodes(root).ref
     expects$ = type_sig_prefix_nexts$(func, candidate$)
     suppress_comma = FALSE
+    'Step 1: Check if any literal tokens are present
     for i = 1 to type_sigt_numargs(expects$)
         expected_type = type_sigt_argtype(expects$, i)
         expected_flags = type_sigt_argflags(expects$, i)
@@ -92,6 +93,7 @@ sub ps_funcarg(root, candidate$, suppress_comma)
             elseif type_sigt_flagval(expected_flags) > 0 then 
                 'We need to generate an AST_FLAGS for this
                 expr = ast_add_node(AST_FLAGS)
+                typ = expected_type
                 ast_nodes(expr).ref = type_sigt_flagval(expected_flags)
                 flags = TYPE_TOKEN
             else
@@ -102,7 +104,9 @@ sub ps_funcarg(root, candidate$, suppress_comma)
             goto arg_done
         end if
     next i
+    'Step 2: The file handle prefix (#)
     if ps_consumed(TOK_DOUBLE_SFX) then flags = TYPE_FILEHANDLE
+    'Step 3a: Try parse an expression
     if tok_token = TOK_COMMA then
         'empty argument
         expr = ast_add_node(AST_NONE)
@@ -111,19 +115,24 @@ sub ps_funcarg(root, candidate$, suppress_comma)
         expr = ps_expr
         if type_is_lvalue(expr) then flags = flags or TYPE_BYREF
     end if
+    'Step 3b: See if that expression fits type-wise
+    typ = type_of_expr(expr)
     for i = 1 to type_sigt_numargs(expects$)
         expected_type = type_sigt_argtype(expects$, i)
         expected_flags = type_sigt_argflags(expects$, i)
         'it's unclear if "or (expected_type = 0 and expected_flags = 0)" is needed in
         'the below condition.
-        if type_sig_compatible_arg(expected_type, expected_flags, type_of_expr(expr), flags, 0) then
+        if type_sig_compatible_arg(expected_type, expected_flags, typ, flags, 0) then
             ok = TRUE
         end if
     next i
     if not ok then ps_error "Bad argument type"
 
+    'Step 4 (TODO, not yet needed): See if that expression fits a later argument
+    'with all the intermediate args being optional (and omitted) token literals/
+
     arg_done:
     ast_attach root, expr
-    candidate$ = type_sigt_add_arg(candidate$, type_of_expr(expr), flags)
+    candidate$ = type_sigt_add_arg(candidate$, typ, flags)
     debuginfo "Completed funcarg"
 end sub

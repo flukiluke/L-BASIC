@@ -340,8 +340,6 @@ function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
     elseif sig_flags and TYPE_BYREF then
         'Hardcoded check for TYPE_ANY to allow for functions that really take any variable
         result = (c_flags and TYPE_BYREF) > 0 and (sig_arg = c_arg or sig_arg = TYPE_ANY)
-    elseif sig_flags and TYPE_TOKEN then
-        result = c_arg = TYPE_FLAGS
     elseif checkmode = 0 then
         result = type_can_cast(c_arg, sig_arg)
     elseif checkmode = 1 then
