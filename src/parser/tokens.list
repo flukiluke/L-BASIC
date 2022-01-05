@@ -395,7 +395,7 @@ function randomize      none      "using,double
 # resume
 # return
 function right          string    string,integer64
-# rmdir
+function rmdir          none      string
 function rnd            single    single?
 # rset
 function rtrim          string    string
