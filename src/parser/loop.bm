@@ -41,7 +41,8 @@ function ps_do_pre
         'Need to invert guard condition
         guard = ast_add_node(AST_CALL)
         ast_nodes(guard).ref = TOK_EQUALS
-        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, mkl$(TYPE_INTEGER) + mkl$(0) + mkl$(TYPE_INTEGER) + mkl$(0))
+        sig$ = type_sigt_add_arg(type_sigt_add_arg(type_sigt_create$(TYPE_ANY), TYPE_INTEGER, 0), TYPE_INTEGER, 0)
+        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, sig$)
         ast_attach guard, ps_expr
         f = ast_add_node(AST_CONSTANT)
         ast_nodes(f).ref = AST_FALSE
@@ -76,7 +77,8 @@ function ps_do_post
         'Need to invert guard condition
         guard = ast_add_node(AST_CALL)
         ast_nodes(guard).ref = TOK_EQUALS
-        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, mkl$(TYPE_INTEGER) + mkl$(0) + mkl$(TYPE_INTEGER) + mkl$(0))
+        sig$ = type_sigt_add_arg(type_sigt_add_arg(type_sigt_create$(TYPE_ANY), TYPE_INTEGER, 0), TYPE_INTEGER, 0)
+        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, sig$)
         ast_attach guard, ps_expr
         f = ast_add_node(AST_CONSTANT)
         ast_nodes(f).ref = AST_FALSE

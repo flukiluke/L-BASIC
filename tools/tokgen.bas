@@ -4,7 +4,7 @@
 'Create TOK_ definitions and register them in the lookup table
 '
 'Nearly every element of the program can be expressed as a token, which is identified with the TOK_
-'constant ID. The symtab also has stores all tokens by name and can tell you their ID.
+'constant ID. The symtab also stores all tokens by name and can tell you their ID.
 'Once you have the ID you can access the extra data defined for that token in symtab(). See
 'symtab.bi for an explanation of that data.
 '
@@ -55,6 +55,13 @@
 ' @ prefix: The argument must be passed BYREF and its type must match exactly
 ' % prefix: The argument is a file handle and may appear with a leading #
 ' ? suffix: The argument is optional
+'
+'Alternatively, any of ARGS may be a " or ' character followed by a token defined elsewhere in the file.
+'This causes that token to be expected at that position. It also suppresses parsing the implicit
+'following comma that would otherwise be expected in the argument list.
+'If the character is ", this argument will be supplied as an AST_FLAGS argument in the call list. The value
+'of the flag is the constant FLAG_[function name]_[token name] which must be defined in the cmdflags.bi file.
+'A ' character supresses the generation of the AST_FLAGS and does not need a FLAG_* constant to be defined. Neither " not ' args may be marked optional.
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
@@ -108,7 +115,6 @@ do while not eof(1)
 
     if parts$(0) = "META" then toksym$ = "$" + toksym$
     if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
-    toksym$ = chr$(34) + toksym$ + chr$(34)
 
     select case parts$(0)
     case "GENERIC"
@@ -117,7 +123,7 @@ do while not eof(1)
         cur_toknum = toknum
         print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "GENERIC" then print #3, "sym.typ = SYM_GENERIC"
-        print #3, "sym.identifier = "; toksym$
+        print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "TYPE"
         assertsize 2
@@ -129,7 +135,7 @@ do while not eof(1)
             print #3, "sym.v1 = 1" 'Size of internal types is always 1
             print #3, "sym.v2 = SYM_TYPE_INTERNAL"
         end if
-        print #3, "sym.identifier = "; toksym$
+        print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "ARRAYTYPE"
         assertsize 4
@@ -141,7 +147,7 @@ do while not eof(1)
         if previous$(0) <> "ARRAYTYPE" then print #3, "sym.v2 = SYM_TYPE_ARRAY"
         if previous$(2) <> parts$(2) then print #3, "sym.v3 = TYPE_"; ucase$(parts$(2))
         if previous$(3) <> parts$(3) then print #3, "sym.v4 = "; parts$(3)
-        print #3, "sym.identifier = "; toksym$
+        print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "META"
         assertsize 2
@@ -149,7 +155,7 @@ do while not eof(1)
         cur_toknum = toknum
         print #2, "CONST META_" + tokname$ + " =" + str$(toknum)
         if previous$(0) <> "META" then print #3, "sym.typ = SYM_META"
-        print #3, "sym.identifier = "; toksym$
+        print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "FUNCTION"
         assertsize_range 3, 4
@@ -164,10 +170,10 @@ do while not eof(1)
         end if
         process_return_type previous$(1), parts$(1), parts$(2)
         if ubound(parts$) = 3 then
-            process_arg_list parts$(3)
+            process_arg_list toksym$, parts$(3)
         end if
         if previous$(1) <> parts$(1) then
-            print #3, "sym.identifier = "; toksym$
+            print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
         end if
     case "PREFIX"
@@ -180,9 +186,9 @@ do while not eof(1)
         if previous$(0) <> "PREFIX" then print #3, "sym.typ = SYM_PREFIX"
         if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         process_return_type previous$(1), parts$(1), parts$(3)
-        process_arg_list parts$(4)
+        process_arg_list toksym$, parts$(4)
         if previous$(1) <> parts$(1) then
-            print #3, "sym.identifier = "; toksym$
+            print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
         end if
     case "INFIX"
@@ -198,9 +204,9 @@ do while not eof(1)
             if parts$(3) = "RIGHT" then print #3, "sym.v3 = 1" else print #3, "sym.v3 = 0"
         end if
         process_return_type previous$(1), parts$(1), parts$(4)
-        process_arg_list parts$(5)
+        process_arg_list toksym$, parts$(5)
         if previous$(1) <> parts$(1) then
-            print #3, "sym.identifier = "; toksym$
+            print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
         end if
     case "LITERAL"
@@ -224,17 +230,18 @@ ehandler:
 
 sub process_return_type(prev_name$, cur_name$, ret_type$)
     if prev_name$ = cur_name$ then
-        print #3, "sym.v1 = type_add_sig(sym.v1, type_sig_create$(TYPE_" + ret_type$ + "))"
+        print #3, "sym.v1 = type_add_sig(sym.v1, type_sigt_create$(TYPE_" + ret_type$ + "))"
     else
-        print #3, "sym.v1 = type_add_sig(0, type_sig_create$(TYPE_" + ret_type$ + "))"
+        print #3, "sym.v1 = type_add_sig(0, type_sigt_create$(TYPE_" + ret_type$ + "))"
     end if
 end sub
 
-sub process_arg_list(arglist$)
+sub process_arg_list(funcname$, arglist$)
     split_args arglist$
     const TYPE_OPTIONAL = 1
     const TYPE_BYREF = 2
     const TYPE_FILEHANDLE = 8
+    const TYPE_TOKEN = 16
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
         flags = 0
@@ -250,7 +257,20 @@ sub process_arg_list(arglist$)
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_FILEHANDLE
         end if
-        print #3, "type_add_sig_arg sym.v1, TYPE_"; args$(i); ","; flags
+        quoting$ = ""
+        if left$(args$(i), 1) = chr$(34) or left$(args$(i), 1) = "'" then
+            quoting$ = left$(args$(i), 1)
+            args$(i) = mid$(args$(i), 2)
+            flags = flags OR TYPE_TOKEN
+            if flags AND TYPE_OPTIONAL then fatalerror "Token argument cannot be optional"
+        end if
+        if quoting$ = chr$(34) then
+            print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags; "OR _SHL(FLAG_"; funcname$; "_"; args$(i); ", 16)"
+        elseif quoting$ = "'" then
+            print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags; "OR _SHL(-1, 16)"
+        else
+            print #3, "type_sig_add_arg sym.v1, TYPE_"; args$(i); ","; flags
+        end if
     next i
 end sub
 
@@ -297,6 +317,10 @@ sub split_args(in$)
         end if
     loop
 end sub
+
+function quote$(a$)
+    quote$ = chr$(34) + a$ + chr$(34)
+end function
 
 sub assertsize_range(min_expected, max_expected)
     if ubound(parts$) < min_expected - 1 or ubound(parts$) > max_expected + 1 then

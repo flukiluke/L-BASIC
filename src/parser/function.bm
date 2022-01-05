@@ -19,11 +19,11 @@ function ps_funccall_p(func)
     sigil = ps_opt_sigil
     if tok_token = TOK_OPAREN then
         ps_consume TOK_OPAREN
-        ps_funcargs root
+        ps_funcargs root, type_sigt_create$(TYPE_ANY)
         ps_consume TOK_CPAREN
     else
-        'function has no arguments
-        matching_sig = type_find_sig_match(func, "")
+       'function has no arguments
+        matching_sig = type_find_sig_match(func, type_sigt_create$(TYPE_ANY))
         if matching_sig = 0 then ps_error "Cannot find matching type signature"
         ast_nodes(root).ref2 = matching_sig
         'Add any optional arguments at end
@@ -34,69 +34,105 @@ function ps_funccall_p(func)
     if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
     ps_funccall_p = root
     debuginfo "Completed function call"
-end function
+ end function
 
 'Expects: first token after function name
 'Results: token after argument list
-sub ps_funcargs(root)
-    ps_funcargs_tail root, ""
-end sub
-
-'Expects: token in argument list
-'Results: token after argument list
-'Note: This allows parsing an argument list that is already partially parsed by specialised functions
-sub ps_funcargs_tail(root, candidate$)
+sub ps_funcargs(root, candidate$)
     debuginfo "Start funcargs"
-    'This code first builds a candidate type signature, then tries to match that against an instance signature.
-    func = ast_nodes(root).ref
-    if tok_token = TOK_COMMA then ps_funcarg root, candidate$
+    'Handle empty argument at start
+    if tok_token = TOK_COMMA then ps_funcarg root, candidate$, suppress_comma
+    'Loop over arguments and build candidate$ as a list of argument types
     do
         if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
         select case tok_token
         case TOK_COMMA
             ps_consume TOK_COMMA
-            ps_funcarg root, candidate$
+            ps_funcarg root, candidate$, suppress_comma
         case else
-            ps_funcarg root, candidate$
+            ps_funcarg root, candidate$, suppress_comma
         end select
     loop
+    debuginfo "Parsed candidate: " + type_human_sig$(candidate$)
+    'candidate$ may match multiple sigs; decide which fits "best". See type.bm for
+    'details on what "best" means. This may still fail because the candidate has only
+    'been checked as a prefix, never for an exect match on the number of arguments.
+    best_sig = type_find_sig_match(ast_nodes(root).ref, candidate$)
+    if best_sig = 0 then ps_error "Cannot find matching type signature"
+    ast_nodes(root).ref2 = best_sig
 
-    'Now we need to find a signature of func that matches candidate$.
-    matching_sig = type_find_sig_match(func, candidate$)
-    if matching_sig = 0 then ps_error "Cannot find matching type signature"
-    ast_nodes(root).ref2 = matching_sig
     'Modify argument nodes to add in casts where needed
     for i = 1 to ast_num_children(root)
         expr = ast_get_child(root, i)
         expr_type = type_of_expr(expr)
-        arg_type = type_sig_argtype(matching_sig, i)
-        if expr_type <> arg_type and expr_type <> TYPE_NONE then
+        arg_type = type_sig_argtype(best_sig, i)
+        if expr_type <> arg_type and expr_type <> TYPE_NONE and expr_type <> TYPE_FLAGS then
             ast_replace_child root, i, ast_add_cast(expr, arg_type)
         end if
     next i
     'Add any optional arguments at end
-    for i = ast_num_children(root) + 1 to type_sig_numargs(matching_sig)
+    for i = ast_num_children(root) + 1 to type_sig_numargs(best_sig)
         ast_attach root, ast_add_node(AST_NONE)
     next i
     debuginfo "Completed funcargs"
 end sub
 
-'Expects: start of expression
-'Results: token after expression
-sub ps_funcarg(root, candidate$)
+sub ps_funcarg(root, candidate$, suppress_comma)
     debuginfo "Start funcarg"
+    func = ast_nodes(root).ref
+    expects$ = type_sig_prefix_nexts$(func, candidate$)
+    suppress_comma = FALSE
+    'Step 1: Check if any literal tokens are present
+    for i = 1 to type_sigt_numargs(expects$)
+        expected_type = type_sigt_argtype(expects$, i)
+        expected_flags = type_sigt_argflags(expects$, i)
+        if expected_flags AND TYPE_TOKEN and expected_type = tok_token then
+            'We have found a literal token we were told to expect
+            if type_sigt_flagval(expected_flags) = 0 then
+                ps_error "Undefined flag"
+            elseif type_sigt_flagval(expected_flags) > 0 then 
+                'We need to generate an AST_FLAGS for this
+                expr = ast_add_node(AST_FLAGS)
+                typ = expected_type
+                ast_nodes(expr).ref = type_sigt_flagval(expected_flags)
+                flags = TYPE_TOKEN
+            else
+                print "!"; type_sigt_flagval(expected_flags)
+            end if
+            tok_advance
+            suppress_comma = TRUE
+            goto arg_done
+        end if
+    next i
+    'Step 2: The file handle prefix (#)
     if ps_consumed(TOK_DOUBLE_SFX) then flags = TYPE_FILEHANDLE
+    'Step 3a: Try parse an expression
     if tok_token = TOK_COMMA then
         'empty argument
         expr = ast_add_node(AST_NONE)
         flags = flags or TYPE_BYREF
     else
         expr = ps_expr
+        if type_is_lvalue(expr) then flags = flags or TYPE_BYREF
     end if
-    'Declare whether this expression would satisfy a BYREF argument
-    if type_is_lvalue(expr) then flags = flags or TYPE_BYREF
-    candidate$ = type_sig_add_arg$(candidate$, type_of_expr(expr), flags)
+    'Step 3b: See if that expression fits type-wise
+    typ = type_of_expr(expr)
+    for i = 1 to type_sigt_numargs(expects$)
+        expected_type = type_sigt_argtype(expects$, i)
+        expected_flags = type_sigt_argflags(expects$, i)
+        'it's unclear if "or (expected_type = 0 and expected_flags = 0)" is needed in
+        'the below condition.
+        if type_sig_compatible_arg(expected_type, expected_flags, typ, flags, 0) then
+            ok = TRUE
+        end if
+    next i
+    if not ok then ps_error "Bad argument type"
+
+    'Step 4 (TODO, not yet needed): See if that expression fits a later argument
+    'with all the intermediate args being optional (and omitted) token literals/
+
+    arg_done:
     ast_attach root, expr
+    candidate$ = type_sigt_add_arg(candidate$, typ, flags)
     debuginfo "Completed funcarg"
 end sub
-

@@ -115,22 +115,68 @@ function type_can_safely_cast(a, b)
     end if
 end function
 
+'The following functions are helpers to extract data from type signatures. type_sig_*
+'variants take a numeric indentifier, type_sigt_* variants take a string holding the
+'signature itself. arg_index is one-indexed, so 1 is the first argument in the signature.
+'The type signature format (mkl$ encoded type, flags pairs) is used more generally for
+'lists of types; in those cases the first component (return type) may be meaningless.
+
+'What is the return type of the given signature?
 function type_sig_return(sig_index)
-    type_sig_return = cvl(left$(type_signatures(sig_index).sig, 4))
+    type_sig_return = type_sigt_return(type_signatures(sig_index).sig)
 end function
 
+function type_sigt_return(sig$)
+    type_sigt_return = cvl(left$(sig$, 4))
+end function
+
+'How many arguments (passed parameters) does a signature have, including all optionals?
 function type_sig_numargs(sig_index)
-    type_sig_numargs = (len(type_signatures(sig_index).sig) - 4) / 8
+    type_sig_numargs = type_sigt_numargs(type_signatures(sig_index).sig)
 end function
 
+function type_sigt_numargs(sig$)
+    type_sigt_numargs = (len(sig$) - 4) / 8
+end function
+
+'What is the type of a particular argument in a signature?
 function type_sig_argtype(sig_index, arg_index)
-    type_sig_argtype = cvl(mid$(type_signatures(sig_index).sig, arg_index * 8 - 3, 4))
+    type_sig_argtype = type_sigt_argtype(type_signatures(sig_index).sig, arg_index)
 end function
 
+function type_sigt_argtype(sig$, arg_index)
+    type_sigt_argtype = cvl(mid$(sig$, arg_index * 8 - 3, 4))
+end function
+
+'What are the flags of a particular argument in a signature?
 function type_sig_argflags(sig_index, arg_index)
-    type_sig_argflags = cvl(mid$(type_signatures(sig_index).sig, arg_index * 8 + 1, 4))
+    type_sig_argflags = type_sigt_argflags(type_signatures(sig_index).sig, arg_index)
 end function
 
+function type_sigt_argflags(sig$, arg_index)
+    type_sigt_argflags = cvl(mid$(sig$, arg_index * 8 + 1, 4))
+end function
+
+function type_sigt_flagval(flags)
+    type_sigt_flagval = _shr(flags, 16)
+end function
+
+'Append an argument of the given type and flags to a signature
+sub type_sig_add_arg(sig_index, typ, flags)
+    type_signatures(sig_index).sig = type_sigt_add_arg$(type_signatures(sig_index).sig, typ, flags)
+end sub
+
+function type_sigt_add_arg$(old$, new_argtype, new_argflags)
+    type_sigt_add_arg$ = old$ + mkl$(new_argtype) + mkl$(new_argflags)
+end function
+
+'Begin a new signature (no type_sig variant because it's unneeded)
+function type_sigt_create$(return_type)
+    type_sigt_create$ = mkl$(return_type)
+end function
+
+'Append a sig to the linked list ending in previous if previous > 0, otherwise start a
+'new list
 function type_add_sig(previous, sig$)
     type_last_signature = type_last_signature + 1
     if ubound(type_signatures) = type_last_signature then
@@ -142,16 +188,78 @@ function type_add_sig(previous, sig$)
     type_add_sig = type_last_signature
 end function
 
-sub type_add_sig_arg(sig_index, typ, flags)
-    type_signatures(sig_index).sig = type_sig_add_arg$(type_signatures(sig_index).sig, typ, flags)
-end sub
-    
-function type_sig_create$(return_type)
-    type_sig_create$ = mkl$(return_type)
+
+'Given an incomplete candidate, what types could we possibly expect to see next?
+'Return format is list of 4 bytes padding + mkl$(type) + mkl$(flags). Padding
+'allows using type_sigt_* functions to access. mkl$(0) + mkl$(0) means
+'"expect end of args".
+function type_sig_prefix_nexts$(func, candidate$)
+    result$ = type_sigt_create$(0) 'return type is meaningless
+    compatibles$ = type_sig_prefix_compatibles$(func, candidate$)
+    clen = type_sigt_numargs(candidate$)
+    'compatibles$ is list of possible sigs, but we can use type_sigt_* on it anyway
+    for i = 1 to type_sigt_numargs(compatibles$)
+        'For each sig, determine what token we would be added to the candiate next
+        'if it were the true signature being read
+        sig_index = type_sigt_argtype(compatibles$, i)
+        if type_sig_numargs(sig_index) = clen then
+            'there are no more tokens expected for this sig, candidate matches exactly
+            result$ = type_sigt_add_arg(result$, 0, 0)
+        elseif type_sig_numargs(sig_index) > clen then
+            'candidate currently only has a prefix-set of the arguments
+            result$ = type_sigt_add_arg(result$, type_sig_argtype(sig_index, clen + 1), type_sig_argflags(sig_index, clen + 1))
+        else
+            'Should never occur
+            ps_error "Impossible sig length"
+        end if
+    next i
+    type_sig_prefix_nexts$ = result$
+    for i = 1 to type_sigt_numargs(result$)
+        debugmsg$ = debugmsg$ + " " + type_human_readable$(type_sigt_argtype(result$, i))
+    next i
+    debuginfo "Nexts list: " + debugmsg$
 end function
 
-function type_sig_add_arg$(old$, new_argtype, new_argflags)
-    type_sig_add_arg$ = old$ + mkl$(new_argtype) + mkl$(new_argflags)
+'Given a (possibly incomplete) candidate, find sigs for func that are compatible
+'Return format is list of mkl$(sig_index)
+function type_sig_prefix_compatibles$(func, candidate$)
+    compatibles$ = type_sigt_create$(0)
+    sig_index = symtab(func).v1
+    while sig_index <> 0
+        if type_sig_is_prefix_compatible(sig_index, candidate$, 0) then
+            compatibles$ = type_sigt_add_arg(compatibles$, sig_index, 0)
+        end if
+        sig_index = type_signatures(sig_index).succ
+    wend
+    type_sig_prefix_compatibles$ = compatibles$
+end function
+
+function type_sig_is_prefix_compatible(sig_index, candidate$, checkmode)
+    debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig)
+    'candidate will generally have ANY or NONE return types for FUNCTION and SUB 
+    'contexts respectively. In the future though this may become more specific, 
+    'so ensure the actual return type can be cast to what is needed.
+    if not type_can_cast(type_sig_return(sig_index), type_sigt_return(candidate$)) then
+        debuginfo "No, return types not compatible"
+        exit function
+    end if
+    for argi = 1 to type_sigt_numargs(candidate$)
+        if argi > type_sig_numargs(sig_index) then
+            'Cannot possibly match, candidate has more args than sig can accept
+            debuginfo "No, candidate has too many arguments"
+            exit function
+        end if
+        sig_arg = type_sig_argtype(sig_index, argi)
+        sig_flags = type_sig_argflags(sig_index, argi)
+        c_arg = type_sigt_argtype(candidate$, argi)
+        c_flags = type_sigt_argflags(candidate$, argi)
+        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
+            debuginfo "No, mismatch on arg" + str$(argi) + " (candidate has " + type_human_readable$(c_arg) + ")"
+            exit function
+        end if
+    next argi
+    debuginfo "(Prefix) All arguments match"
+    type_sig_is_prefix_compatible = TRUE
 end function
 
 'Function call resolution!
@@ -177,41 +285,27 @@ end function
 'doesn't lose data is picked. 2b is a fallback if a cast is inevitable.
 
 function type_find_sig_match(func, candidate$)
-    debuginfo "Function resolution candidate is " + type_human_sig$(mkl$(0) + candidate$)
+    debuginfo "Function resolution candidate is " + type_human_sig$(candidate$)
     sig_index = symtab(func).v1
+    compatibles$ = type_sigt_create$(0)
     while sig_index <> 0
         if type_sig_is_compatible(sig_index, candidate$, 0) then
-            compatibles$ = compatibles$ + mkl$(sig_index)
+            compatibles$ = type_sigt_add_arg$(compatibles$, sig_index, 0)
         end if
         sig_index = type_signatures(sig_index).succ
     wend
-    if len(compatibles$) = 0 then
+    if type_sigt_numargs(compatibles$) = 0 then
         exit function
-    elseif len(compatibles$) = 4 then
-        type_find_sig_match = cvl(compatibles$)
+    elseif type_sigt_numargs(compatibles$) = 1 then
+        type_find_sig_match = type_sigt_argtype(compatibles$, 1)
     else
         type_find_sig_match = type_pick_best_compatible_sig(compatibles$, candidate$)
     end if
 end function
 
 function type_sig_is_compatible(sig_index, candidate$, checkmode)
-    debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig)
-    for argi = 1 to len(candidate$) / 8
-        if argi > type_sig_numargs(sig_index) then
-            'Cannot possibly match, candidate has more args than sig can accept
-            debuginfo "No, candidate has too many arguments"
-            exit function
-        end if
-        sig_arg = type_sig_argtype(sig_index, argi)
-        sig_flags = type_sig_argflags(sig_index, argi)
-        c_arg = cvl(mid$(candidate$, 8 * argi - 7, 4))
-        c_flags = cvl(mid$(candidate$, 8 * argi - 3, 4))
-        if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
-            debuginfo "No, mismatch on arg" + str$(argi) + " (candidate has " + type_human_readable$(c_arg) + ")"
-            exit function
-        end if
-    next argi
-    for i = argi to type_sig_numargs(sig_index)
+    if not type_sig_is_prefix_compatible(sig_index, candidate$, checkmode) then exit function
+    for i = type_sigt_numargs(candidate$) + 1 to type_sig_numargs(sig_index)
         'sig has more args; they had better be optional
         if (type_sig_argflags(sig_index, i) AND TYPE_OPTIONAL) = 0 then
             debuginfo "No, required argument" + str$(i) + " not provided"
@@ -226,8 +320,8 @@ function type_pick_best_compatible_sig(compatibles$, candidate$)
     'Picks the first sig that has lossless casts, otherwise the last sig if
     'no lossless casts are available.
     debuginfo "Looking for a safe cast option"
-    for i = 1 to len(compatibles$) / 4
-        sig_index = cvl(mid$(compatibles$, i * 4 - 3, 4))
+    for i = 1 to type_sigt_numargs(compatibles$)
+        sig_index = type_sigt_argtype(compatibles$, i)
         if type_sig_is_compatible(sig_index, candidate$, 1) then
             type_pick_best_compatible_sig = sig_index
             debuginfo "Safe signature found."
@@ -235,7 +329,8 @@ function type_pick_best_compatible_sig(compatibles$, candidate$)
         end if
     next i
     debuginfo "No safe signature found."
-    type_pick_best_compatible_sig = cvl(right$(compatibles$, 4))
+    'Default to last sig on list
+    type_pick_best_compatible_sig = type_sigt_argtype(compatibles$, type_sigt_numargs(compatibles$))
 end function
 
 function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
@@ -263,16 +358,21 @@ function type_human_readable$(typ)
 end function
 
 function type_human_sig$(sig$)
-    o$ = type_human_readable$(cvl(left$(sig$, 4))) + "("
-    for p = 1 to (len(sig$) - 4) / 8
-        flags = cvl(mid$(sig$,p * 8 + 1, 4))
+    o$ = type_human_readable$(type_sigt_return(sig$)) + "("
+    for p = 1 to type_sigt_numargs(sig$)
+        flags = type_sigt_argflags(sig$, p)
         if flags and TYPE_BYVAL then o$ = o$ + "BYVAL "
         if flags and TYPE_BYREF then o$ = o$ + "BYREF "
         if flags and TYPE_OPTIONAL then o$ = o$ + "OPTION "
         if flags and TYPE_FILEHANDLE then o$ = o$ + "#"
-        o$ = o$ + type_human_readable$(cvl(mid$(sig$, p * 8 - 3, 4)))
-        if p < (len(sig$) - 4) / 8 then o$ = o$ + ", "
+        if flags and TYPE_TOKEN then
+            o$ = o$ + tok_human_readable$(type_sigt_argtype(sig$, p))
+        else
+            o$ = o$ + type_human_readable$(type_sigt_argtype(sig$, p))
+        end if
+        o$ = o$ + ", "
     next p
+    if right$(o$, 2) = ", " then o$ = left$(o$, len(o$) - 2) 'Trim trailing comma
     type_human_sig$ = o$ + ")"
 end function
  

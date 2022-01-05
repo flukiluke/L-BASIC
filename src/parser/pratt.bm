@@ -56,7 +56,8 @@ function nud(token, content$)
             ast_nodes(node).ref = token
             expr = pt_expr(symtab(token).v2)
             if type_is_lvalue(expr) then candidate_flags = TYPE_BYREF
-            candidate$ = type_sig_add_arg$("", type_of_expr(expr), flags)
+            candidate$ = type_sigt_create$(TYPE_ANY)
+            candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), flags)
             matching_sig = type_find_sig_match(token, candidate$)
             if matching_sig = 0 then ps_error "Cannot find matching type signature"
             ast_attach node, ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
@@ -87,7 +88,7 @@ function lbp(token, content$)
 end function
 
 function led(token, content$, left_node)
-    'content$ is not used by might be useful one day.
+    'content$ is not used but might be useful one day.
     'This next line stops the warning about unused variables.
     content$ = content$
     node = ast_add_node(AST_CALL)
@@ -99,10 +100,11 @@ function led(token, content$, left_node)
         else 'right-associative
             right_node = pt_expr(symtab(token).v2 - 1)
         end if
+        candidate$ = type_sigt_create$(TYPE_ANY)
         if type_is_lvalue(left_node) then candidate_flags = TYPE_BYREF
-        candidate$ = type_sig_add_arg$("", type_of_expr(left_node), flags)
+        candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(left_node), flags)
         if type_is_lvalue(right_node) then candidate_flags = TYPE_BYREF
-        candidate$ = type_sig_add_arg$(candidate$, type_of_expr(right_node), flags)
+        candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(right_node), flags)
         matching_sig = type_find_sig_match(token, candidate$)
         if matching_sig = 0 then ps_error "Cannot find matching type signature"
         ast_attach node, ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
