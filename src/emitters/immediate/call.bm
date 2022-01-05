@@ -27,6 +27,7 @@ sub imm_do_call_internal(node, result as imm_value_t)
     '$include: 'calls/maths.bm'
     '$include: 'calls/os.bm'
     '$include: 'calls/print.bm'
+    '$include: 'calls/random.bm'
     '$include: 'calls/rounding.bm'
     '$include: 'calls/screen.bm'
     '$include: 'calls/sound.bm'
