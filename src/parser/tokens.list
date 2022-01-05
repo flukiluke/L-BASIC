@@ -387,7 +387,7 @@ function put            none      %long,integer64?,quad?
 
 generic random
 function randomize      none      double?
-function randomize      none      "using?,double
+function randomize      none      "using,double
 # read
 # redim
 # reset

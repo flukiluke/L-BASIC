@@ -41,16 +41,16 @@ function ps_funccall_p(func)
 sub ps_funcargs(root, candidate$)
     debuginfo "Start funcargs"
     'Handle empty argument at start
-    if tok_token = TOK_COMMA then ps_funcarg root, candidate$
+    if tok_token = TOK_COMMA then ps_funcarg root, candidate$, suppress_comma
     'Loop over arguments and build candidate$ as a list of argument types
     do
         if ps_is_terminator(tok_token) or tok_token = TOK_CPAREN then exit do
         select case tok_token
         case TOK_COMMA
             ps_consume TOK_COMMA
-            ps_funcarg root, candidate$
+            ps_funcarg root, candidate$, suppress_comma
         case else
-            ps_funcarg root, candidate$
+            ps_funcarg root, candidate$, suppress_comma
         end select
     loop
     debuginfo "Parsed candidate: " + type_human_sig$(candidate$)
@@ -77,10 +77,31 @@ sub ps_funcargs(root, candidate$)
     debuginfo "Completed funcargs"
 end sub
 
-sub ps_funcarg(root, candidate$)
+sub ps_funcarg(root, candidate$, suppress_comma)
     debuginfo "Start funcarg"
     func = ast_nodes(root).ref
     expects$ = type_sig_prefix_nexts$(func, candidate$)
+    suppress_comma = FALSE
+    for i = 1 to type_sigt_numargs(expects$)
+        expected_type = type_sigt_argtype(expects$, i)
+        expected_flags = type_sigt_argflags(expects$, i)
+        if expected_flags AND TYPE_TOKEN and expected_type = tok_token then
+            'We have found a literal token we were told to expect
+            if type_sigt_flagval(expected_flags) = 0 then
+                ps_error "Undefined flag"
+            elseif type_sigt_flagval(expected_flags) > 0 then 
+                'We need to generate an AST_FLAGS for this
+                expr = ast_add_node(AST_FLAGS)
+                ast_nodes(expr).ref = type_sigt_flagval(expected_flags)
+                flags = TYPE_TOKEN
+            else
+                print "!"; type_sigt_flagval(expected_flags)
+            end if
+            tok_advance
+            suppress_comma = TRUE
+            goto arg_done
+        end if
+    next i
     if ps_consumed(TOK_DOUBLE_SFX) then flags = TYPE_FILEHANDLE
     if tok_token = TOK_COMMA then
         'empty argument
@@ -93,13 +114,15 @@ sub ps_funcarg(root, candidate$)
     for i = 1 to type_sigt_numargs(expects$)
         expected_type = type_sigt_argtype(expects$, i)
         expected_flags = type_sigt_argflags(expects$, i)
-        'it's unclear if "or expected_type = 0 and expected_flags = 0" is needed in
+        'it's unclear if "or (expected_type = 0 and expected_flags = 0)" is needed in
         'the below condition.
         if type_sig_compatible_arg(expected_type, expected_flags, type_of_expr(expr), flags, 0) then
             ok = TRUE
         end if
     next i
     if not ok then ps_error "Bad argument type"
+
+    arg_done:
     ast_attach root, expr
     candidate$ = type_sigt_add_arg(candidate$, type_of_expr(expr), flags)
     debuginfo "Completed funcarg"

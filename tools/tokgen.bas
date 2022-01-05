@@ -4,7 +4,7 @@
 'Create TOK_ definitions and register them in the lookup table
 '
 'Nearly every element of the program can be expressed as a token, which is identified with the TOK_
-'constant ID. The symtab also has stores all tokens by name and can tell you their ID.
+'constant ID. The symtab also stores all tokens by name and can tell you their ID.
 'Once you have the ID you can access the extra data defined for that token in symtab(). See
 'symtab.bi for an explanation of that data.
 '
@@ -56,11 +56,12 @@
 ' % prefix: The argument is a file handle and may appear with a leading #
 ' ? suffix: The argument is optional
 '
-'Alternatively, any of ARGS may be a " character followed by a token defined elsewhere in the file.
+'Alternatively, any of ARGS may be a " or ' character followed by a token defined elsewhere in the file.
 'This causes that token to be expected at that position. It also suppresses parsing the implicit
 'following comma that would otherwise be expected in the argument list.
-'This argument will be supplied as an AST_FLAGS argument in the call list. The value of the flag
-'is the constant FLAG_[function name]_[token name] which must be defined in the cmdflags.bi file.
+'If the character is ", this argument will be supplied as an AST_FLAGS argument in the call list. The value
+'of the flag is the constant FLAG_[function name]_[token name] which must be defined in the cmdflags.bi file.
+'A ' character supresses the generation of the AST_FLAGS and does not need a FLAG_* constant to be defined. Neither " not ' args may be marked optional.
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
@@ -256,12 +257,17 @@ sub process_arg_list(funcname$, arglist$)
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_FILEHANDLE
         end if
-        if left$(args$(i), 1) = chr$(34) then
+        quoting$ = ""
+        if left$(args$(i), 1) = chr$(34) or left$(args$(i), 1) = "'" then
+            quoting$ = left$(args$(i), 1)
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_TOKEN
+            if flags AND TYPE_OPTIONAL then fatalerror "Token argument cannot be optional"
         end if
-        if flags AND TYPE_TOKEN then
+        if quoting$ = chr$(34) then
             print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags; "OR _SHL(FLAG_"; funcname$; "_"; args$(i); ", 16)"
+        elseif quoting$ = "'" then
+            print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags; "OR _SHL(-1, 16)"
         else
             print #3, "type_sig_add_arg sym.v1, TYPE_"; args$(i); ","; flags
         end if
