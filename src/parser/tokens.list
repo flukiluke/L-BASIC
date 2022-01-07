@@ -334,8 +334,8 @@ function len            integer64 @double
 function len            integer64 @quad
 # let
 function _limit         none      long
-function line           none      'dash,"step?,'oparen,single,single,'cparen,$b|bf?,long?
-function line           none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,$b|bf?,long?
+function line           none      'dash,"step?,'oparen,single,single,'cparen,long,$b|bf?,long?
+function line           none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,long,$b|bf?,long?
 # line input
 # loc
 function locate         none      integer?,integer?,integer?

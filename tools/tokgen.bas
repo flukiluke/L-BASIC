@@ -226,6 +226,7 @@ do while not eof(1)
         previous$(i) = parts$(i)
     next i
 loop
+print #3, "ast_commit"
 system
 
 ehandler:

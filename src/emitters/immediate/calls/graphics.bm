@@ -29,6 +29,56 @@ case TOK_DRAW
     imm_eval ast_get_child(node, 1), v1
     draw v1.s
 
+case TOK_LINE
+    if ast_num_children(node) = 6 then
+        src_step = true
+        v1.n = 0
+        v2.n = 0
+        if ast_is_none(ast_get_child(node, 1)) then dest_step = false else dest_step = true
+        imm_eval ast_get_child(node, 2), v3
+        imm_eval ast_get_child(node, 3), v4
+        imm_eval ast_get_child(node, 4), v5
+        mode_child = ast_get_child(node, 5)
+        style_child = ast_get_child(node, 6)
+    else
+        if ast_is_none(ast_get_child(node, 1)) then src_step = false else src_step = true
+        imm_eval ast_get_child(node, 2), v1
+        imm_eval ast_get_child(node, 3), v2
+        if ast_is_none(ast_get_child(node, 4)) then dest_step = false else dest_step = true
+        imm_eval ast_get_child(node, 5), v3
+        imm_eval ast_get_child(node, 6), v4
+        imm_eval ast_get_child(node, 7), v5
+        mode_child = ast_get_child(node, 8)
+        style_child = ast_get_child(node, 9)
+    end if
+    if ast_is_none(mode_child) then mode = 0 else mode = ast_nodes(mode_child).ref2
+    if ast_is_none(style_child) then v6.n = 65535 else imm_eval style_child, v6
+    if not src_step and not dest_step and mode = 0 then
+        line (v1.n, v2.n)-(v3.n, v4.n), v5.n, , v6.n
+    elseif not src_step and not dest_step and mode = 1 then
+        line (v1.n, v2.n)-(v3.n, v4.n), v5.n, b, v6.n
+    elseif not src_step and not dest_step and mode = 2 then
+        line (v1.n, v2.n)-(v3.n, v4.n), v5.n, bf, v6.n
+    elseif not src_step and dest_step and mode = 0 then
+        line (v1.n, v2.n)-step(v3.n, v4.n), v5.n, , v6.n
+    elseif not src_step and dest_step and mode = 1 then
+        line (v1.n, v2.n)-step(v3.n, v4.n), v5.n, b, v6.n
+    elseif not src_step and dest_step and mode = 2 then
+        line (v1.n, v2.n)-step(v3.n, v4.n), v5.n, bf, v6.n
+    elseif src_step and not dest_step and mode = 0 then
+        line step(v1.n, v2.n)-(v3.n, v4.n), v5.n, , v6.n
+    elseif src_step and not dest_step and mode = 1 then
+        line step(v1.n, v2.n)-(v3.n, v4.n), v5.n, b, v6.n
+    elseif src_step and not dest_step and mode = 2 then
+        line step(v1.n, v2.n)-(v3.n, v4.n), v5.n, bf, v6.n
+    elseif src_step and dest_step and mode = 0 then
+        line step(v1.n, v2.n)-step(v3.n, v4.n), v5.n, , v6.n
+    elseif src_step and dest_step and mode = 1 then
+        line step(v1.n, v2.n)-step(v3.n, v4.n), v5.n, b, v6.n
+    elseif src_step and dest_step and mode = 2 then
+        line step(v1.n, v2.n)-step(v3.n, v4.n), v5.n, bf, v6.n
+    end if
+
 case TOK_SCREEN
     'Ignores second argument
     imm_eval ast_get_child(node, 1), v1
