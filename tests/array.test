@@ -1,0 +1,91 @@
+$title: one dimensional array
+dim f(4)
+dim g(6) as string
+dim h&(-3 to 6)
+for i = 0 to 4
+    if i <> 3 then f(i) = i + 0.5
+next i
+for i = 0 to 6
+    if i <> 4 then g(i) = ltrim(str(i))
+next i
+for i = -3 to 6
+    h&(i) = i + 0.1
+next i
+for i = 0 to 4
+    print f(i);
+next i
+print
+for i = 0 to 6
+    print g(i);
+next i
+print
+for i = -3 to 6
+    print h(i);
+next i
+$expect: stdout
+.5  1.5  2.5  0  4.5
+012356
+-3 -2 -1  0  1  2  3  4  5  6
+$finish
+
+$title: multi-dimensional array
+dim f$(3, 1 to 2, -3 to 1)
+for i = 0 to 3
+    for j = 1 to 2
+        for k = -3 to 1
+            f(i, j, k) = str(i) + ltrim(str(j)) + ltrim(str(k))
+        next k
+    next j
+next i
+for i = 0 to 3
+    for j = 1 to 2
+        for k = -3 to 1
+            print f(i, j, k);
+        next k
+    next j
+next i
+$expect: stdout
+01-3 21-3 21-2 22-3 22-2 21-2 22-3 22-2 22-1 220 11-3 31-3 31-2 32-3 32-2 31-2 32-3 32-2 32-1 320 21-3 21-2 22-3 22-2 22-1 22-3 22-2 22-1 220 221 31-3 31-2 32-3 32-2 32-1 32-3 32-2 32-1 320 321
+$finish
+
+$title: array of udt
+type t
+    a as long
+    b as string
+end type
+dim f(4) as t
+for i = 0 to 4
+    f(i).a = i
+    f(i).b = ltrim(str(i))
+next i
+for i = 0 to 4
+    print f(i).a; f(i).b;
+next i
+$expect: stdout
+0 0 1 1 2 2 3 3 4 4
+$finish
+
+
+$title: array bounds checking 1
+'Feature not implemented; test expected to fail
+dim f(4)
+f(5) = 3
+$expect: error
+
+$title: array bounds checking 2
+'Feature not implemented; test expected to fail
+dim f(4)
+f(-1) = 3
+$expect: error
+
+$title: array bounds checking 3
+'Feature not implemented; test expected to fail
+dim f(2 to 4)
+f(1) = 3
+$expect: error
+
+$title: array bounds checking 4
+'Feature not implemented; test expected to fail
+dim f(3, 1 to 6)
+f(1, 0) = 3
+$expect: error
