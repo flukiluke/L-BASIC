@@ -234,7 +234,7 @@ function cdbl           double    double
 function chdir          none      string
 function chr            string    integer
 function cint           integer   integer
-function circle         none      flags,single,single,integer,long?,single?,single?,single?
+function circle         none      "step?,'oparen,single,single,'cparen,single,long?,single?,single?,single?
 # clear
 function clng           long      long
 function close          none      %long?

@@ -1,37 +1,3 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
 'drawing.bm - Parse rules for vector drawing commands
-
-'Expects: TOK_CIRCLE
-'Results: newline
-'Format: CIRCLE [STEP] (x!,y!),radius![,[color&] [,[start!] [,[end!] [,aspect!]]]]
-function ps_circle
-    debuginfo "Start circle"
-    root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = TOK_CIRCLE
-    ps_consume TOK_CIRCLE
-
-    flags = ast_add_node(AST_FLAGS)
-    if tok_token = TOK_STEP then
-        ast_nodes(flags).ref = GRAPHICS_STEP
-        ps_consume TOK_STEP
-    end if
-    ast_attach root, flags
-    candidate$ = type_sigt_add_arg$(type_sigt_create$(TYPE_NONE), TYPE_FLAGS, 0)
-
-    ps_consume TOK_OPAREN
-    expr = ps_expr
-    ast_attach root, expr
-    candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), 0)
-    ps_consume TOK_COMMA
-    expr = ps_expr
-    ast_attach root, expr
-    candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), 0)
-    ps_consume TOK_CPAREN
-    ps_consume TOK_COMMA
-
-    ps_funcargs root, candidate$, TRUE
-
-    ps_circle = root
-    debuginfo "Completed circle"
-end function

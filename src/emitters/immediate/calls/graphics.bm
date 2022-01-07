@@ -19,7 +19,7 @@ case TOK_CIRCLE
     v7.n = 1
     c7 = ast_get_child(node, 8)
     if not ast_is_none(c7) then imm_eval c7, v7
-    if ast_nodes(ast_get_child(node, 1)).ref and GRAPHICS_STEP then
+    if not ast_is_none(ast_get_child(node, 1)) then
         circle step (v1.n, v2.n), v3.n, v4.n, v5.n, v6.n, v7.n
     else
         circle (v1.n, v2.n), v3.n, v4.n, v5.n, v6.n, v7.n
