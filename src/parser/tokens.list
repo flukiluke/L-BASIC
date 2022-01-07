@@ -420,7 +420,12 @@ function space          string    long
 # static
 # stick
 # stop
-# str
+function str            string    integer
+function str            string    long
+function str            string    integer64
+function str            string    single
+function str            string    double
+function str            string    quad
 function _strcmp        integer   string,string
 function _stricmp       integer   string,string
 # strig

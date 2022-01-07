@@ -99,6 +99,10 @@ case TOK_SPACE
     imm_eval ast_get_child(node, 1), v1
     result.s = space$(v1.n)
 
+case TOK_STR
+    imm_eval ast_get_child(node, 1), v1
+    result.s = str$(v1.n)
+
 case TOK__STRCMP
     imm_eval ast_get_child(node, 1), v1
     imm_eval ast_get_child(node, 2), v2
