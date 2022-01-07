@@ -60,6 +60,7 @@ sub ps_new_array(var_name$, sigil, block)
     sym.v2 = ps_next_var_index
     ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
     sym.v3 = false
+    sym.v4 = false
     symtab_add_entry sym
     var = symtab_last_entry
 
