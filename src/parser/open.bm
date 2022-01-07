@@ -16,17 +16,18 @@ function ps_open
     ast_attach root, ps_expr
 
     flags = ast_add_node(AST_FLAGS)
+    ast_nodes(flags).ref = AST_FLAG_MANUAL
     ast_attach root, flags
     ps_consume TOK_FOR
     select case tok_token
     case TOK_INPUT
-        ast_nodes(flags).ref = OPEN_INPUT
+        ast_nodes(flags).ref2 = OPEN_INPUT
     case TOK_OUTPUT
-        ast_nodes(flags).ref = OPEN_OUTPUT
+        ast_nodes(flags).ref2 = OPEN_OUTPUT
     case TOK_BINARY
-        ast_nodes(flags).ref = OPEN_BINARY
+        ast_nodes(flags).ref2 = OPEN_BINARY
     case TOK_RANDOM
-        ast_nodes(flags).ref = OPEN_RANDOM
+        ast_nodes(flags).ref2 = OPEN_RANDOM
     case else
         ps_error "Unknown file mode"
     end select

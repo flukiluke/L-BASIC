@@ -34,3 +34,7 @@ const TYPE_FILEHANDLE = 8
 const TYPE_TOKEN = 16
 'This argument is only a syntax element and should not have an ast node generated for it
 const TYPE_SYNTAX_ONLY = 32
+'This argument needs to be matched by textual name. This allows parameters
+'that have meaning only in a specific context, like LINE's B/BF. The argument 'type'
+'is the index of a constant that contains a | separated list of allowable values.
+const TYPE_CONTEXTUAL = 64

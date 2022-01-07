@@ -6,9 +6,9 @@ case TOK_PRINT
     for i = 1 to ast_num_children(node)
         child = ast_get_child(node, i)
         if ast_nodes(child).typ = AST_FLAGS then
-            if ast_nodes(child).ref AND PRINT_NEXT_FIELD then
+            if ast_nodes(child).ref2 AND PRINT_NEXT_FIELD then
                 print ,
-            elseif ast_nodes(child).ref AND PRINT_NEWLINE then
+            elseif ast_nodes(child).ref2 AND PRINT_NEWLINE then
                 print
             end if
         else

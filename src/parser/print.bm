@@ -18,7 +18,8 @@ function ps_print
         select case tok_token
         case TOK_COMMA
             node = ast_add_node(AST_FLAGS)
-            ast_nodes(node).ref = PRINT_NEXT_FIELD
+            ast_nodes(node).ref = AST_FLAG_MANUAL
+            ast_nodes(node).ref2 = PRINT_NEXT_FIELD
             ast_attach root, node
             ps_consume TOK_COMMA
             newline = FALSE
@@ -33,7 +34,8 @@ function ps_print
     loop
     if newline then
         node = ast_add_node(AST_FLAGS)
-        ast_nodes(node).ref = PRINT_NEWLINE
+        ast_nodes(node).ref = AST_FLAG_MANUAL
+        ast_nodes(node).ref2 = PRINT_NEWLINE
         ast_attach root, node
     end if
     

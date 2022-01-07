@@ -91,11 +91,11 @@ sub ps_funcarg(root, candidate$, suppress_comma)
     func = ast_nodes(root).ref
     expects$ = type_sig_prefix_nexts$(func, candidate$, 0)
     suppress_comma = FALSE
-    'Step 1: Check if any literal tokens are present
+    'Step 1: Check if any tokens or contextual arguments are present
     for i = 1 to type_sigt_numargs(expects$)
         expected_type = type_sigt_argtype(expects$, i)
         expected_flags = type_sigt_argflags(expects$, i)
-        if expected_flags AND TYPE_TOKEN and expected_type = tok_token then
+        if (expected_flags AND TYPE_TOKEN) > 0 and expected_type = tok_token then
             'We have found a literal token we were told to expect
             typ = expected_type
             flags = expected_flags
@@ -105,12 +105,29 @@ sub ps_funcarg(root, candidate$, suppress_comma)
             else
                 'We need to generate an AST_FLAGS for this
                 expr = ast_add_node(AST_FLAGS)
-                ast_nodes(expr).ref = 0
+                ast_nodes(expr).ref = AST_FLAG_TOKEN
                 ast_nodes(expr).ref2 = typ
             end if
             tok_advance
             suppress_comma = TRUE
             goto arg_done
+        elseif expected_flags AND TYPE_CONTEXTUAL then
+            l = instr(ast_constants(expected_type), "|" + ucase$(tok_content$) + "|")
+            if l then
+                'We have found a matching contextual argument
+                typ = expected_type
+                flags = expected_flags
+                expr = ast_add_node(AST_FLAGS)
+                ast_nodes(expr).ref = AST_FLAG_CONTEXTUAL
+                do while l > 1
+                    ast_nodes(expr).ref2 = ast_nodes(expr).ref2 + 1
+                    l = _instrrev(l - 1, ast_constants(expected_type), "|")
+                loop
+                ast_nodes(expr).ref2 = ast_nodes(expr).ref2 + 1
+                tok_advance
+                suppress_comma = TRUE
+                goto arg_done
+            end if
         end if
     next i
     'Step 2: The file handle prefix (#)

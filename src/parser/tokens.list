@@ -33,7 +33,7 @@ generic quad_sfx        ; direct nosym
 generic string_sfx      ; direct nosym
 
 # Types and pseudotypes
-# Akin to C's void type
+# Signals "no value" in some sense
 type none       ; nosym
 # Flexible number of arbitrary arguments (looking at you, INPUT & PRINT)
 type list       ; nosym
@@ -57,6 +57,8 @@ type double
 type quad
 # Everyone's favourite non-numeric type
 type string
+# See comment below on corresponding literal
+type contextual_argument
 
 # Parentheses don't have any real meaning, they only direct the parsing
 generic oparen ; direct nosym
@@ -70,7 +72,12 @@ literal numexp ; direct
 literal numbase ; direct
 # A string
 literal stringlit ; direct
-#
+# Used to represent a list of arguments that can be provided to a function as
+# unquoted literals. This literal is never produced by the parser, it is simply
+# to tag those constants as such.
+literal contextual_argument
+
+
 # Literals have a hard-coded precedence of 1, which needs to be lower than any other
 # The precedence of NOT may surprise you; NOT 2 + 3 is NOT (2 + 3).
 # Note -3^2 = -(3^2)
@@ -327,7 +334,8 @@ function len            integer64 @double
 function len            integer64 @quad
 # let
 function _limit         none      long
-# line
+function line           none      'dash,"step?,'oparen,single,single,'cparen,$b|bf?,long?
+function line           none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,$b|bf?,long?
 # line input
 # loc
 function locate         none      integer?,integer?,integer?

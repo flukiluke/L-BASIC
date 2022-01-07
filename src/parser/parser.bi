@@ -3,7 +3,6 @@
 'parser.bi - Declarations for parser module
 
 '$include: 'tokeng.bi'
-'$include: 'token_registrations.bm'
 
 'Next available slot for variables, used to know how many data slots to allocate.
 'This applies to the current scope - the parser for subs/functions will save and

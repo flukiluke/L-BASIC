@@ -5,7 +5,7 @@
 deflng a-z
 
 sub tok_init
-    'Read in the state machine
+    'Read in the state machine for the lexer
     restore tokeng_data
     for s = 1 to ubound(t_states~%, 2)
         read t_statenames$(s)
@@ -19,6 +19,11 @@ sub tok_init
     tokeng_state.has_data = FALSE
     tokeng_state.linestart = TRUE
     tokeng_state.recovery_mode = FALSE
+
+    'Populate token and type signature data
+    'TODO check if this impacts startup times
+    '$include: 'token_registrations.bm'
+
     'Fill the 'next' buffer and propagate to tok_token
     tok_read_next_token
     tok_advance

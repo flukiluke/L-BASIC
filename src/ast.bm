@@ -60,6 +60,9 @@ function ast_add_constant(token, content$, force_type)
         'Strip quotes
         ast_constants(ast_last_constant) = mid$(content$, 2, len(content$) - 2)
         detected_type = TYPE_STRING
+    case TOK_CONTEXTUAL_ARGUMENT
+        ast_constants(ast_last_constant) = "|" + content$ + "|"
+        detected_type = TYPE_CONTEXTUAL_ARGUMENT
     end select
     if force_type > 0 then
         'If you've used D or E, don't try and use # or ! as well!

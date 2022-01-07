@@ -48,7 +48,7 @@ case TOK_OPEN
     v3.n = 128 'len
     reclen = ast_get_child(node, 4)
     if not ast_is_none(reclen) then imm_eval reclen, v3
-    select case ast_nodes(ast_get_child(node, 2)).ref
+    select case ast_nodes(ast_get_child(node, 2)).ref2
     case OPEN_INPUT
         open v1.s for input as #v2.n
     case OPEN_OUTPUT

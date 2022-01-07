@@ -20,3 +20,6 @@ dim shared tok_content$
 dim shared tok_token as long
 dim shared tok_next_content$
 dim shared tok_next_token as long
+
+'Used to map TS_ to TOK_
+dim shared tok_direct(1 to TS_MAX)

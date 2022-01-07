@@ -55,6 +55,11 @@
 ' @ prefix: The argument must be passed BYREF and its type must match exactly
 ' % prefix: The argument is a file handle and may appear with a leading #
 ' ? suffix: The argument is optional
+' " prefix: The argument is a token name, and will be represented with an AST_FLAGS
+'           (or AST_NONE if optional and not present)
+' ' prefix: The argument is a token name but will not be added to the AST
+' $ prefix: The argument is an unquoted literal that matches the label given. The
+'           label may be split into multiple alternatives with a | separator.
 '
 'Alternatively, any of ARGS may be a " or ' character followed by a token defined elsewhere in the file.
 'This causes that token to be expected at that position. It also suppresses parsing the implicit
@@ -94,7 +99,6 @@ redim shared previous$(0)
 redim shared args$(0)
 dim shared linenum
 
-print #3, "dim shared tok_direct(1 to TS_MAX)"
 print #3, "dim sym as symtab_entry_t"
 do while not eof(1)
     linenum = linenum + 1
@@ -243,6 +247,7 @@ sub process_arg_list(arglist$)
     const TYPE_FILEHANDLE = 8
     const TYPE_TOKEN = 16
     const TYPE_SYNTAX_ONLY = 32
+    const TYPE_CONTEXTUAL = 64
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
         flags = 0
@@ -264,9 +269,16 @@ sub process_arg_list(arglist$)
         elseif left$(args$(i), 1) = "'" then
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_TOKEN OR TYPE_SYNTAX_ONLY
+        elseif left$(args$(i), 1) = "$" then
+            args$(i) = mid$(args$(i), 2)
+            flags = flags OR TYPE_CONTEXTUAL
         end if
         if flags AND TYPE_TOKEN then
             print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags
+        elseif flags AND TYPE_CONTEXTUAL then
+            print #3, "type_sig_add_arg sym.v1,";
+            print #3, "ast_add_constant(TOK_CONTEXTUAL_ARGUMENT,";
+            print #3, chr$(34); args$(i); chr$(34); ",0),"; flags
         else
             print #3, "type_sig_add_arg sym.v1, TYPE_"; args$(i); ","; flags
         end if

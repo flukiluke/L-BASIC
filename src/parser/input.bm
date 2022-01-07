@@ -11,11 +11,12 @@ function ps_stmt_input
     ast_nodes(root).ref = TOK_INPUT
     ast_nodes(root).ref2 = symtab(TOK_INPUT).v1
     flags = ast_add_node(AST_FLAGS)
+    ast_nodes(flags).ref = AST_FLAG_MANUAL
     ast_attach root, flags
     ps_consume TOK_INPUT
 
     if tok_token = TOK_SEMICOLON then
-        ast_nodes(flags).ref = STMT_INPUT_NO_NEWLINE
+        ast_nodes(flags).ref2 = STMT_INPUT_NO_NEWLINE
         ps_consume TOK_SEMICOLON
     end if
 
@@ -23,11 +24,11 @@ function ps_stmt_input
     if tok_token = TOK_STRINGLIT then
         prompt = ast_add_node(AST_CONSTANT)
         ast_nodes(prompt).ref = ast_add_constant(tok_token, tok_content$, TYPE_STRINGLIT)
-        ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_PROMPT
+        ast_nodes(flags).ref2 = ast_nodes(flags).ref2 OR STMT_INPUT_PROMPT
         ast_attach root, prompt
         ps_consume TOK_STRINGLIT
         if tok_token = TOK_COMMA then
-            ast_nodes(flags).ref = ast_nodes(flags).ref OR STMT_INPUT_NO_QUESTION
+            ast_nodes(flags).ref2 = ast_nodes(flags).ref2 OR STMT_INPUT_NO_QUESTION
             ps_consume TOK_COMMA
         else
             ps_consume TOK_SEMICOLON

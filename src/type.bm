@@ -243,7 +243,11 @@ function type_sig_prefix_nexts$(func, candidate$, depth)
     next i
     type_sig_prefix_nexts$ = result$
     for i = 1 to type_sigt_numargs(result$)
-        debugmsg$ = debugmsg$ + " " + type_human_readable$(type_sigt_argtype(result$, i)) + "/" + str$(type_sigt_flagval(type_sigt_argflags(result$, i)))
+        if type_sigt_argflags(result$, i) and TYPE_CONTEXTUAL then
+            debugmsg$ = debugmsg$ + " " + ast_constants(type_sigt_argtype(result$, i)) + "/" + str$(type_sigt_flagval(type_sigt_argflags(result$, i)))
+        else
+            debugmsg$ = debugmsg$ + " " + type_human_readable$(type_sigt_argtype(result$, i)) + "/" + str$(type_sigt_flagval(type_sigt_argflags(result$, i)))
+        end if
     next i
     debuginfo "Nexts list:" + debugmsg$
 end function
@@ -395,6 +399,8 @@ function type_human_sig$(sig$)
         if flags and TYPE_FILEHANDLE then o$ = o$ + "#"
         if flags and TYPE_TOKEN then
             o$ = o$ + tok_human_readable$(type_sigt_argtype(sig$, p))
+        elseif flags and TYPE_CONTEXTUAL then
+            o$ = o$ + ast_constants(type_sigt_argtype(sig$, p))
         else
             o$ = o$ + type_human_readable$(type_sigt_argtype(sig$, p))
         end if
