@@ -294,8 +294,7 @@ function get            none      %long,integer64?,@integer64?
 function get            none      %long,integer64?,@single?
 function get            none      %long,integer64?,@double?
 function get            none      %long,integer64?,@quad?
-function get            none      'oparen,single,single,'cparen,'dash,'oparen,single,single,'cparen,@any_array,long?
-#function get            none      flags,single,single,single,single,@arrayelem
+function get            none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,@any_array,long?
 # gosub
 
 function hex            string    integer64

@@ -66,7 +66,8 @@ const AST_CALL = 10
 const AST_CONSTANT = 11
 'For now casts are first-class AST elements instead of just CALLs. We'll see if this is a good idea or not. ref is a type, child is a CALL, CONSTANT or VAR.
 const AST_CAST = 12
-'ref is an integer. Used to pass extra data to some functions that have behaviour set by syntax (e.g. INPUT)
+'Used to pass extra data to some functions that have behaviour set by syntax (e.g. INPUT).
+'ref is a bitfield of values defined in cmdflags.bi. ref2 is a token. Only one may be nonzero.
 const AST_FLAGS = 13
 'If the goto is resolved, ref is the node to jump to. If unresolved, the label symtab. A fully-parsed program will have no unresolved labels.
 const AST_GOTO = 14

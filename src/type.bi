@@ -11,13 +11,7 @@
 'type_signature_t.sig is an mkl$-encoded string. Its format is mkl$(return type) +
 'mkl$(argument 1 type) + mkl$(argument 1 flags) + mkl$(argument 2 type) +
 'mkl$(argument 2 flags) + ...
-'For each flag, the low 16 bits are one or more TYPE_* flags as defined below. If
-'TYPE_TOKEN is set, the high 16 bits of the flag contain the value that will be passed
-'as an AST_FLAGS value in this position in the argument list. As an exception, no AST_FLAGS
-'argument will be generated if the high 16 bits are 0. This allows for specifying tokens
-'that are part of the syntax but have no meaning to the call (e.g. parentheses in drawing
-'commands).
-'
+'For each flag, one or more TYPE_* flags as defined below are set.
 'Don't access things directly, use the type_sig_* functions.
 type type_signature_t
     sig as string
@@ -38,3 +32,5 @@ const TYPE_BYVAL = 4
 const TYPE_FILEHANDLE = 8
 'This argument is a literal token and the type refers to that token id
 const TYPE_TOKEN = 16
+'This argument is only a syntax element and should not have an ast node generated for it
+const TYPE_SYNTAX_ONLY = 32

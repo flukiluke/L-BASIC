@@ -181,7 +181,13 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty ast_get_child(root, 1), 0
         print #logging_file_handle, ")";
     case AST_FLAGS
-        print #logging_file_handle, "flag("; ltrim$(str$(ast_nodes(root).ref)); ")";
+        print #logging_file_handle, "flag(";
+        if ast_nodes(root).ref then
+            print ltrim$(str$(ast_nodes(root).ref));
+        else
+            print symtab(ast_nodes(root).ref2).identifier;
+        end if
+        print ")";
     case AST_GOTO
         print #logging_file_handle, indent$; "goto("; ast_nodes(root).ref; ")";
     case AST_EXIT

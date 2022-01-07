@@ -138,7 +138,10 @@ end function
 'How many arguments excluding components that do not have an ast representation
 function type_sig_numargs_concrete(sig_index)
     for i = 1 to type_sig_numargs(sig_index)
-        if type_sig_concrete_arg(sig_index, i) then result = result + 1
+        if type_sig_concrete_arg(sig_index, i) then
+            result = result + 1
+        else
+        end if
     next i
     type_sig_numargs_concrete = result
 end function
@@ -169,9 +172,13 @@ function type_sigt_flagval(flags)
     type_sigt_flagval = _shr(flags, 16)
 end function
 
+function type_sigt_merge$(a$, b$)
+    type_sigt_merge$ = a$ + mid$(b$, 5)
+end function
+
 function type_sig_concrete_arg(sig_index, arg_index)
     flags = type_sig_argflags(sig_index, arg_index)
-    type_sig_concrete_arg = not ((flags AND TYPE_TOKEN) > 0 AND (type_sigt_flagval(flags) = -1))
+    type_sig_concrete_arg = (flags AND TYPE_SYNTAX_ONLY) = 0
 end function
 
 'Append an argument of the given type and flags to a signature
@@ -206,7 +213,7 @@ end function
 'Return format is list of 4 bytes padding + mkl$(type) + mkl$(flags). Padding
 'allows using type_sigt_* functions to access. mkl$(0) + mkl$(0) means
 '"expect end of args".
-function type_sig_prefix_nexts$(func, candidate$)
+function type_sig_prefix_nexts$(func, candidate$, depth)
     result$ = type_sigt_create$(0) 'return type is meaningless
     compatibles$ = type_sig_prefix_compatibles$(func, candidate$)
     clen = type_sigt_numargs(candidate$)
@@ -219,8 +226,16 @@ function type_sig_prefix_nexts$(func, candidate$)
             'there are no more tokens expected for this sig, candidate matches exactly
             result$ = type_sigt_add_arg(result$, 0, 0)
         elseif type_sig_numargs(sig_index) > clen then
-            'candidate currently only has a prefix-set of the arguments
-            result$ = type_sigt_add_arg(result$, type_sig_argtype(sig_index, clen + 1), type_sig_argflags(sig_index, clen + 1))
+            'candidate currently only has a prefix-set of the arguments.
+            arg_type = type_sig_argtype(sig_index, clen + 1)
+            arg_flags = type_sig_argflags(sig_index, clen + 1) OR _shl(depth, 16)
+            result$ = type_sigt_add_arg(result$, arg_type, arg_flags)
+            'If that was an optional TYPE_TOKEN, also include the args after it to
+            'allow for epsilon transition.
+            if (arg_flags AND TYPE_TOKEN) > 0 and (arg_flags AND TYPE_OPTIONAL) > 0 then
+                lookahead$ = type_sig_prefix_nexts$(func, type_sigt_add_arg(candidate$, arg_type, arg_flags), depth + 1)
+                result$ = type_sigt_merge$(result$, lookahead$)
+            end if
         else
             'Should never occur
             ps_error "Impossible sig length"
@@ -228,7 +243,7 @@ function type_sig_prefix_nexts$(func, candidate$)
     next i
     type_sig_prefix_nexts$ = result$
     for i = 1 to type_sigt_numargs(result$)
-        debugmsg$ = debugmsg$ + " " + type_human_readable$(type_sigt_argtype(result$, i))
+        debugmsg$ = debugmsg$ + " " + type_human_readable$(type_sigt_argtype(result$, i)) + "/" + str$(type_sigt_flagval(type_sigt_argflags(result$, i)))
     next i
     debuginfo "Nexts list:" + debugmsg$
 end function

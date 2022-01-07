@@ -170,7 +170,7 @@ do while not eof(1)
         end if
         process_return_type previous$(1), parts$(1), parts$(2)
         if ubound(parts$) = 3 then
-            process_arg_list toksym$, parts$(3)
+            process_arg_list parts$(3)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
@@ -186,7 +186,7 @@ do while not eof(1)
         if previous$(0) <> "PREFIX" then print #3, "sym.typ = SYM_PREFIX"
         if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         process_return_type previous$(1), parts$(1), parts$(3)
-        process_arg_list toksym$, parts$(4)
+        process_arg_list parts$(4)
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
@@ -204,7 +204,7 @@ do while not eof(1)
             if parts$(3) = "RIGHT" then print #3, "sym.v3 = 1" else print #3, "sym.v3 = 0"
         end if
         process_return_type previous$(1), parts$(1), parts$(4)
-        process_arg_list toksym$, parts$(5)
+        process_arg_list parts$(5)
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
@@ -236,12 +236,13 @@ sub process_return_type(prev_name$, cur_name$, ret_type$)
     end if
 end sub
 
-sub process_arg_list(funcname$, arglist$)
+sub process_arg_list(arglist$)
     split_args arglist$
     const TYPE_OPTIONAL = 1
     const TYPE_BYREF = 2
     const TYPE_FILEHANDLE = 8
     const TYPE_TOKEN = 16
+    const TYPE_SYNTAX_ONLY = 32
     if args$(0) = "" then exit sub 'No arguments
     for i  = 0 to ubound(args$)
         flags = 0
@@ -257,17 +258,15 @@ sub process_arg_list(funcname$, arglist$)
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_FILEHANDLE
         end if
-        quoting$ = ""
-        if left$(args$(i), 1) = chr$(34) or left$(args$(i), 1) = "'" then
-            quoting$ = left$(args$(i), 1)
+        if left$(args$(i), 1) = chr$(34) then
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_TOKEN
-            if flags AND TYPE_OPTIONAL then fatalerror "Token argument cannot be optional"
+        elseif left$(args$(i), 1) = "'" then
+            args$(i) = mid$(args$(i), 2)
+            flags = flags OR TYPE_TOKEN OR TYPE_SYNTAX_ONLY
         end if
-        if quoting$ = chr$(34) then
-            print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags; "OR _SHL(FLAG_"; funcname$; "_"; args$(i); ", 16)"
-        elseif quoting$ = "'" then
-            print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags; "OR _SHL(-1, 16)"
+        if flags AND TYPE_TOKEN then
+            print #3, "type_sig_add_arg sym.v1, TOK_"; args$(i); ","; flags
         else
             print #3, "type_sig_add_arg sym.v1, TYPE_"; args$(i); ","; flags
         end if

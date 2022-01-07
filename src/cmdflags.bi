@@ -13,6 +13,7 @@ const PRINT_NEWLINE = 2 'No comma or semicolon at the end of the list
 const GRAPHICS_STEP = 1 'Next args are coordinate that is relative
 
 const FLAG_RANDOMIZE_USING = 1
+const FLAG_GET_STEP = 1
 
 const OPEN_INPUT = 1
 const OPEN_OUTPUT = 2

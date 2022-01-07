@@ -89,7 +89,7 @@ end sub
 sub ps_funcarg(root, candidate$, suppress_comma)
     debuginfo "Start funcarg"
     func = ast_nodes(root).ref
-    expects$ = type_sig_prefix_nexts$(func, candidate$)
+    expects$ = type_sig_prefix_nexts$(func, candidate$, 0)
     suppress_comma = FALSE
     'Step 1: Check if any literal tokens are present
     for i = 1 to type_sigt_numargs(expects$)
@@ -97,19 +97,16 @@ sub ps_funcarg(root, candidate$, suppress_comma)
         expected_flags = type_sigt_argflags(expects$, i)
         if expected_flags AND TYPE_TOKEN and expected_type = tok_token then
             'We have found a literal token we were told to expect
-            if type_sigt_flagval(expected_flags) = 0 then
-                ps_error "Undefined flag"
-            elseif type_sigt_flagval(expected_flags) > 0 then 
-                'We need to generate an AST_FLAGS for this
-                expr = ast_add_node(AST_FLAGS)
-                typ = expected_type
-                ast_nodes(expr).ref = type_sigt_flagval(expected_flags)
-                flags = TYPE_TOKEN
-            else
+            typ = expected_type
+            flags = expected_flags
+            if expected_flags AND TYPE_SYNTAX_ONLY then
                 'Don't generate any ast nodes, but add this to the candidate
                 expr = 0
-                typ = expected_type
-                flags = TYPE_TOKEN
+            else
+                'We need to generate an AST_FLAGS for this
+                expr = ast_add_node(AST_FLAGS)
+                ast_nodes(expr).ref = 0
+                ast_nodes(expr).ref2 = typ
             end if
             tok_advance
             suppress_comma = TRUE
@@ -140,11 +137,19 @@ sub ps_funcarg(root, candidate$, suppress_comma)
     next i
     if not ok then ps_error "Bad argument type " + type_human_readable$(typ)
 
-    'Step 4 (TODO, not yet needed): See if that expression fits a later argument
-    'with all the intermediate args being optional (and omitted) token literals/
-
     arg_done:
-    ast_attach root, expr
+    'Step 4a: If the processed arg skipped some optional components, add those optional
+    'components as placeholders
+    for i = 1 to type_sigt_flagval(flags)
+        ast_attach root, ast_add_node(AST_NONE)
+    next i
+    'Step 4b: Add ast node if any
+    if expr then ast_attach root, expr
+    
+    'Step 5: Like step 4 for for the candidate
+    for i = 1 to type_sigt_flagval(flags)
+        candidate$ = type_sigt_add_arg(candidate$, TYPE_NONE, 0)
+    next i
     candidate$ = type_sigt_add_arg(candidate$, typ, flags)
     debuginfo "Completed funcarg"
 end sub
