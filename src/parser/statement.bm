@@ -14,6 +14,8 @@ function ps_stmt
 
     if tok_token = TOK_LINENUM then ps_label
     debuginfo "Start statement"
+    'Sigh
+    if tok_token = TOK_LINE and ucase$(tok_next_content$) = "INPUT" then tok_token = TOK_LINEINPUT
     select case tok_token
         case is < 0
             ps_error "Unexpected literal " + tok_content$
@@ -23,6 +25,8 @@ function ps_stmt
             ps_meta_debug
         case TOK_CONST
             stmt = ps_const
+        case TOK_DECLARE
+            stmt = ps_declare
         case TOK_DIM
             stmt = ps_dim
         case TOK_DO
@@ -37,7 +41,8 @@ function ps_stmt
             stmt = ps_goto
         case TOK_IF
             stmt = ps_if
-        case TOK_INPUT
+        case TOK_INPUT, TOK_LINEINPUT
+            'These two are so similar, we parse them as the same function
             stmt = ps_stmt_input
         case TOK_OPEN
             stmt = ps_open

@@ -209,7 +209,7 @@ generic is
 generic type
 generic sub
 generic function
-
+generic declare
 generic shared
 
 # functions with return type none are subs
@@ -266,7 +266,6 @@ function cvsmbf         single    string
 
 # data
 function date           string
-# declare
 # def seg
 # def*
 function _deflate       string    string
@@ -340,7 +339,7 @@ function len            integer64 @quad
 function _limit         none      long
 function line           none      'dash,"step?,'oparen,single,single,'cparen,long,$b|bf?,long?
 function line           none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,long,$b|bf?,long?
-# line input
+generic lineinput
 # loc
 function locate         none      integer?,integer?,integer?
 function locate         none      integer?,integer?,integer?,integer,integer

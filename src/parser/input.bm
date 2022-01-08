@@ -2,9 +2,10 @@
 'SPDX-License-Identifier: Apache-2.0
 'input.bm - Parse rules for INPUT statement
 
-'Expects: TOK_INPUT
+'Expects: TOK_INPUT or TOK_LINEINPUT
 'Results: token after input variables
 'Format: INPUT[;]["prompt"{;|,}]variablelist
+'or LINE INPUT[;]["prompt"{;|,}]variable$
 function ps_stmt_input
     debuginfo "Start stmt input"
     root = ast_add_node(AST_CALL)
@@ -13,11 +14,15 @@ function ps_stmt_input
     flags = ast_add_node(AST_FLAGS)
     ast_nodes(flags).ref = AST_FLAG_MANUAL
     ast_attach root, flags
+    ast_nodes(flags).ref2 = 0
+    if ps_consumed(TOK_LINEINPUT) then
+        ast_nodes(flags).ref2 = ast_nodes(flags).ref2 OR STMT_INPUT_LINEMODE
+        linemode = TRUE
+    end if
     ps_consume TOK_INPUT
 
-    if tok_token = TOK_SEMICOLON then
+    if ps_consumed(TOK_SEMICOLON) then
         ast_nodes(flags).ref2 = STMT_INPUT_NO_NEWLINE
-        ps_consume TOK_SEMICOLON
     end if
 
     'The prompt must be a literal string, no expressions. Crazy, right?
@@ -35,10 +40,16 @@ function ps_stmt_input
         end if
     end if
 
-    do
+    if linemode then
         var = ps_lvalue_mutable
+        if type_of_lvalue(var) <> TYPE_STRING then ps_error "Variable must be a string"
         ast_attach root, var
-    loop while ps_consumed(TOK_COMMA)
+    else
+        do
+            var = ps_lvalue_mutable
+            ast_attach root, var
+        loop while ps_consumed(TOK_COMMA)
+    end if
 
     ps_stmt_input = root
     debuginfo "Completed stmt input"

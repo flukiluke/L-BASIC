@@ -176,6 +176,10 @@ function type_sigt_merge$(a$, b$)
     type_sigt_merge$ = a$ + mid$(b$, 5)
 end function
 
+sub type_sig_merge(sig_index, b$)
+    type_signatures(sig_index).sig = type_signatures(sig_index).sig + mid$(b$, 5)
+end function
+
 function type_sig_concrete_arg(sig_index, arg_index)
     flags = type_sig_argflags(sig_index, arg_index)
     type_sig_concrete_arg = (flags AND TYPE_SYNTAX_ONLY) = 0

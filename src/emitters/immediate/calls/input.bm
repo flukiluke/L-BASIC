@@ -14,22 +14,28 @@ case TOK_INPUT
     end if
     if (flags AND STMT_INPUT_NO_QUESTION) = 0 then print "? ";
     if flags AND STMT_INPUT_NO_NEWLINE then line input ; readline$ else line input readline$
-    'TODO: Better error handling
-    for i = 1 to numvars
-        comma = instr(readline$, ",")
-        if comma = 0 then comma = len(readline$) + 1
-        var = ast_get_child(node, first_var_offset + i)
+    if flags AND STMT_INPUT_LINEMODE then
+        var = ast_get_child(node, first_var_offset + 1)
         var_addr = imm_get_addr(var)
-        if nomoredata then
-            v1.n = 0
-            v1.s = ""
-        elseif type_of_var(var) = TYPE_STRING then
-            v1.s = left$(readline$, comma - 1)
-        else
-            v1.n = val(left$(readline$, comma - 1))
-        end if
-        imm_enforce_type v1, type_of_var(var)
-        imm_set_at_addr var_addr, v1
-        readline$ = mid$(readline$, comma + 1)
-        if readline$ = "" then nomoredata = TRUE
-    next i
+        imm_set_at_addr_s var_addr, readline$
+    else
+        'TODO: Better error handling
+        for i = 1 to numvars
+            comma = instr(readline$, ",")
+            if comma = 0 then comma = len(readline$) + 1
+            var = ast_get_child(node, first_var_offset + i)
+            var_addr = imm_get_addr(var)
+            if nomoredata then
+                v1.n = 0
+                v1.s = ""
+            elseif type_of_var(var) = TYPE_STRING then
+                v1.s = left$(readline$, comma - 1)
+            else
+                v1.n = val(left$(readline$, comma - 1))
+            end if
+            imm_enforce_type v1, type_of_var(var)
+            imm_set_at_addr var_addr, v1
+            readline$ = mid$(readline$, comma + 1)
+            if readline$ = "" then nomoredata = TRUE
+        next i
+    end if

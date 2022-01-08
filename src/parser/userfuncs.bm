@@ -2,6 +2,35 @@
 'SPDX-License-Identifier: Apache-2.0
 'userfuncs.bm - Parse rules for SUB and FUNCTION definitions
 
+'Expects: TOK_DECLARE
+'Results: NEWLINE
+function ps_declare
+    debuginfo "Start declare"
+    ps_consume TOK_DECLARE
+    if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
+    if tok_token <> TOK_UNKNOWN then
+        ps_error "Name already in use"
+    end if
+    dim sym as symtab_entry_t
+    sym.identifier = ucase$(tok_content$)
+    sym.typ = SYM_FUNCTION
+    tok_advance
+    if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
+    if return_type = 0 then return_type = ps_default_type
+    sym.v1 = type_add_sig(0, type_sigt_create$(return_type)) 
+    if ps_consumed(TOK_OPAREN) then
+        sig$ = ps_formal_args$(0)
+        type_sig_merge sym.v1, sig$
+        ps_consume TOK_CPAREN
+    end if
+    sym.v2 = SYM_FUNCTION_USER
+    sym.v3 = 0 'We have no implementation for this function yet
+    symtab_add_entry sym
+    proc_id = symtab_last_entry
+    ps_declare = 0
+    debuginfo "Completed declare"
+end function
+
 'Expects: TOK_FUNCTION or TOK_SUB
 'Results: NEWLINE
 'Return -2, which is handled particularly by ps_block, ps_stmt and interactive_mode
@@ -12,11 +41,11 @@ function ps_userfunc
     end if
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     
-    if ps_is_preload and tok_token <> TOK_UNKNOwN then
-        if symtab(tok_token).typ <> SYM_FUNCTION then ps_error "Can only override functions"
+    if tok_token <> TOK_UNKNOWN then
+        if symtab(tok_token).typ <> SYM_FUNCTION then ps_error "Existing name is not a function"
+        'if not preload mode and (intrinsic function or implemented user function)
+        if not ps_is_preload and (symtab(tok_token).v2 <> SYM_FUNCTION_USER or symtab(tok_token).v3 <> 0) then ps_error "Function already exists"
         override_sym = tok_token
-    elseif tok_token <> TOK_UNKNOWN then
-        ps_error "Name already in use"
     end if
 
     dim sym as symtab_entry_t
@@ -34,19 +63,27 @@ function ps_userfunc
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
     if return_type = 0 then return_type = ps_default_type
 
-    sym.v1 = type_add_sig(0, type_sigt_create$(return_type)) 
+    new_sig = type_add_sig(0, type_sigt_create$(return_type)) 
     if ps_consumed(TOK_OPAREN) then
-        ps_add_formal_args root, sym.v1
+        sig$ = ps_formal_args$(root)
+        type_sig_merge new_sig, sig$
         ps_consume TOK_CPAREN
     end if
 
     if override_sym then
-        'Overriding existing function
-        'TODO: Be more smart about the type signature
+        'Overriding existing function, or implementing a declaration
+        'TODO: Be more smart about the type signature for intrinsics
+        if symtab(override_sym).v2 = SYM_FUNCTION_USER and _
+            type_signatures(symtab(override_sym).v1).sig <> type_signatures(new_sig).sig then
+            print type_human_sig$(type_signatures(symtab(override_sym).v1).sig)
+            print type_human_sig$(type_signatures(new_sig).sig)
+            ps_error "Type signature does not match existing"
+        end if
         symtab(override_sym).v2 = SYM_FUNCTION_USER
         symtab(override_sym).v3 = root
         proc_id = override_sym
     else
+        sym.v1 = new_sig
         sym.v2 = SYM_FUNCTION_USER
         sym.v3 = root
         symtab_add_entry sym
@@ -71,9 +108,10 @@ end function
 
 'Expects: token after OPAREN
 'Result: CPAREN
-'Adds formal args to root node, adds args to sig index.
-sub ps_add_formal_args(root, sig_index)
+'Return list of formal args. If root is <> 0, attach AST_VAR nodes.
+function ps_formal_args$(root)
     debuginfo "Start formal args"
+    result$ = type_sigt_create$(0)
     do
         flags = 0
         do
@@ -99,16 +137,24 @@ sub ps_add_formal_args(root, sig_index)
         if ((flags AND TYPE_BYVAL) <> 0) and ((flags AND TYPE_OPTIONAL) <> 0) then
             ps_error "Optional arguments cannot be BYVAL"
         end if
-        var = ps_simple_variable
-        if (flags AND TYPE_BYVAL) = 0 then
-            'Default to making the argument pass-by-reference
-            symtab(ast_nodes(var).ref).v4 = TRUE
+        if root then
+            var = ps_simple_variable
+            if (flags AND TYPE_BYVAL) = 0 then
+                'Default to making the argument pass-by-reference
+                symtab(ast_nodes(var).ref).v4 = TRUE
+            end if
+            ast_attach root, var
+            typ = type_of_var(var)
+        else
+            'Stripped down variable parser used just for declarations
+            tok_advance 'Skip name
+            typ = ps_opt_sigil
         end if
-        ast_attach root, var
-        type_sig_add_arg sig_index, type_of_var(var), flags
+        result$ = type_sigt_add_arg(result$, typ, flags)
     loop while ps_consumed(TOK_COMMA)
+    ps_formal_args$ = result$
     debuginfo "Completed formal args"
-end sub
+end function
 
 'Expects: function name token
 'Result: NEWLINE if valid return assignment, unchanged otherwise
