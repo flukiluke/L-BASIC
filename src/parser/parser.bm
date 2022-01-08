@@ -74,7 +74,7 @@ end sub
 
 function ps_scope$
     'Note: global symbols (functions, SHARED vars) have no @ at all
-    ps_scope$ = ps_scope_identifier$ + "@"
+    ps_scope$ = "@" + ps_scope_identifier$ + "@"
 end function
 
 sub ps_error(msg$)

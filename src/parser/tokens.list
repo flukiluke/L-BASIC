@@ -210,6 +210,8 @@ generic type
 generic sub
 generic function
 
+generic shared
+
 # functions with return type none are subs
 function abs            integer   integer
 function abs            long      long
@@ -418,7 +420,6 @@ function screen         none      long,integer?,integer?,integer?
 # seek
 # setmem
 # sgn
-# shared
 # shell
 # signal
 function sin            single    single

@@ -8,6 +8,7 @@
 function ps_dim
     debuginfo "Start dim"
     ps_consume TOK_DIM
+    if ps_consumed(TOK_SHARED) then is_shared = TRUE
     do
         if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
         'This is a little messy because we have to look-ahead some to see if
@@ -22,7 +23,7 @@ function ps_dim
             ps_new_array variable_name$, sigil, block
         else
             'Just a regular variable
-            dummy = ps_new_var_pp(variable_name$, sigil)
+            dummy = ps_new_var_pp(variable_name$, sigil, is_shared)
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_dim = block
@@ -124,12 +125,16 @@ end function
 
 function ps_new_var_p(var_name$)
     sigil = ps_opt_sigil
-    ps_new_var_p = ps_new_var_pp(var_name$, sigil)
+    ps_new_var_p = ps_new_var_pp(var_name$, sigil, FALSE)
 end function
 
-function ps_new_var_pp(var_name$, sigil)
+function ps_new_var_pp(var_name$, sigil, is_shared)
     dim sym as symtab_entry_t
-    sym.identifier = ps_scope$ + ucase$(var_name$)
+    if is_shared then
+        sym.identifier = ucase$(var_name$)
+    else
+        sym.identifier = ps_scope$ + ucase$(var_name$)
+    end if
     sym.typ = SYM_VARIABLE
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
     sym.v2 = ps_next_var_index
