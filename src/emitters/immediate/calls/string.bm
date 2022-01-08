@@ -120,3 +120,7 @@ case TOK__TRIM
 case TOK_UCASE
     imm_eval ast_get_child(node, 1), v1
     result.s = ucase$(v1.s)
+
+case TOK_VAL
+    imm_eval ast_get_child(node, 1), v1
+    result.n = val(v1.s)
