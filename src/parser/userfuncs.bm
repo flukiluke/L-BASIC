@@ -128,11 +128,11 @@ function ps_func_return
         debuginfo "Completed func return"
         exit function
     end if
+    tok_advance
     'Ensure any type sigils match
     sigil = ps_opt_sigil
     if sigil <> 0 and return_type <> sigil then ps_error "Function return type not consistent"
     'Ok, definitely setting the return value
-    tok_advance
     ps_consume TOK_EQUALS
     root = ast_add_node(AST_SET_RETURN)
     expr = ps_expr
