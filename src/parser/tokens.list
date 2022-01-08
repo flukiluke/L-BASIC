@@ -304,6 +304,7 @@ function get            none      %long,integer64?,@quad?
 function get            none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,@any_array,long?
 # gosub
 
+function _height        long      long?
 function hex            string    integer64
 
 # include
@@ -320,6 +321,7 @@ function int            quad      quad
 # interrupt
 
 # key
+function _keyhit        long
 function kill           none      string
 
 function lbound         integer   any_array,integer?
@@ -361,6 +363,7 @@ function mid            string    string,integer64,integer64?
 # mksmbf
 
 # name
+function _newimage      long      long,long,long?
 
 # oct
 # off
@@ -375,6 +378,7 @@ generic output
 # pcopy
 # peek
 # pen
+function _pi            double    single?
 function play           none      string
 # pmap
 # point
@@ -463,5 +467,6 @@ generic using
 
 # wait
 # width
+function _width         long      long?
 # window
 # write

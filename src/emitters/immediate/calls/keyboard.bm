@@ -4,3 +4,6 @@
 
 case TOK_INKEY
     result.s = inkey$
+
+case TOK__KEYHIT
+    result.n = _keyhit
