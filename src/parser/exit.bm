@@ -15,6 +15,8 @@ function ps_exit
         target = ps_last_nested(AST_WHILE)
     case TOK_FOR
         target = ps_last_nested(AST_FOR)
+    case TOK_FUNCTION, TOK_SUB
+        target = ps_last_nested(AST_PROCEDURE)
     case else
         ps_error "Expected DO, WHILE or FOR"
     end select

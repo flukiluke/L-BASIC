@@ -73,7 +73,7 @@ const AST_FLAGS = 13
 const AST_GOTO = 14
 'Used for empty optional arguments to functions
 const AST_NONE = 15
-'The EXIT statement. ref is the loop statement we're exiting.
+'The EXIT statement. ref is the loop statement or function we're exiting.
 const AST_EXIT = 16
 
 'These nodes may appear where-ever an lvalue is required

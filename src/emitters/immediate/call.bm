@@ -102,4 +102,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     'Restore previous stack frame
     imm_stack_last = imm_stack_base
     imm_stack_base = old_stack_base
+    'If we exited early, clear the exit flag (no need to actually check it because
+    'we can't nest functions).
+    imm_exit_node = 0
 end sub
