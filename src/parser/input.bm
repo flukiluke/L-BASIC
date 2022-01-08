@@ -38,6 +38,11 @@ function ps_stmt_input
         else
             ps_consume TOK_SEMICOLON
         end if
+        'It turns out INPUT and LINE INPUT interpret the {;|,} with exactly opposite
+        'meaning
+        if linemode then
+            ast_nodes(flags).ref2 = ast_nodes(flags).ref2 XOR STMT_INPUT_NO_QUESTION
+        end if
     end if
 
     if linemode then
