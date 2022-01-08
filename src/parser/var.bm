@@ -2,12 +2,12 @@
 'SPDX-License-Identifier: Apache-2.0
 'var.bm - Parse rules for DIM and variables
 
-'Expects: TOK_DIM
+'Expects: TOK_DIM or TOK_REDIM
 'Results: token after last declaration
 'Format: DIM variablelist
 function ps_dim
     debuginfo "Start dim"
-    ps_consume TOK_DIM
+    tok_advance
     if ps_consumed(TOK_SHARED) then is_shared = TRUE
     'Check for Dim As Long style syntax
     typ = ps_opt_sigil
@@ -24,7 +24,7 @@ function ps_dim
             'Array declaration.
             'The block holds all resizes declared in this DIM statement
             if block = 0 then block = ast_add_node(AST_BLOCK)
-            ps_new_array variable_name$, sigil, block
+            ps_new_array variable_name$, sigil, block, is_shared
         else
             'Just a regular variable
             dummy = ps_new_var_pp(variable_name$, sigil, is_shared)

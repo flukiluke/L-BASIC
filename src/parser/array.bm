@@ -7,7 +7,7 @@
 'This sub produced AST_ARRAY_RESIZE operations for each dimension
 'and adds them to the supplied block. It also generates the symtab entries
 'for the array itself and its type.
-sub ps_new_array(var_name$, sigil, block)
+sub ps_new_array(var_name$, sigil, block, is_shared)
     debuginfo "Start new array"
     'array declaration. dims$ will be a series of pairs of AST_EXPR,
     'which are the lower and upper bounds for each dimension.
@@ -54,7 +54,11 @@ sub ps_new_array(var_name$, sigil, block)
     end if
 
     'Now we have a SYM_ for the type, we can create the actual array variable
-    sym.identifier = ucase$(var_name$)
+    if is_shared then
+        sym.identifier = ucase$(var_name$)
+    else
+        sym.identifier = ps_scope$ + ucase$(var_name$)
+    end if
     sym.typ = SYM_VARIABLE
     sym.v1 = array_type_sym
     sym.v2 = ps_next_var_index
