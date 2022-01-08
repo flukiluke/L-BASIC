@@ -83,6 +83,22 @@ for active_test = 1 to ubound(tests)
         else
             print "Failed, expected error but ran successfully."
         end if
+    case "silence"
+        open filename$ + ".output" for binary as #1
+        actual_output$ = space$(lof(1))
+        get #1, , actual_output$
+        close #1
+        actual_output$ = remove_char$(actual_output$, chr$(13))
+        if retcode > 0 then
+            print "Failed with error, output was: "; actual_output$
+        elseif len(actual_output$) = 0 then
+            print "OK"
+            successes = successes + 1
+        else
+            print "Failed!"
+            print "Expected silence, actual: "; actual_output$
+        end if
+        
     case "stdout", "stdout_exact"
         open filename$ + ".output" for binary as #1
         actual_output$ = space$(lof(1))
@@ -101,8 +117,8 @@ for active_test = 1 to ubound(tests)
             successes = successes + 1
         else
             print "Failed!"
-            print "Expected: "; tests(active_test).expected_output;
-            print "  Actual: "; actual_output$;
+            print "Expected: "; tests(active_test).expected_output
+            print "  Actual: "; actual_output$
         end if
     case else
         print "Unknown condition"

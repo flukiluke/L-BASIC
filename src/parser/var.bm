@@ -9,6 +9,8 @@ function ps_dim
     debuginfo "Start dim"
     ps_consume TOK_DIM
     if ps_consumed(TOK_SHARED) then is_shared = TRUE
+    'Check for Dim As Long style syntax
+    typ = ps_opt_sigil
     do
         if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
         'This is a little messy because we have to look-ahead some to see if
@@ -16,6 +18,8 @@ function ps_dim
         variable_name$ = tok_content$
         tok_advance
         sigil = ps_opt_sigil
+        if typ > 0 and sigil > 0 and typ <> sigil then ps_error "Variable type does not match DIM type"
+        if typ then sigil = typ
         if ps_consumed(TOK_OPAREN) then
             'Array declaration.
             'The block holds all resizes declared in this DIM statement

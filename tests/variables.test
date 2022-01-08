@@ -21,3 +21,16 @@ print x%; y!; "{"; z$; "}"
 $expect: stdout
 0  0 {}
 $finish
+
+$title: dim
+type t
+    v as long
+end type
+dim a as t, b$
+a.v = 3
+b = "test"
+dim as t x, y
+x.v = 1
+y.v = 2
+$expect: silence
+
