@@ -14,8 +14,8 @@
 '
 'lbasic.bas - Main file for L-BASIC Compiler
 
-$if VERSION < 1.5 then
-    $error QB64 V1.5 or greater required
+$if VERSION < 2.0 then
+    $error QB64 V2.0 or greater required
 $end if
 
 '$dynamic
@@ -28,7 +28,7 @@ const FALSE = 0, TRUE = not FALSE
 on error goto error_handler
 
 dim shared VERSION$
-VERSION$ = "0.0.5"
+VERSION$ = "0.1.0"
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
