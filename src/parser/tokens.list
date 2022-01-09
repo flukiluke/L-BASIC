@@ -418,7 +418,12 @@ function rtrim          string    string
 function screen         none      long,integer?,integer?,integer?
 # seek
 # setmem
-# sgn
+function sgn            integer   integer
+function sgn            integer   long
+function sgn            integer   integer64
+function sgn            integer   single
+function sgn            integer   double
+function sgn            integer   quad
 # shell
 # signal
 function sin            single    single
@@ -428,7 +433,9 @@ function sleep          none      long?
 function sound          none      double,double
 function space          string    long    
 # spc
-# sqr
+function sqr            single    single
+function sqr            double    double
+function sqr            quad      quad
 # static
 # stick
 # stop

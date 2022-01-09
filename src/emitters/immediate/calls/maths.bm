@@ -61,6 +61,14 @@ case TOK_SIN
     imm_eval ast_get_child(node, 1), v1
     result.n = sin(v1.n)
 
+case TOK_SGN
+    imm_eval ast_get_child(node, 1), v1
+    result.n = sgn(v1.n)
+
+case TOK_SQR
+    imm_eval ast_get_child(node, 1), v1
+    result.n = sqr(v1.n)
+
 case TOK_SLASH
     imm_eval ast_get_child(node, 1), v1
     imm_eval ast_get_child(node, 2), v2
