@@ -133,3 +133,20 @@ function imm_get_at_addr_n##(addr)
     imm_get_at_addr_n## = r##
     debuginfo "=" + str$(r##)
 end function
+
+sub imm_memset(addr, size, value as imm_value_t)
+    debuginfo "Write [" + str$(addr) + "+" + str$(size) + "] =" + str$(value.n) + " " + value.s
+    if addr < 0 then
+        for i = addr to imm_add_offset(addr, size - 1) step -1
+            imm_heap(-i).s = value.s
+            imm_heap(-i).n = value.n
+        next i
+    elseif addr > 0 then
+        for i = addr to imm_add_offset(addr, size - 1)
+            imm_stack(i).s = value.s
+            imm_stack(i).n = value.n
+        next i
+    else
+        imm_error "Null pointer write"
+    end if
+end sub

@@ -210,7 +210,10 @@ generic type
 generic sub
 generic function
 generic declare
+
+generic redim
 generic shared
+generic _preserve
 
 # functions with return type none are subs
 function abs            integer   integer

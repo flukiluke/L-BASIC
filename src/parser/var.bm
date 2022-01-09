@@ -8,11 +8,12 @@
 function ps_dim
     debuginfo "Start dim"
     tok_advance
+    if ps_consumed(TOK__PRESERVE) then preserve = TRUE
     if ps_consumed(TOK_SHARED) then is_shared = TRUE
     'Check for Dim As Long style syntax
     typ = ps_opt_sigil
     do
-        if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
+        name_token = tok_token
         'This is a little messy because we have to look-ahead some to see if
         'it's a scalar or array.
         variable_name$ = tok_content$
@@ -24,9 +25,10 @@ function ps_dim
             'Array declaration.
             'The block holds all resizes declared in this DIM statement
             if block = 0 then block = ast_add_node(AST_BLOCK)
-            ps_new_array variable_name$, sigil, block, is_shared
+            ps_dim_array name_token, variable_name$, sigil, block, is_shared, preserve
         else
             'Just a regular variable
+            if name_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
             dummy = ps_new_var_pp(variable_name$, sigil, is_shared)
         end if
     loop while ps_consumed(TOK_COMMA)

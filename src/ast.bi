@@ -84,10 +84,17 @@ const AST_UDT_ACCESS = 18
 'Access to an array element. First child is the lvalue to be indexed. Second child is expression for the index in leftmost dimension, then so on for other dimensions.
 const AST_ARRAY_ACCESS = 19
 
-'Emitted by DIM/REDIM statements. first child is lvalue to be resized, then each pair of children after are expr for the lower and upper bound of each dimension.
-const AST_ARRAY_RESIZE = 20
+'Emitted by DIM statements to initialise an array. First child is lvalue to be
+'initialised, then each pair of children after are expr for the lower and upper
+'bound of each dimension. The array is zeroed out.
+const AST_ARRAY_CREATE = 20
+'Like above, but preserve the contents of the array if any.
+const AST_ARRAY_RESIZE = 21
+'Free an array's heap allocation, effectively a destructor. First child is an lvalue.
+const AST_ARRAY_DELETE = 22
+
 'Sets the return value of the current function. first child is expr to return.
-const AST_SET_RETURN = 21
+const AST_SET_RETURN = 23
 
 'Flag is a value defined in cmdflags.bi.
 const AST_FLAG_MANUAL = 1

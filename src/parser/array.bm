@@ -4,11 +4,11 @@
 
 'Expects: (
 'Results: token after ) or sigil, if present
-'This sub produced AST_ARRAY_RESIZE operations for each dimension
+'This sub produces AST_ARRAY_DELETE and AST_ARRAY_RESIZE operations
 'and adds them to the supplied block. It also generates the symtab entries
 'for the array itself and its type.
-sub ps_new_array(var_name$, sigil, block, is_shared)
-    debuginfo "Start new array"
+sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve)
+    debuginfo "Start dim array"
     'array declaration. dims$ will be a series of pairs of AST_EXPR,
     'which are the lower and upper bounds for each dimension.
     dim sym as symtab_entry_t
@@ -31,9 +31,14 @@ sub ps_new_array(var_name$, sigil, block, is_shared)
     if sigil2 then sigil = sigil2
     if sigil = 0 then sigil = ps_default_type
 
+    if token <> TOK_UNKNOWN then existing_array = token
+
     'First we construct the array's type
     array_type_name$ = symtab(sigil).identifier + "(" + ltrim$(str$(len(dims$) / 4 / 2)) + ")"
     array_type_sym = symtab_get_id(array_type_name$)
+    if existing_array and symtab(existing_array).v1 <> array_type_sym then
+        ps_error "Cannot change array type"
+    end if
     if array_type_sym = 0 then
         sym.identifier = array_type_name$
         sym.typ = SYM_TYPE
@@ -54,26 +59,39 @@ sub ps_new_array(var_name$, sigil, block, is_shared)
     end if
 
     'Now we have a SYM_ for the type, we can create the actual array variable
-    if is_shared then
-        sym.identifier = ucase$(var_name$)
+    if existing_array = 0 then
+        if is_shared then
+            sym.identifier = ucase$(var_name$)
+        else
+            sym.identifier = ps_scope$ + ucase$(var_name$)
+        end if
+        sym.typ = SYM_VARIABLE
+        sym.v1 = array_type_sym
+        sym.v2 = ps_next_var_index
+        ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+        sym.v3 = false
+        sym.v4 = false
+        symtab_add_entry sym
+        var = symtab_last_entry
     else
-        sym.identifier = ps_scope$ + ucase$(var_name$)
+        var = existing_array
     end if
-    sym.typ = SYM_VARIABLE
-    sym.v1 = array_type_sym
-    sym.v2 = ps_next_var_index
-    ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
-    sym.v3 = false
-    sym.v4 = false
-    symtab_add_entry sym
-    var = symtab_last_entry
 
-    node = ast_add_node(AST_ARRAY_RESIZE)
     var_node = ast_add_node(AST_VAR)
     ast_nodes(var_node).ref = var
-    ast_children(node) = mkl$(var_node) + dims$
+    if preserve then
+        node = ast_add_node(AST_ARRAY_RESIZE)
+    else
+        node = ast_add_node(AST_ARRAY_CREATE)
+    end if
+    ast_attach node, var_node
     ast_attach block, node
-    debuginfo "Completed new array"
+    ast_children(node) = mkl$(var_node) + dims$
+
+    'If we are in a procedure, and the array is not from an outer scope,
+    'we need to generate a destructor.
+    proc = ps_last_nested(AST_PROCEDURE)
+    debuginfo "Completed dim array"
 end sub
 
 'Expects: First index of array access

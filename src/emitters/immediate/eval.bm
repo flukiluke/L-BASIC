@@ -36,8 +36,12 @@ sub imm_eval(node, result as imm_value_t)
         else
             imm_get_at_addr addr, result
         end if
+    case AST_ARRAY_CREATE
+        imm_do_array_resize node, FALSE
     case AST_ARRAY_RESIZE
-        imm_do_array_resize node
+        imm_do_array_resize node, TRUE
+    case AST_ARRAY_DELETE
+        imm_do_array_delete node
     case AST_CAST
         imm_do_cast node, result
     case AST_GOTO

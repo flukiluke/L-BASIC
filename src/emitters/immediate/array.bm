@@ -2,40 +2,111 @@
 'SPDX-License-Identifier: Apache-2.0
 'array.bm - Array handling functions
 
-sub imm_do_array_resize(node)
+sub imm_do_array_delete(node)
     array = ast_get_child(node, 1)
-    array_type = type_of_lvalue(array)
+    'get address of descriptor
     info_base_addr = imm_get_addr(array)
+    'get data block address
+    data_addr = imm_get_at_addr_n(info_base_addr)
+    imm_heap_free data_addr
+end sub
+
+sub imm_array_init(node)
+    dim temp as imm_value_t
+    'New array
+    'Array descriptor:
+    ' - pointer to data
+    ' - number of dimensions
+    ' - lbound of leftmost dimension
+    ' - ubound of leftmost dimension
+    ' - etc.
+    ' - lbound of rightmost dimension
+    ' - ubound of rightmost dimension
+    array = ast_get_child(node, 1)
+    info_base_addr = imm_get_addr(array)
+    data_addr = imm_get_at_addr_n(info_base_addr)
+    array_type = type_of_lvalue(array)
     element_type = symtab(array_type).v3
     dimensions = (ast_num_children(node) - 1) / 2
+    block_size = 1
+    imm_set_at_addr_n imm_add_offset(info_base_addr, 1), dimensions
+    for i = 1 to dimensions
+        'evaluate upper and lower bounds for this dimension
+        imm_eval ast_get_child(node, i * 2), temp
+        lower_bound = temp.n
+        imm_eval ast_get_child(node, i * 2 + 1), temp
+        upper_bound = temp.n
+        'write values to descriptor
+        imm_set_at_addr_n imm_add_offset(info_base_addr, i * 2), lower_bound
+        imm_set_at_addr_n imm_add_offset(info_base_addr, i * 2 + 1), upper_bound
+        'accumulate total data block size as number of elements
+        data_size = data_size + (upper_bound - lower_bound + 1) * block_size
+        block_size = upper_bound - lower_bound + 1
+    next i
+    'convert to bytes
+    data_size = data_size * type_fixed_size(element_type)
+    'allocate and store pointer
+    data_addr = imm_heap_alloc(data_size)
+    imm_set_at_addr_n info_base_addr, data_addr
+    temp.n = 0
+    temp.s = ""
+    imm_memset data_addr, data_size, temp
+end sub
+    
+sub imm_do_array_resize(node, preserve)
+    dim temp as imm_value_t
+    array = ast_get_child(node, 1)
+    'get address of descriptor
+    info_base_addr = imm_get_addr(array)
+    'get data block address
     data_addr = imm_get_at_addr_n(info_base_addr)
     if data_addr = 0 then
-        'New array
-        'Array descriptor:
-        ' - pointer to data
-        ' - number of dimensions
-        ' - lbound of leftmost dimension
-        ' - ubound of leftmost dimension
-        ' - etc.
-        ' - lbound of rightmost dimension
-        ' - ubound of rightmost dimension
-        block_size = 1
-        for i = 1 to dimensions
-            dim temp as imm_value_t
-            imm_eval ast_get_child(node, i * 2), temp
-            lower_bound = temp.n
-            imm_eval ast_get_child(node, i * 2 + 1), temp
-            upper_bound = temp.n
-            imm_set_at_addr_n imm_add_offset(info_base_addr, i * 2), lower_bound
-            imm_set_at_addr_n imm_add_offset(info_base_addr, i * 2 + 1), upper_bound
-            data_size = data_size + (upper_bound - lower_bound + 1) * block_size
-            block_size = upper_bound - lower_bound + 1
-        next i
-        imm_set_at_addr_n imm_add_offset(info_base_addr, 1), dimensions
-        data_size = data_size * type_fixed_size(element_type)
-        data_addr = imm_heap_alloc(data_size)
-        imm_set_at_addr_n info_base_addr, data_addr
+        imm_array_init node
+    elseif not preserve then
+        imm_heap_free data_addr
+        imm_array_init node
     else
-        imm_error "Array resize not implemented"
+        'only allow resizing the last dimension because otherwise we would need to
+        'rearrange all the data
+        array_type = type_of_lvalue(array)
+        element_type = symtab(array_type).v3
+        dimensions = (ast_num_children(node) - 1) / 2
+        old_block_size = 1
+        new_block_size = 1
+        for i = 1 to dimensions
+            'check lower bound
+            imm_eval ast_get_child(node, i * 2), temp
+            old_lower_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2))
+            new_lower_bound = temp.n
+            if i < dimensions and old_lower_bound <> new_lower_bound then imm_error "Bad array resize"
+            'check upper bound
+            imm_eval ast_get_child(node, i * 2 + 1), temp
+            old_upper_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2 + 1))
+            new_upper_bound = temp.n
+            if i < dimensions and old_upper_bound <> new_upper_bound then imm_error "Bad array resize"
+            imm_set_at_addr_n imm_add_offset(info_base_addr, i * 2), new_lower_bound
+            imm_set_at_addr_n imm_add_offset(info_base_addr, i * 2 + 1), new_upper_bound
+            old_data_size = old_data_size + (old_upper_bound - old_lower_bound + 1) * old_block_size
+            old_block_size = old_upper_bound - old_lower_bound + 1
+            new_data_size = new_data_size + (new_upper_bound - new_lower_bound + 1) * new_block_size
+            new_block_size = new_upper_bound - new_lower_bound + 1
+        next i
+        old_data_size = old_data_size * type_fixed_size(element_type)
+        new_data_size = new_data_size * type_fixed_size(element_type)
+        if new_data_size < old_data_size then
+            'Array is shrinking. Since we don't have the ability to shrink allocations, just leave it
+            'the same size.
+            'TODO implement heap shrinking
+        else
+            'Array is expanding. Copy data to a new allocation.
+            'TODO implement heap expanding
+            new_data_addr = imm_heap_alloc(new_data_size)
+            for i = 0 to old_data_size - 1
+                imm_get_at_addr imm_add_offset(data_addr, i), temp
+                imm_set_at_addr imm_add_offset(new_data_addr, i), temp
+            next i
+            imm_heap_free data_addr
+            imm_set_at_addr_n info_base_addr, new_data_addr
+        end if
     end if
 end sub

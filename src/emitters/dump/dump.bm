@@ -165,8 +165,9 @@ sub ast_dump_pretty(root, indent_level)
             if i <> ast_num_children(root) then print #logging_file_handle, ", "
         next i
         print #logging_file_handle, ")";
-    case AST_ARRAY_RESIZE
+    case AST_ARRAY_CREATE, AST_ARRAY_RESIZE
         print #logging_file_handle, "REDIM ";
+        if ast_nodes(root).typ = AST_ARRAY_RESIZE then print #logging_file_handle, "_PRESERVE ";
         ast_dump_pretty ast_get_child(root, 1), 0
         print #logging_file_handle, "(";
         for i = 2 to ast_num_children(root) step 2
@@ -176,6 +177,9 @@ sub ast_dump_pretty(root, indent_level)
             if i < ast_num_children(root) - 1 then print #logging_file_handle, ", ";
         next i
         print #logging_file_handle, ")";
+    case AST_ARRAY_DELETE
+        print #logging_file_handle, "delete ";
+        ast_dump_pretty ast_get_child(root, 1), 0
     case AST_CAST
         print #logging_file_handle, "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_pretty ast_get_child(root, 1), 0

@@ -19,11 +19,11 @@ sub imm_init
 end sub
 
 sub imm_reinit(stack_size)
-    u = ubound(imm_stack)
+    old_last = imm_stack_last
     imm_stack_last = stack_size
-    if imm_stack_last <= u then exit sub
-    redim _preserve imm_stack(1 to imm_stack_last) as imm_value_t
-    for i = u + 1 to imm_stack_last
+    if imm_stack_last > u then redim _preserve imm_stack(1 to imm_stack_last) as imm_value_t
+    debuginfo "Clear stack" + str$(old_last) + " to" + str$(imm_stack_last)
+    for i = old_last + 1 to imm_stack_last
         imm_stack(i).s = ""
         imm_stack(i).n = 0
     next i
