@@ -24,6 +24,11 @@ dim shared imm_stack_base
 dim shared imm_heap(1) as imm_value_t
 dim shared imm_heap_next_free
 const IMM_HEAP_HEADER_SIZE = 2
+'some extra values worth tracking
+dim shared imm_heap_current_blocks
+dim shared imm_heap_max_blocks
+dim shared imm_heap_current_bytes
+dim shared imm_heap_max_bytes
 
 'Instead of executing the next statement, execution should begin at
 'this node if it is > 0 (used to support GOTO)

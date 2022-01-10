@@ -89,11 +89,19 @@ function ps_userfunc
         symtab_add_entry sym
         proc_id = symtab_last_entry
     end if
+    ast_nodes(root).ref = proc_id
 
     'TODO: STATIC and other modifiers
 
     ps_consume TOK_NEWLINE
-    ast_pre_attach root, ps_block
+    block = ps_block
+    for i = 1 to len(ps_queued_nodes$) - 3 step 4
+        other = cvl(mid$(ps_queued_nodes$, i, 4))
+        ast_attach block, other
+    next i
+    ps_queued_nodes$ = ""
+
+    ast_pre_attach root, block
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
     symtab(proc_id).v4 = ps_next_var_index - 1

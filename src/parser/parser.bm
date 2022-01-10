@@ -77,6 +77,19 @@ function ps_scope$
     ps_scope$ = "@" + ps_scope_identifier$ + "@"
 end function
 
+function ps_get_scope$(token)
+    varname$ = symtab(token).identifier
+    if left$(varname$, 1) <> "@" then
+        ps_get_scope$ = ""
+    else
+        ps_get_scope$ = mid$(varname$, 2, instr(2, varname$, "@") - 2)
+    end if
+end function
+
+sub ps_queue_cleanup(node)
+    ps_queued_nodes$ = ps_queued_nodes$ + mkl$(node)
+end sub
+
 sub ps_error(msg$)
     Error_message$ = msg$
     error 101

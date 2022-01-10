@@ -18,7 +18,6 @@
 'This is based on the allocator presented in Chapter 8.7 of K&R C.
 
 'Allocate 'req_elems' elements on the heap and return start address.
-'Values are initialised to 0 / "".
 function imm_heap_alloc(req_elems)
     'Calculate needed size to the next multiple of IMM_HEAP_HEADER_SIZE,
     'including +1 for the header itself.
@@ -36,6 +35,10 @@ function imm_heap_alloc(req_elems)
             end if
             imm_heap_next_free = prevp
             imm_heap_alloc = -(p + IMM_HEAP_HEADER_SIZE)
+            imm_heap_current_blocks = imm_heap_current_blocks + 1
+            imm_heap_current_bytes = imm_heap_current_bytes + nelems
+            if imm_heap_current_blocks > imm_heap_max_blocks then imm_heap_max_blocks = imm_heap_current_blocks
+            if imm_heap_current_bytes > imm_heap_max_bytes then imm_heap_max_bytes = imm_heap_current_bytes
             debuginfo "Allocated" + str$(nelems) + " elements at " + str$(-p - IMM_HEAP_HEADER_SIZE)
             exit function
         end if
@@ -62,8 +65,8 @@ sub imm_heap_free(address)
     wend
     if addr + imm_heap(addr).n = imm_heap(p + 1).n then
         'Adjacent to upper block
-        imm_heap(addr).n = imm_heap(addr).n + imm_heap(imm_heap(addr + 1).n).n
-        imm_heap(addr + 1).n = imm_heap(imm_heap(addr + 1).n + 1).n
+        imm_heap(addr).n = imm_heap(addr).n + imm_heap(imm_heap(p + 1).n).n
+        imm_heap(addr + 1).n = imm_heap(imm_heap(p + 1).n + 1).n
     else
         imm_heap(addr + 1).n = imm_heap(p + 1).n
     end if
@@ -75,6 +78,8 @@ sub imm_heap_free(address)
         imm_heap(p + 1).n = addr
     end if
     imm_heap_next_free = p
+    imm_heap_current_blocks = imm_heap_current_blocks - 1
+    imm_heap_current_bytes = imm_heap_current_bytes - imm_heap(addr).n
     debuginfo "Freed" + str$(imm_heap(addr).n) + " elements at " + str$(address)
 end sub
 
@@ -95,6 +100,14 @@ function imm_heap_expand(nu)
     redim _preserve imm_heap(1 to ubound(imm_heap) + nelems) as imm_value_t
     debuginfo "Expand heap to" + str$(ubound(imm_heap)) + " elements"
     imm_heap(new_mem).n = nelems
+    imm_heap_current_blocks = imm_heap_current_blocks + 1
+    imm_heap_current_bytes = imm_heap_current_bytes + nelems
     imm_heap_free -(new_mem + IMM_HEAP_HEADER_SIZE)
     imm_heap_expand = imm_heap_next_free
+end sub
+
+sub imm_heap_stats
+    print #logging_file_handle, "Total heap allocation:"; ubound(imm_heap); " elements"
+    print #logging_file_handle, "Current heap:"; imm_heap_current_blocks; " blocks /"; imm_heap_current_bytes; " elements"
+    print #logging_file_handle, "Max heap:"; imm_heap_max_blocks; " blocks /"; imm_heap_max_bytes; " elements"
 end sub

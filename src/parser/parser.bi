@@ -35,3 +35,7 @@ dim shared ps_nested_structures$
 
 'Name of the containing function, used as part of a prefix for local objects.
 dim shared ps_scope_identifier$
+
+'Sometimes we need to run cleanup code just before exiting a scope. This is
+'a list of nodes to be added to the end of a scope's block.
+dim shared ps_queued_nodes$

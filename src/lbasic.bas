@@ -294,6 +294,7 @@ sub run_mode
     Error_context = 4
     imm_run AST_ENTRYPOINT
     Error_context = 0
+    if options.debug then imm_heap_stats
 end sub
 
 'Strip the .bas extension if present
@@ -317,7 +318,7 @@ sub show_help
     print '                                                                                '80 columns
     print "Options:"
     print "  -t, --terminal                   Run in terminal mode (no graphical window)"
-    print "  -c FILE, --compile FILE          Compile FILE instead of executing"
+    print "  -c, --compile                    Compile FILE instead of executing"
     print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
     print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
     print "  --preload FILE                   Load FILE before parsing main program"

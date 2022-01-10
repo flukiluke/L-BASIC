@@ -40,7 +40,7 @@ dim shared AST_ENTRYPOINT
 'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, any of the lvalue types or NONE (if allowed).
 
 'Every SUB and FUNCTION is rooted in an AST_PROCEDURE.
-'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to right.
+'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to right. ref is the symtab entry for the function name.
 'Note: the main program is not an AST_PROCEDURE, it is just an AST_BLOCK. See ast_init.
 const AST_PROCEDURE = 1
 'group of statements
