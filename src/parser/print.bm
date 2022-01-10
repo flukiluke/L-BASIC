@@ -6,7 +6,9 @@
 'Results: token after last expression, comma or semicolon
 'Format: PRINT [expressionlist][{,|;}]
 function ps_print
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start print"
+    $end if
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = TOK_PRINT
     ast_nodes(root).ref2 = symtab(TOK_PRINT).v1
@@ -40,5 +42,7 @@ function ps_print
     end if
     
     ps_print = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed print"
+    $end if
 end function

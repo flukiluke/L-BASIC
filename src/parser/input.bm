@@ -7,7 +7,9 @@
 'Format: INPUT[;]["prompt"{;|,}]variablelist
 'or LINE INPUT[;]["prompt"{;|,}]variable$
 function ps_stmt_input
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start stmt input"
+    $end if
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = TOK_INPUT
     ast_nodes(root).ref2 = symtab(TOK_INPUT).v1
@@ -57,5 +59,7 @@ function ps_stmt_input
     end if
 
     ps_stmt_input = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed stmt input"
+    $end if
 end function

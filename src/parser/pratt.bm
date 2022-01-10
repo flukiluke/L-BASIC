@@ -7,9 +7,13 @@
 'Note: the expression parser is greedy; it will only stop when it encounters
 '      a token that cannot possibly be part of an expression.
 function ps_expr
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start expr"
+    $end if
     ps_expr = pt_expr(0)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed expr"
+    $end if
 end function
 
 function pt_expr(rbp)

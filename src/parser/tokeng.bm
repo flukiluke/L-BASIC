@@ -67,7 +67,9 @@ sub tok_advance
             tok_read_next_token
         end if
     end if
-    'debuginfo ">>> " + tok_content$
+    $if DEBUG_TOKEN_STREAM then
+    debuginfo ">>> " + tok_content$
+    $end if
 end sub
 
 'Advance token stream until reaching end_marker, but do no processing of

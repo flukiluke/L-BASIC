@@ -22,7 +22,9 @@ sub imm_reinit(stack_size)
     old_last = imm_stack_last
     imm_stack_last = stack_size
     if imm_stack_last > u then redim _preserve imm_stack(1 to imm_stack_last) as imm_value_t
+    $if DEBUG_MEM_TRACE then
     debuginfo "Clear stack" + str$(old_last) + " to" + str$(imm_stack_last)
+    $end if
     for i = old_last + 1 to imm_stack_last
         imm_stack(i).s = ""
         imm_stack(i).n = 0

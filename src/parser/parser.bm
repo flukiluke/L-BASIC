@@ -27,7 +27,9 @@ sub ps_assert(expected)
             ps_error "Syntax error: expected " + tok_human_readable(expected) + " got " + tok_human_readable(tok_token) + " " + chr$(34) + tok_content$ + chr$(34)
         end if
     else
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Assert " + tok_human_readable(expected)
+        $end if
     end if
     if tok_token = TOK_NEWLINE and not ps_is_linejoin then ps_actual_linenum = ps_actual_linenum + 1
 end sub
@@ -98,7 +100,9 @@ end sub
 'Expects: first token in block
 'Results: block end marker or IEOF
 function ps_block
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start block"
+    $end if
     root = ast_add_node(AST_BLOCK)
     do
         do while tok_token = TOK_NEWLINE
@@ -110,7 +114,9 @@ function ps_block
         if stmt > 0 then ast_attach root, stmt '0 means that statement did not generate any ast nodes
     loop
     ps_block = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "End block"
+    $end if
 end function
 
 '$include: 'array.bm'

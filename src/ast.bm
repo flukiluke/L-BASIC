@@ -96,7 +96,9 @@ end function
 
 sub ast_attach(parent, child)
     if child = 0 or child = -1 then
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Not adding child node because it is " + ltrim$(str$(child))
+        $end if
         exit sub
     end if
     ast_nodes(child).parent = parent
@@ -105,7 +107,9 @@ end sub
 
 sub ast_pre_attach(parent, child)
     if child = 0 or child = -1 then
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Not adding child node because it is " + ltrim$(str$(child))
+        $end if
         exit sub
     end if
     ast_nodes(child).parent = parent

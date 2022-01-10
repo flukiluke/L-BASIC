@@ -6,7 +6,9 @@
 'Results: TOK_NEWLINE
 'Format OPEN filename$ [FOR {INPUT|OUTPUT|BINARY|RANDOM}] AS [#]fileno& [LEN=reclen]
 function ps_open
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start open"
+    $end if
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = TOK_OPEN
     ast_nodes(root).ref2 = symtab(TOK_OPEN).v1
@@ -47,5 +49,7 @@ function ps_open
     end if
 
     ps_open = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed open"
+    $end if
 end function

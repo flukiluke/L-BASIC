@@ -46,8 +46,10 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     num_locals = symtab(proc_id).v4
     if proc_node = 0 then imm_error "Call to unimplemented function"
     'Create new stack frame
+    $if DEBUG_MEM_TRACE then
     debuginfo "New stack frame at" + str$(imm_stack_last + 1)
     debuginfo "Allocate"  + str$(num_locals) + " slots"
+    $end if
     old_stack_last = imm_stack_last
     old_stack_base = imm_stack_base
     imm_reinit imm_stack_last + num_locals

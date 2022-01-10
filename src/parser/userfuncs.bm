@@ -5,7 +5,9 @@
 'Expects: TOK_DECLARE
 'Results: NEWLINE
 function ps_declare
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start declare"
+    $end if
     ps_consume TOK_DECLARE
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     if tok_token <> TOK_UNKNOWN then
@@ -28,14 +30,18 @@ function ps_declare
     symtab_add_entry sym
     proc_id = symtab_last_entry
     ps_declare = 0
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed declare"
+    $end if
 end function
 
 'Expects: TOK_FUNCTION or TOK_SUB
 'Results: NEWLINE
 'Return -2, which is handled particularly by ps_block, ps_stmt and interactive_mode
 function ps_userfunc
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start userfunc"
+    $end if
     if ps_final_nested then
         ps_error "SUB and FUNCTION must appear at top level"
     end if
@@ -111,14 +117,18 @@ function ps_userfunc
     ps_remove_nested_structure
 
     ps_userfunc = -2
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed userfunc"
+    $end if
 end function
 
 'Expects: token after OPAREN
 'Result: CPAREN
 'Return list of formal args. If root is <> 0, attach AST_VAR nodes.
 function ps_formal_args$(root)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start formal args"
+    $end if
     result$ = type_sigt_create$(0)
     do
         flags = 0
@@ -161,25 +171,33 @@ function ps_formal_args$(root)
         result$ = type_sigt_add_arg(result$, typ, flags)
     loop while ps_consumed(TOK_COMMA)
     ps_formal_args$ = result$
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed formal args"
+    $end if
 end function
 
 'Expects: function name token
 'Result: NEWLINE if valid return assignment, unchanged otherwise
 'Returns node if this is a function return value assignment, 0 otherwise
 function ps_func_return
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start func return"
+    $end if
     'Are we in a procedure with a matching name?
     u$ = ucase$(tok_content$)
     if u$ <> ps_scope_identifier$ then
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Completed func return"
+        $end if
         exit function
     end if
     proc_id = symtab_get_id(u$)
     'Is this actually a function, not a sub?
     return_type = type_sig_return(symtab(proc_id).v1)
     if return_type = 0 then
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Completed func return"
+        $end if
         exit function
     end if
     tok_advance
@@ -195,5 +213,7 @@ function ps_func_return
     expr = ast_add_cast(expr, return_type)
     ast_attach root, expr
     ps_func_return = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed func return"
+    $end if
 end function

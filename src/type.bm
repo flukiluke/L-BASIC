@@ -246,6 +246,7 @@ function type_sig_prefix_nexts$(func, candidate$, depth)
         end if
     next i
     type_sig_prefix_nexts$ = result$
+    $if DEBUG_CALL_RESOLUTION then
     for i = 1 to type_sigt_numargs(result$)
         if type_sigt_argflags(result$, i) and TYPE_CONTEXTUAL then
             debugmsg$ = debugmsg$ + " " + ast_constants(type_sigt_argtype(result$, i)) + "/" + str$(type_sigt_flagval(type_sigt_argflags(result$, i)))
@@ -254,6 +255,7 @@ function type_sig_prefix_nexts$(func, candidate$, depth)
         end if
     next i
     debuginfo "Nexts list:" + debugmsg$
+    $end if
 end function
 
 'Given a (possibly incomplete) candidate, find sigs for func that are compatible
@@ -271,18 +273,24 @@ function type_sig_prefix_compatibles$(func, candidate$)
 end function
 
 function type_sig_is_prefix_compatible(sig_index, candidate$, checkmode)
+    $if DEBUG_CALL_RESOLUTION then
     debuginfo "Comparing to " + type_human_sig$(type_signatures(sig_index).sig)
+    $end if
     'candidate will generally have ANY or NONE return types for FUNCTION and SUB 
     'contexts respectively. In the future though this may become more specific, 
     'so ensure the actual return type can be cast to what is needed.
     if not type_can_cast(type_sig_return(sig_index), type_sigt_return(candidate$)) then
+        $if DEBUG_CALL_RESOLUTION then
         debuginfo "No, return types not compatible"
+        $end if
         exit function
     end if
     for argi = 1 to type_sigt_numargs(candidate$)
         if argi > type_sig_numargs(sig_index) then
             'Cannot possibly match, candidate has more args than sig can accept
+            $if DEBUG_CALL_RESOLUTION then
             debuginfo "No, candidate has too many arguments"
+            $end if
             exit function
         end if
         sig_arg = type_sig_argtype(sig_index, argi)
@@ -290,11 +298,15 @@ function type_sig_is_prefix_compatible(sig_index, candidate$, checkmode)
         c_arg = type_sigt_argtype(candidate$, argi)
         c_flags = type_sigt_argflags(candidate$, argi)
         if not type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode) then
+            $if DEBUG_CALL_RESOLUTION then
             debuginfo "No, mismatch on arg" + str$(argi) + " (candidate has " + type_human_readable$(c_arg) + ")"
+            $end if
             exit function
         end if
     next argi
+    $if DEBUG_CALL_RESOLUTION then
     debuginfo "(Prefix) " + str$(type_sigt_numargs(candidate$)) + " arguments match"
+    $end if
     type_sig_is_prefix_compatible = TRUE
 end function
 
@@ -321,7 +333,9 @@ end function
 'doesn't lose data is picked. 2b is a fallback if a cast is inevitable.
 
 function type_find_sig_match(func, candidate$)
+    $if DEBUG_CALL_RESOLUTION then
     debuginfo "Function resolution candidate is " + type_human_sig$(candidate$)
+    $end if
     sig_index = symtab(func).v1
     compatibles$ = type_sigt_create$(0)
     while sig_index <> 0
@@ -344,27 +358,37 @@ function type_sig_is_compatible(sig_index, candidate$, checkmode)
     for i = type_sigt_numargs(candidate$) + 1 to type_sig_numargs(sig_index)
         'sig has more args; they had better be optional
         if (type_sig_argflags(sig_index, i) AND TYPE_OPTIONAL) = 0 then
+            $if DEBUG_CALL_RESOLUTION then
             debuginfo "No, required argument" + str$(i) + " not provided"
+            $end if
             exit function
         end if
     next i
     type_sig_is_compatible = TRUE
+    $if DEBUG_CALL_RESOLUTION then
     debuginfo "Compatible"
+    $end if
 end function
 
 function type_pick_best_compatible_sig(compatibles$, candidate$)
     'Picks the first sig that has lossless casts, otherwise the last sig if
     'no lossless casts are available.
+    $if DEBUG_CALL_RESOLUTION then
     debuginfo "Looking for a safe cast option"
+    $end if
     for i = 1 to type_sigt_numargs(compatibles$)
         sig_index = type_sigt_argtype(compatibles$, i)
         if type_sig_is_compatible(sig_index, candidate$, 1) then
             type_pick_best_compatible_sig = sig_index
+            $if DEBUG_CALL_RESOLUTION then
             debuginfo "Safe signature found."
+            $end if
             exit function
         end if
     next i
+    $if DEBUG_CALL_RESOLUTION then
     debuginfo "No safe signature found."
+    $end if
     'Default to last sig on list
     type_pick_best_compatible_sig = type_sigt_argtype(compatibles$, type_sigt_numargs(compatibles$))
 end function

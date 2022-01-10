@@ -3,7 +3,9 @@
 'exit.bm - Parse rules for EXIT statements
 
 function ps_exit
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start exit"
+    $end if
     root = ast_add_node(AST_EXIT)
     ps_consume TOK_EXIT
 
@@ -25,5 +27,7 @@ function ps_exit
     ast_nodes(root).ref = target
 
     ps_exit = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed exit"
+    $end if
 end function

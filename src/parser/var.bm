@@ -6,7 +6,9 @@
 'Results: token after last declaration
 'Format: DIM variablelist
 function ps_dim
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start dim"
+    $end if
     tok_advance
     if ps_consumed(TOK__PRESERVE) then preserve = TRUE
     if ps_consumed(TOK_SHARED) then is_shared = TRUE
@@ -33,7 +35,9 @@ function ps_dim
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_dim = block
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed dim"
+    $end if
 end function
 
 function ps_lvalue
@@ -50,7 +54,9 @@ function ps_lvalue_mutable
 end function
 
 function ps_lvalue_p(head, content$)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start lvalue"
+    $end if
     node = ps_simple_variable_p(head, content$)
     do while tok_token = TOK_DOT or tok_token = TOK_OPAREN
         if ps_consumed(TOK_DOT) then
@@ -63,7 +69,9 @@ function ps_lvalue_p(head, content$)
         end if
     loop
     ps_lvalue_p = node
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed lvalue"
+    $end if
 end function
 
 function ps_simple_variable
@@ -77,7 +85,9 @@ end function
 'Results: token after optional sigil
 'Note: process simple variables, i.e. no udt or array stuff. Returns AST_VAR.
 function ps_simple_variable_p(head, content$)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start simple variable"
+    $end if
     node = ast_add_node(AST_VAR)
     if head = TOK_UNKNOWN then
         'Add new variable (implicit declaration)
@@ -94,13 +104,17 @@ function ps_simple_variable_p(head, content$)
     end if
 
     ps_simple_variable_p = node
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed simple variable"
+    $end if
 end function
 
 'Expects: sigil or otherwise
 'Results: post token if sigil present, unchanged otherwise
 function ps_opt_sigil
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start optional sigil"
+    $end if
     if ps_consumed(TOK_AS) then
         typ = tok_token
         if typ = 0 or symtab(typ).typ <> SYM_TYPE then ps_error "Expected type name"
@@ -126,7 +140,9 @@ function ps_opt_sigil
     end if
     if typ then tok_advance
     ps_opt_sigil = typ
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed optional sigil"
+    $end if
 end function
 
 function ps_new_var_p(var_name$)

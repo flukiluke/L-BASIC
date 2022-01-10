@@ -1,5 +1,7 @@
 sub ps_preload_file
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start preload file"
+    $end if
     ps_is_preload = TRUE
     do
         do while tok_token = TOK_NEWLINE
@@ -10,5 +12,7 @@ sub ps_preload_file
         if stmt = -1 then exit do
     loop
     ps_is_preload = FALSE
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed preload file"
+    $end if
 end sub

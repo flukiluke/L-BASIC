@@ -5,7 +5,9 @@
 'Expects: TOK_CONST
 'Results: token after rvalue
 function ps_const
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start const"
+    $end if
     ps_consume TOK_CONST
     'We use a block so we can deal with multiple consts
     root = ast_add_node(AST_BLOCK)
@@ -40,5 +42,7 @@ function ps_const
     loop while ps_consumed(TOK_COMMA) 
 
     ps_const = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed const"
+    $end if
 end function

@@ -18,6 +18,13 @@ $if VERSION < 2.0 then
     $error QB64 V2.0 or greater required
 $end if
 
+$let DEBUG_PARSE_TRACE = 0
+$let DEBUG_TOKEN_STREAM = 0
+$let DEBUG_CALL_RESOLUTION = 0
+$let DEBUG_PARSE_RESULT = 0
+$let DEBUG_MEM_TRACE = 0
+$let DEBUG_HEAP = 1
+
 '$dynamic
 $console
 $screenhide
@@ -226,12 +233,14 @@ sub interactive_mode(recovery)
         case else
             Error_context = 0
             ast_attach AST_ENTRYPOINT, node
+            $if DEBUG_PARSE_RESULT then
             if options.debug then
                 Error_context = 3
                 ast_dump_pretty AST_ENTRYPOINT, 0
                 Error_context = 0
                 print #1,
             end if
+            $end if
             imm_reinit ps_next_var_index - 1
             Error_context = 2
             imm_run AST_ENTRYPOINT
@@ -251,12 +260,14 @@ sub command_mode
     tok_init
     root = ps_block
     Error_context = 0
+    $if DEBUG_PARSE_RESULT then
     if options.debug then
         Error_context = 3
         ast_dump_pretty root, 0
         Error_context = 0
         print #1,
     end if
+    $end if
     imm_init
     Error_context = 2
     imm_run root
@@ -294,7 +305,9 @@ sub run_mode
     Error_context = 4
     imm_run AST_ENTRYPOINT
     Error_context = 0
+    $if DEBUG_HEAP then
     if options.debug then imm_heap_stats
+    $end if
 end sub
 
 'Strip the .bas extension if present
@@ -322,7 +335,7 @@ sub show_help
     print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
     print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
     print "  --preload FILE                   Load FILE before parsing main program"
-    print "  -d, --debug                      For internal debugging"
+    print "  -d, --debug                      For internal debugging (if available)"
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
 end sub

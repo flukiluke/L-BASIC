@@ -5,7 +5,9 @@
 'Expects: WHILE
 'Results: NEWLINE after WEND
 function ps_while
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start WHILE loop"
+    $end if
     root = ast_add_node(AST_WHILE)
     ps_add_nested_structure root
     ps_consume TOK_WHILE
@@ -18,22 +20,30 @@ function ps_while
 
     ps_remove_nested_structure
     ps_while = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed WHILE loop"
+    $end if
 end function
 
 'Expects: DO
 'Results: NEWLINE after LOOP or condition
 function ps_do
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start DO loop"
+    $end if
     ps_consume TOK_DO
     if tok_token = TOK_WHILE or tok_token = TOK_UNTIL then ps_do = ps_do_pre else ps_do = ps_do_post
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed DO loop"
+    $end if
 end function
 
 'Expects: WHILE or UNTIL
 'Results: NEWLINE after LOOP
 function ps_do_pre
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start DO-pre loop"
+    $end if
     root = ast_add_node(AST_DO_PRE)
     ps_add_nested_structure root
     if tok_token = TOK_UNTIL then
@@ -59,13 +69,17 @@ function ps_do_pre
 
     ps_remove_nested_structure
     ps_do_pre = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed DO-pre loop"
+    $end if
 end function
 
 'Expects: NEWLINE
 'Results: NEWLINE after loop guard condition
 function ps_do_post
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start DO-post loop"
+    $end if
     ps_consume TOK_NEWLINE
     root = ast_add_node(AST_DO_POST)
     ps_add_nested_structure root
@@ -96,5 +110,7 @@ function ps_do_post
 
     ps_remove_nested_structure
     ps_do_post = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed DO-post loop"
+    $end if
 end function

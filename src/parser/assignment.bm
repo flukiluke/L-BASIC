@@ -5,7 +5,9 @@
 'Expects: lvalue token
 'Results: token after rvalue
 function ps_assignment
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start assignment"
+    $end if
     root = ast_add_node(AST_ASSIGN)
 
     lval = ps_lvalue_mutable
@@ -20,6 +22,8 @@ function ps_assignment
     ast_attach root, expr
 
     ps_assignment = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed assignment"
+    $end if
 end function
 

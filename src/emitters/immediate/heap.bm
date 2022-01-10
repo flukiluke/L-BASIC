@@ -35,11 +35,13 @@ function imm_heap_alloc(req_elems)
             end if
             imm_heap_next_free = prevp
             imm_heap_alloc = -(p + IMM_HEAP_HEADER_SIZE)
+            $if DEBUG_HEAP then
             imm_heap_current_blocks = imm_heap_current_blocks + 1
             imm_heap_current_bytes = imm_heap_current_bytes + nelems
             if imm_heap_current_blocks > imm_heap_max_blocks then imm_heap_max_blocks = imm_heap_current_blocks
             if imm_heap_current_bytes > imm_heap_max_bytes then imm_heap_max_bytes = imm_heap_current_bytes
             debuginfo "Allocated" + str$(nelems) + " elements at " + str$(-p - IMM_HEAP_HEADER_SIZE)
+            $end if
             exit function
         end if
         if p = imm_heap_next_free then 'wrapped around free list
@@ -78,9 +80,11 @@ sub imm_heap_free(address)
         imm_heap(p + 1).n = addr
     end if
     imm_heap_next_free = p
+    $if DEBUG_HEAP then
     imm_heap_current_blocks = imm_heap_current_blocks - 1
     imm_heap_current_bytes = imm_heap_current_bytes - imm_heap(addr).n
     debuginfo "Freed" + str$(imm_heap(addr).n) + " elements at " + str$(address)
+    $end if
 end sub
 
 'Setup initial heap
@@ -98,10 +102,12 @@ function imm_heap_expand(nu)
     if nelems < IMM_HEAP_MIN_ALLOC then nelems = IMM_HEAP_MIN_ALLOC
     new_mem = ubound(imm_heap) + 1
     redim _preserve imm_heap(1 to ubound(imm_heap) + nelems) as imm_value_t
+    $if DEBUG_HEAP then
     debuginfo "Expand heap to" + str$(ubound(imm_heap)) + " elements"
-    imm_heap(new_mem).n = nelems
     imm_heap_current_blocks = imm_heap_current_blocks + 1
     imm_heap_current_bytes = imm_heap_current_bytes + nelems
+    $end if
+    imm_heap(new_mem).n = nelems
     imm_heap_free -(new_mem + IMM_HEAP_HEADER_SIZE)
     imm_heap_expand = imm_heap_next_free
 end sub

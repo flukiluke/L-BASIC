@@ -5,7 +5,9 @@
 'Expects: TOK_TYPE
 'Results: token after END TYPE
 function ps_udt
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start UDT definition"
+    $end if
     dim udt_sym as symtab_entry_t
     udt_sym.typ = SYM_TYPE
     udt_sym.v1 = 0
@@ -28,13 +30,17 @@ function ps_udt
     symtab_add_entry udt_sym
     ps_udt = 0 'Never generate any ast nodes
     ps_consume TOK_TYPE
+    $if DEBUG_PARSE_TRACE then
     debuginfo "End UDT definition"
+    $end if
 end function
 
 'Expects: Element identifier
 'Results: token after newline
 function ps_udt_element(udt_sym as symtab_entry_t)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start UDT element"
+    $end if
     dim elem_sym as symtab_entry_t
     elem_sym.typ = SYM_UDT_ELEMENT
     
@@ -70,14 +76,18 @@ function ps_udt_element(udt_sym as symtab_entry_t)
     ps_consume TOK_NEWLINE
     ps_line_prelude
     ps_udt_element = symtab_last_entry
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed UDT element"
+    $end if
 end function
 
 'Expects: Element
 'Results: token after element
 'Takes udt variable as argument
 function ps_udt_element_access(lvalue)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start udt element access"
+    $end if
     head_typ_name$ = symtab(type_of_lvalue(lvalue)).identifier
     elem = symtab_get_id(head_typ_name$ + "." + ucase$(tok_content$))
     if elem = 0 or symtab(elem).typ <> SYM_UDT_ELEMENT then ps_error "Bad UDT element access"
@@ -86,5 +96,7 @@ function ps_udt_element_access(lvalue)
     ast_attach node, lvalue
     ast_nodes(node).ref = elem
     ps_udt_element_access = node
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed udt element access"
+    $end if
 end function

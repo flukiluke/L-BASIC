@@ -6,7 +6,9 @@
 'Results: next token
 'Note: this is for label definitions, not references
 sub ps_label
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start label"
+    $end if
     id = symtab_get_id(tok_content$)
     if id > 0 and symtab(id).typ <> SYM_LABEL then
         ps_error "Label name conflicts with existing identifier"
@@ -25,7 +27,9 @@ sub ps_label
     end if
     ps_unattached_labels$ = ps_unattached_labels$ + mkl$(id)
     ps_consume TOK_LINENUM
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed label"
+    $end if
 end sub
 
 'There may have been 0 or more labels since the last statement that produced
@@ -36,7 +40,9 @@ sub ps_attach_labels(node)
     if node > 0 then
         for i = 1 to len(ps_unattached_labels$) step 4
             label_id = cvl(mid$(ps_unattached_labels$, i, 4))
+            $if DEBUG_PARSE_TRACE then
             debuginfo "Attached label " + symtab(label_id).identifier
+            $end if
             symtab(label_id).v1 = node
             'Have we resolved an unresolved jump?
             for j = 1 to len(ps_unresolved_jumps$) step 4

@@ -64,7 +64,9 @@ function imm_get_addr(node)
 end function
 
 sub imm_set_at_addr(addr, v as imm_value_t)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Write [" + str$(addr) + " ] = " + str$(v.n) + " " + v.s
+    $end if
     if addr < 0 then
         imm_heap(-addr) = v
     elseif addr > 0 then
@@ -75,7 +77,9 @@ sub imm_set_at_addr(addr, v as imm_value_t)
 end sub
 
 sub imm_set_at_addr_s(addr, v$)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Write [" + str$(addr) + " ] =" + v$
+    $end if
     if addr < 0 then
         imm_heap(-addr).s = v$
     elseif addr > 0 then
@@ -86,7 +90,9 @@ sub imm_set_at_addr_s(addr, v$)
 end sub
 
 sub imm_set_at_addr_n(addr, n as _float)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Write [" + str$(addr) + " ] =" + str$(n)
+    $end if
     if addr < 0 then
         imm_heap(-addr).n = n
     elseif addr > 0 then
@@ -97,7 +103,9 @@ sub imm_set_at_addr_n(addr, n as _float)
 end sub
 
 sub imm_get_at_addr(addr, v as imm_value_t)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Read [" + str$(addr) + " ]"
+    $end if
     if addr < 0 then
         v = imm_heap(-addr)
     elseif addr > 0 then
@@ -105,11 +113,15 @@ sub imm_get_at_addr(addr, v as imm_value_t)
     else
         imm_error "Null pointer value read"
     end if
+    $if DEBUG_MEM_TRACE then
     debuginfo "=" + str$(v.n) + " " + v.s
+    $end if
 end sub
 
 function imm_get_at_addr_s$(addr)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Read [" + str$(addr) + " ]"
+    $end if
     if addr < 0 then
         r$ = imm_heap(-addr).s
     elseif addr > 0 then
@@ -118,11 +130,15 @@ function imm_get_at_addr_s$(addr)
         imm_error "Null pointer string read"
     end if
     imm_get_at_addr_s$ = r$
+    $if DEBUG_MEM_TRACE then
     debuginfo "=" + r$
+    $end if
 end sub
 
 function imm_get_at_addr_n##(addr)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Read [" + str$(addr) + " ]"
+    $end if
     if addr < 0 then
         r## = imm_heap(-addr).n
     elseif addr > 0 then
@@ -131,11 +147,15 @@ function imm_get_at_addr_n##(addr)
         imm_error "Null pointer numeric read"
     end if
     imm_get_at_addr_n## = r##
+    $if DEBUG_MEM_TRACE then
     debuginfo "=" + str$(r##)
+    $end if
 end function
 
 sub imm_memset(addr, size, value as imm_value_t)
+    $if DEBUG_MEM_TRACE then
     debuginfo "Write [" + str$(addr) + "+" + str$(size) + "] =" + str$(value.n) + " " + value.s
+    $end if
     if addr < 0 then
         for i = addr to imm_add_offset(addr, size - 1) step -1
             imm_heap(-i).s = value.s

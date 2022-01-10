@@ -13,7 +13,9 @@ end function
 'Expects: token after function, function token as arg
 'Results: token after last argument
 function ps_funccall_p(func)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start function call"
+    $end if
     root = ast_add_node(AST_CALL)
     ast_nodes(root).ref = func
     sigil = ps_opt_sigil
@@ -33,13 +35,17 @@ function ps_funccall_p(func)
     end if
     if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
     ps_funccall_p = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed function call"
+    $end if
  end function
 
 'Expects: first token after function name
 'Results: token after argument list
 sub ps_funcargs(root, candidate$, is_statement)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start funcargs"
+    $end if
     'Handle empty argument at start
     if tok_token = TOK_COMMA then ps_funcarg root, candidate$, suppress_comma
     'Loop over arguments and build candidate$ as a list of argument types
@@ -53,7 +59,9 @@ sub ps_funcargs(root, candidate$, is_statement)
         case else
             ps_funcarg root, candidate$, suppress_comma
         end select
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Candidate is now " + type_human_sig$(candidate$)
+    $end if
     loop
     'candidate$ may match multiple sigs; decide which fits "best". See type.bm for
     'details on what "best" means. This may still fail because the candidate has only
@@ -83,11 +91,15 @@ sub ps_funcargs(root, candidate$, is_statement)
     for i = ast_num_children(root) + 1 to type_sig_numargs_concrete(best_sig)
         ast_attach root, ast_add_node(AST_NONE)
     next i
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed funcargs"
+    $end if
 end sub
 
 sub ps_funcarg(root, candidate$, suppress_comma)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start funcarg"
+    $end if
     func = ast_nodes(root).ref
     expects$ = type_sig_prefix_nexts$(func, candidate$, 0)
     suppress_comma = FALSE
@@ -168,5 +180,7 @@ sub ps_funcarg(root, candidate$, suppress_comma)
         candidate$ = type_sigt_add_arg(candidate$, TYPE_NONE, 0)
     next i
     candidate$ = type_sigt_add_arg(candidate$, typ, flags)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed funcarg"
+    $end if
 end sub

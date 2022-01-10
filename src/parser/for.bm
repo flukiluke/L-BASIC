@@ -5,7 +5,9 @@
 'Expects: FOR
 'Results: NEWLINE after NEXT or iterator variable
 function ps_for
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start FOR loop"
+    $end if
     root = ast_add_node(AST_FOR)
     ps_add_nested_structure root
     ps_consume TOK_FOR
@@ -62,5 +64,7 @@ function ps_for
 
     ps_remove_nested_structure
     ps_for = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed FOR loop"
+    $end if
 end function

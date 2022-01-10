@@ -12,21 +12,29 @@ end function
 'Expects: line number
 'Results: token after line number
 function ps_goto_p
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start goto"
+    $end if
     ps_assert TOK_NUMINT
     root = ast_add_node(AST_GOTO)
     id = symtab_get_id(tok_content$)
     if id > 0 and symtab(id).v2 = TRUE and symtab(id).v1 > 0 then
         'Label exists, is resolved and is attached
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Goto resolves to" + str$(symtab(id).v1)
+        $end if
         ast_nodes(root).ref = symtab(id).v1
     elseif id > 0 then
         'This case helps with things like "10 GOTO 10" (label resolved but not attached)
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Reference to pre-existing unresolved or unattached label"
+        $end if
         ast_nodes(root).ref = id
         ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
     else
+        $if DEBUG_PARSE_TRACE then
         debuginfo "Unresolved goto"
+        $end if
         dim symtab_label as symtab_entry_t
         symtab_label.identifier = tok_content$
         symtab_label.typ = SYM_LABEL
@@ -37,5 +45,7 @@ function ps_goto_p
     end if
     ps_consume TOK_NUMINT
     ps_goto_p = root
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed goto"
+    $end if
 end function

@@ -8,7 +8,9 @@
 'and adds them to the supplied block. It also generates the symtab entries
 'for the array itself and its type.
 sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start dim array"
+    $end if
     'array declaration. dims$ will be a series of pairs of AST_EXPR,
     'which are the lower and upper bounds for each dimension.
     dim sym as symtab_entry_t
@@ -108,14 +110,18 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve)
         ps_queue_cleanup node
     end if
     array_dstr_dup:
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed dim array"
+    $end if
 end sub
 
 'Expects: First index of array access
 'Results: token after )
 'Takes array variable as argument
 function ps_array_element_access(lvalue)
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Start array element access"
+    $end if
     array_type = type_of_lvalue(lvalue)
     if symtab(array_type).v2 <> SYM_TYPE_ARRAY then ps_error "Value is not an array"
     dimensions = symtab(array_type).v4
@@ -128,5 +134,7 @@ function ps_array_element_access(lvalue)
     tok_advance
     if ast_num_children(node) - 1 <> dimensions then ps_error "Incorrect number of dimensions"
     ps_array_element_access = node
+    $if DEBUG_PARSE_TRACE then
     debuginfo "Completed array element access"
+    $end if
 end function
