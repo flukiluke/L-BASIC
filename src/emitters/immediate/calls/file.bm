@@ -129,7 +129,7 @@ case TOK_GET
             get #v1.n, v2.n, getvar_quad##
             imm_set_at_addr_n dest_addr, getvar_quad##
         case TYPE_STRING
-            getvar_string$ = space$(len(imm_get_at_addr_s(dest_var)))
+            getvar_string$ = space$(len(imm_get_at_addr_s(dest_addr)))
             get #v1.n, v2.n, getvar_string$
             imm_set_at_addr_s dest_addr, getvar_string$
         end select
