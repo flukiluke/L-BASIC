@@ -18,6 +18,9 @@ generic linenum   ; nosym
 # Metacommands
 meta list
 meta debug
+meta include
+# Represent an unknown metacommand so we can ignore it
+meta unknown            ; nosym
 
 # The meta parameter is everything after the first : or space.
 # It is up to the implementation of each metacommand to break apart this content.
@@ -225,7 +228,6 @@ function abs            quad      quad
 # absolute
 # access
 # alias
-# any
 function asc            integer   string,integer64?
 function atn            single    single
 function atn            double    double
@@ -309,7 +311,6 @@ function get            none      "step?,'oparen,single,single,'cparen,'dash,"st
 function _height        long      long?
 function hex            string    integer64
 
-# include
 function _inflate       string    string
 function inkey          string
 # inp

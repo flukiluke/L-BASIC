@@ -25,6 +25,10 @@ function ps_stmt
             ps_meta_list
         case META_DEBUG
             ps_meta_debug
+        case META_INCLUDE
+            ps_meta_include
+        case META_UNKNOWN
+            ps_meta_unknown
         case TOK_CONST
             stmt = ps_const
         case TOK_DECLARE

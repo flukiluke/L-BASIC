@@ -112,7 +112,7 @@ sub tok_read_next_token
         
         case TS_METACMD
             tok_next_token = symtab_get_id(ucase$(tok_next_content$))
-            if tok_next_token = 0 then ps_error "Unknown metacommand"
+            if tok_next_token = 0 then tok_next_token = META_UNKNOWN
 
         case TS_LINENUM
             if not tokeng_state.linestart then ps_error "Line number must be at start of line"

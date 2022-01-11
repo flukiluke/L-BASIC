@@ -44,3 +44,43 @@ sub ps_meta_debug
         ps_error "$DEBUG [ON|OFF]"
     end select
 end sub
+
+'Expects: META_INCLUDE
+'Results: TOK_NEWLINE
+sub ps_meta_include
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start $include"
+    $end if
+    if input_file_handles(input_file_handles_last) = 0 then
+        'No file is open, we must be in interactive mode or similar
+        ps_error "Cannot include files in this mode"
+    end if
+    ps_consume META_INCLUDE
+    if tok_token <> TOK_METAPARAM then ps_error "Filename required"
+    filename$ = _trim$(tok_content$)
+    if left$(filename$, 1) <> "'" or right$(filename$, 1) <> "'" then
+        ps_error "Filename must be surrounded by single quotes"
+    end if
+    filename$ = mid$(filename$, 2, len(filename$) - 2)
+    input_file_handles_last = input_file_handles_last + 1
+    if ubound(input_file_handles) < input_file_handles_last then
+        redim _preserve input_file_handles(input_file_handles_last)
+    end if
+    input_file_handles(input_file_handles_last) = freefile
+    open filename$ for input as #input_file_handles(input_file_handles_last)
+    tok_advance 'Consume file name
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed $include"
+    $end if
+end sub
+
+'Expects: unknown metacommand
+'Results: TOK_NEWLINE
+sub ps_meta_unknown
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Metacommand " + tok_content$ + " is unknown"
+    $end if
+    while tok_token <> TOK_NEWLINE
+        tok_advance
+    wend
+end sub

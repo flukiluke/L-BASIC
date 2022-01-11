@@ -18,12 +18,12 @@ $if VERSION < 2.0 then
     $error QB64 V2.0 or greater required
 $end if
 
-$let DEBUG_PARSE_TRACE = 1
+$let DEBUG_PARSE_TRACE = 0
 $let DEBUG_TOKEN_STREAM = 0
-$let DEBUG_CALL_RESOLUTION = 1
+$let DEBUG_CALL_RESOLUTION = 0
 $let DEBUG_PARSE_RESULT = 1
 $let DEBUG_MEM_TRACE = 0
-$let DEBUG_HEAP = 1
+$let DEBUG_HEAP = 0
 
 '$dynamic
 $console
@@ -55,7 +55,10 @@ dim shared Error_message$
 '$include: 'parser/parser.bi'
 '$include: 'emitters/immediate/immediate.bi'
 
-dim shared input_file_handle
+'This is an array so we can handle included files.
+'The current "reading" file is (input_file_handles(input_file_handles_last)s_last).
+redim shared input_file_handles(0)
+dim shared input_file_handles_last
 dim shared logging_file_handle
 
 type options_t
@@ -165,7 +168,7 @@ end sub
 'They provide a uniform way of loading the next line.
 function general_next_line$
     if options.preload <> "" then
-        line input #input_file_handle, s$
+        line input #input_file_handles(input_file_handles_last), s$
     elseif options.interactive_mode then
         print "> ";
         line input s$
@@ -173,31 +176,40 @@ function general_next_line$
         s$ = options.mainarg
         options.mainarg = ""
     else
-        line input #input_file_handle, s$
+        line input #input_file_handles(input_file_handles_last), s$
     end if
     general_next_line$ = s$
 end function
 
 function general_eof
     if options.preload <> "" then
-        general_eof = eof(input_file_handle)
+        result = eof(input_file_handles(input_file_handles_last))
     elseif options.interactive_mode then
         'Hopefully one day we'll be able to handle ^D/^Z here
-        general_eof = FALSE
+        result = FALSE
     elseif options.command_mode then
-        general_eof = options.mainarg = ""
+        result = options.mainarg = ""
     else
-        general_eof = eof(input_file_handle)
+        result = eof(input_file_handles(input_file_handles_last))
+        'An EOF in an include file just means close that and return to the
+        'outer file
+        if result and input_file_handles_last > 0 then
+            close #input_file_handles(input_file_handles_last)
+            input_file_handles_last = input_file_handles_last - 1
+            'Call recursively in case the outer file has also ended
+            result = general_eof
+        end if
     end if
+    general_eof = result
 end function
 
 sub preload_file
-    input_file_handle = freefile
-    open options.preload for input as #input_file_handle
+    input_file_handles(input_file_handles_last) = freefile
+    open options.preload for input as #input_file_handles(input_file_handles_last)
     tok_init
     Error_context = 1
     ps_preload_file
-    close #input_file_handle
+    close #input_file_handles(input_file_handles_last)
     options.preload = ""
 end sub    
 
@@ -276,13 +288,13 @@ end sub
     
 sub compile_mode
     if options.mainarg = "" then fatalerror "No input file"
-    input_file_handle = freefile
-    open options.mainarg for input as #input_file_handle
+    input_file_handles(input_file_handles_last) = freefile
+    open options.mainarg for input as #input_file_handles(input_file_handles_last)
     tok_init
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
-    close #input_file_handle
+    close #input_file_handles(input_file_handles_last)
     close #logging_file_handle
     logging_file_handle = freefile
     open options.outputfile for output as #logging_file_handle
@@ -294,13 +306,13 @@ end sub
 
 sub run_mode
     if options.mainarg = "" then fatalerror "No input file"
-    input_file_handle = freefile
-    open options.mainarg for input as #input_file_handle
+    input_file_handles(input_file_handles_last) = freefile
+    open options.mainarg for input as #input_file_handles(input_file_handles_last)
     tok_init
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
-    close #input_file_handle
+    close #input_file_handles(input_file_handles_last)
     imm_init
     Error_context = 4
     imm_run AST_ENTRYPOINT
