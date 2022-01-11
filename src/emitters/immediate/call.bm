@@ -18,6 +18,7 @@ sub imm_do_call_internal(node, result as imm_value_t)
     dim v5 as imm_value_t
     dim v6 as imm_value_t
     dim v7 as imm_value_t
+    return_type = type_of_call(node)
     select case ast_nodes(node).ref
     '$include: 'calls/input.bm'
     '$include: 'calls/file.bm'

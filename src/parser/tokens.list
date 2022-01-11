@@ -316,7 +316,7 @@ function _inflate       string    string
 function inkey          string
 # inp
 function input          none      list
-# input$
+function input          string    integer64,%long?
 function instr          integer64 string,string
 function instr          integer64 integer64,string,string
 function int            single    single

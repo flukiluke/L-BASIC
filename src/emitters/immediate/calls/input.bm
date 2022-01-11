@@ -1,41 +1,54 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'input.bm - Executor for INPUT statement
+'input.bm - Executor for INPUT statement and function
 
 case TOK_INPUT
-    numvars = ast_num_children(node) - 1
-    first_var_offset = 1
-    flags = ast_nodes(ast_get_child(node, 1)).ref2
-    if flags AND STMT_INPUT_PROMPT then
-        imm_eval ast_get_child(node, 2), v1
-        print v1.s;
-        numvars = numvars - 1
-        first_var_offset = 2
-    end if
-    if (flags AND STMT_INPUT_NO_QUESTION) = 0 then print "? ";
-    if flags AND STMT_INPUT_NO_NEWLINE then line input ; readline$ else line input readline$
-    if flags AND STMT_INPUT_LINEMODE then
-        var = ast_get_child(node, first_var_offset + 1)
-        var_addr = imm_get_addr(var)
-        imm_set_at_addr_s var_addr, readline$
+    if return_type <> TYPE_NONE then
+        'INPUT$ function
+        imm_eval ast_get_child(node, 1), v1
+        c2 = ast_get_child(node, 2)
+        if ast_is_none(c2) then
+            result.s = input$(v1.n)
+        else
+            imm_eval c2, v2
+            result.s = input$(v1.n, v2.n + imm_filehandle_offset)
+        end if
     else
-        'TODO: Better error handling
-        for i = 1 to numvars
-            comma = instr(readline$, ",")
-            if comma = 0 then comma = len(readline$) + 1
-            var = ast_get_child(node, first_var_offset + i)
+        'INPUT statement
+        numvars = ast_num_children(node) - 1
+        first_var_offset = 1
+        flags = ast_nodes(ast_get_child(node, 1)).ref2
+        if flags AND STMT_INPUT_PROMPT then
+            imm_eval ast_get_child(node, 2), v1
+            print v1.s;
+            numvars = numvars - 1
+            first_var_offset = 2
+        end if
+        if (flags AND STMT_INPUT_NO_QUESTION) = 0 then print "? ";
+        if flags AND STMT_INPUT_NO_NEWLINE then line input ; readline$ else line input readline$
+        if flags AND STMT_INPUT_LINEMODE then
+            var = ast_get_child(node, first_var_offset + 1)
             var_addr = imm_get_addr(var)
-            if nomoredata then
-                v1.n = 0
-                v1.s = ""
-            elseif type_of_var(var) = TYPE_STRING then
-                v1.s = left$(readline$, comma - 1)
-            else
-                v1.n = val(left$(readline$, comma - 1))
-            end if
-            imm_enforce_type v1, type_of_var(var)
-            imm_set_at_addr var_addr, v1
-            readline$ = mid$(readline$, comma + 1)
-            if readline$ = "" then nomoredata = TRUE
-        next i
+            imm_set_at_addr_s var_addr, readline$
+        else
+            'TODO: Better error handling
+            for i = 1 to numvars
+                comma = instr(readline$, ",")
+                if comma = 0 then comma = len(readline$) + 1
+                var = ast_get_child(node, first_var_offset + i)
+                var_addr = imm_get_addr(var)
+                if nomoredata then
+                    v1.n = 0
+                    v1.s = ""
+                elseif type_of_var(var) = TYPE_STRING then
+                    v1.s = left$(readline$, comma - 1)
+                else
+                    v1.n = val(left$(readline$, comma - 1))
+                end if
+                imm_enforce_type v1, type_of_var(var)
+                imm_set_at_addr var_addr, v1
+                readline$ = mid$(readline$, comma + 1)
+                if readline$ = "" then nomoredata = TRUE
+            next i
+        end if
     end if
