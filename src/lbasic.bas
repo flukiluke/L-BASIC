@@ -15,9 +15,11 @@
 'lbasic.bas - Main file for L-BASIC Compiler
 
 $if VERSION < 2.0 then
+    'We use zero-place predicate recursion which is only available in 2.0
     $error QB64 V2.0 or greater required
 $end if
 
+'Control which components produce debugging messages when debugging is on
 $let DEBUG_PARSE_TRACE = 0
 $let DEBUG_TOKEN_STREAM = 0
 $let DEBUG_CALL_RESOLUTION = 0
@@ -25,7 +27,12 @@ $let DEBUG_PARSE_RESULT = 1
 $let DEBUG_MEM_TRACE = 0
 $let DEBUG_HEAP = 0
 
+dim shared VERSION$
+VERSION$ = "0.1.0"
+
 '$dynamic
+'Setting the graphics window off by default allows running without a
+'graphics environment (and prevents an annoying popup).
 $console
 $screenhide
 option _explicitarray
@@ -33,9 +40,6 @@ _dest _console
 deflng a-z
 const FALSE = 0, TRUE = not FALSE
 on error goto error_handler
-
-dim shared VERSION$
-VERSION$ = "0.1.0"
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
@@ -48,19 +52,47 @@ dim shared Error_context
 'detailed explanation.
 dim shared Error_message$
 
-'$include: 'cmdflags.bi'
-'$include: 'type.bi'
-'$include: 'symtab.bi'
-'$include: 'ast.bi'
-'$include: 'parser/parser.bi'
-'$include: 'emitters/immediate/immediate.bi'
+'We distinguish the runtime platform (where L-BASIC is running) from the target
+'platform (where the binaries we produce are running).
+type platform_t
+    id as string
+    posix_paths as long 'TRUE for linux/mac style paths, false for Windows style paths
+    executable_extension as string
+end type
+dim shared as platform_t runtime_platform_settings, target_platform_settings
+if instr(_os$, "[WINDOWS]") then
+    runtime_platform_settings.id = "Windows"
+    runtime_platform_settings.posix_paths = FALSE
+    runtime_platform_settings.executable_extension = ".exe"
+elseif instr(_os$, "[MACOSX]") then
+    runtime_platform_settings.id = "MacOS"
+    runtime_platform_settings.posix_paths = TRUE
+    runtime_platform_settings.executable_extension = ""
+elseif instr(_os$, "[LINUX]") then
+    runtime_platform_settings.id = "Linux"
+    runtime_platform_settings.posix_paths = TRUE
+    runtime_platform_settings.executable_extension = ""
+else
+    fatalerror "Could not detect runtime platform"
+end if
+'For now, the target platform is always the same as the runtime platform
+target_platform_settings = runtime_platform_settings
 
 'This is an array so we can handle included files.
-'The current "reading" file is (input_file_handles(input_file_handles_last)s_last).
-redim shared input_file_handles(0)
-dim shared input_file_handles_last
+'The current "reading" file is input_files(input_files_last).
+type input_file_t
+    handle as long
+    'Directory containing the file, further includes are relative to this
+    dirname as string
+    'To be used only for diagnostic messages
+    filename as string
+end type
+redim shared input_files(0) as input_file_t
+dim shared input_files_last
+'The logging output is used for debugging output
 dim shared logging_file_handle
 
+'Various global options read from the command line
 type options_t
     mainarg as string
     preload as string
@@ -72,39 +104,45 @@ type options_t
     compile_mode as integer
     debug as integer
 end type
-
 dim shared options as options_t
+
+'Allow immediate mode to access COMMAND$() without picking up interpreter options
 dim shared input_file_command_offset
 
-chdir _startdir$
-parse_cmd_line_args
+'$include: 'cmdflags.bi'
+'$include: 'type.bi'
+'$include: 'symtab.bi'
+'$include: 'ast.bi'
+'$include: 'parser/parser.bi'
+'$include: 'emitters/immediate/immediate.bi'
 
-if instr(_os$, "[WINDOWS]") then
-    exe_suffix$ = ".exe"
-else
-    exe_suffix$ = ""
-end if
+parse_cmd_line_args
 
 if not options.terminal_mode then
     _screenshow
     _dest 0
 end if
 
+'Send out debugging info to the screen
 logging_file_handle = freefile
 open "SCRN:" for output as #logging_file_handle
+
+'Setup AST and constants
 ast_init
+
+'Preload files can override built-in commands; handle that now
 if options.preload <> "" then preload_file
 
+'Dispatch based on desired mode of operation
 Error_context = 1
 if options.interactive_mode then
+    'User will type in commands
     interactive_mode FALSE
 elseif options.command_mode then
+    'Run some code given on the command line
     command_mode
 elseif options.compile_mode then
-    'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
-    if options.outputfile = "" then options.outputfile = remove_ext$(options.mainarg) + exe_suffix$
-    if instr("/", left$(options.mainarg, 1)) = 0 then options.mainarg = _startdir$ + "/" + options.mainarg
-    if instr("/", left$(options.outputfile, 1)) = 0 then options.outputfile = _startdir$ + "/" + options.outputfile
+    'Produce a binary output. Currently this just dumps the AST and symbol table.
     compile_mode
 else
     run_mode
@@ -168,7 +206,7 @@ end sub
 'They provide a uniform way of loading the next line.
 function general_next_line$
     if options.preload <> "" then
-        line input #input_file_handles(input_file_handles_last), s$
+        line input #input_files(input_files_last).handle, s$
     elseif options.interactive_mode then
         print "> ";
         line input s$
@@ -176,26 +214,26 @@ function general_next_line$
         s$ = options.mainarg
         options.mainarg = ""
     else
-        line input #input_file_handles(input_file_handles_last), s$
+        line input #input_files(input_files_last).handle, s$
     end if
     general_next_line$ = s$
 end function
 
 function general_eof
     if options.preload <> "" then
-        result = eof(input_file_handles(input_file_handles_last))
+        result = eof(input_files(input_files_last).handle)
     elseif options.interactive_mode then
         'Hopefully one day we'll be able to handle ^D/^Z here
         result = FALSE
     elseif options.command_mode then
         result = options.mainarg = ""
     else
-        result = eof(input_file_handles(input_file_handles_last))
+        result = eof(input_files(input_files_last).handle)
         'An EOF in an include file just means close that and return to the
         'outer file
-        if result and input_file_handles_last > 0 then
-            close #input_file_handles(input_file_handles_last)
-            input_file_handles_last = input_file_handles_last - 1
+        if result and input_files_last > 0 then
+            close #input_files(input_files_last).handle
+            input_files_last = input_files_last - 1
             'Call recursively in case the outer file has also ended
             result = general_eof
         end if
@@ -204,12 +242,12 @@ function general_eof
 end function
 
 sub preload_file
-    input_file_handles(input_file_handles_last) = freefile
-    open options.preload for input as #input_file_handles(input_file_handles_last)
+    input_files(input_files_last).handle = freefile
+    open options.preload for input as #input_files(input_files_last).handle
     tok_init
     Error_context = 1
     ps_preload_file
-    close #input_file_handles(input_file_handles_last)
+    close #input_files(input_files_last).handle
     options.preload = ""
 end sub    
 
@@ -288,13 +326,18 @@ end sub
     
 sub compile_mode
     if options.mainarg = "" then fatalerror "No input file"
-    input_file_handles(input_file_handles_last) = freefile
-    open options.mainarg for input as #input_file_handles(input_file_handles_last)
+    'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
+    if options.outputfile = "" then options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
+    input_files(input_files_last).filename = options.mainarg
+    options.mainarg = locate_path$(options.mainarg, _startdir$)
+    input_files(input_files_last).dirname = dirname$(options.mainarg)
+    input_files(input_files_last).handle = freefile
+    open options.mainarg for input as #input_files(input_files_last).handle
     tok_init
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
-    close #input_file_handles(input_file_handles_last)
+    close #input_files(input_files_last).handle
     close #logging_file_handle
     logging_file_handle = freefile
     open options.outputfile for output as #logging_file_handle
@@ -306,13 +349,16 @@ end sub
 
 sub run_mode
     if options.mainarg = "" then fatalerror "No input file"
-    input_file_handles(input_file_handles_last) = freefile
-    open options.mainarg for input as #input_file_handles(input_file_handles_last)
+    input_files(input_files_last).filename = options.mainarg
+    options.mainarg = locate_path$(options.mainarg, _startdir$)
+    input_files(input_files_last).dirname = dirname$(options.mainarg)
+    input_files(input_files_last).handle = freefile
+    open options.mainarg for input as #input_files(input_files_last).handle
     tok_init
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
-    close #input_file_handles(input_file_handles_last)
+    close #input_files(input_files_last).handle
     imm_init
     Error_context = 4
     imm_run AST_ENTRYPOINT
@@ -329,6 +375,44 @@ function remove_ext$(fullname$)
         remove_ext$ = left$(fullname$, dot - 1)
     else
         remove_ext$ = fullname$
+    end if
+end function
+
+'Get the path to a file relative to the prefix$ path. If prefix$ is
+'absolute, then the returned path is absolute too.
+function locate_path$(file$, prefix$)
+    if runtime_platform_settings.posix_paths then
+        if left$(file$, 1) = "/" then
+            'path is already absolute
+            locate_path$ = file$
+        else
+            locate_path$ = prefix$ + "/" + file$
+        end if
+    else
+        'This doesn't support UNC paths or DOS device paths
+        if mid$(file$, 2, 1) = ":" or left$(file$, 1) = "\" then
+            'already absolute, or relative with explicit drive letter
+            'that we can't meaningfully modify
+            locate_path$ = file$
+        else
+            if right$(prefix$, 1) = "\" then sep$ = "" else sep$ = "\" '"fix syntax hilight
+            locate_path$ = prefix$ + sep$ + file$
+        end if
+    end if
+end function
+
+'Get the directory component of a path
+function dirname$(path$)
+    if runtime_platform_settings.posix_paths then
+        slash$ = "/"
+    else
+        slash$ = "\" '"
+    end if
+    s = _instrrev(path$, slash$)
+    if s = 0 then
+        dirname$ = "."
+    else
+        dirname$ = left$(path$, s - 1)
     end if
 end function
 
@@ -369,7 +453,7 @@ sub parse_cmd_line_args()
                     options.terminal_mode = TRUE
                     fatalerror arg$ + " requires argument"
                 end if
-                options.outputfile = command$(i + 1)
+                options.outputfile = locate_path$(command$(i + 1), _startdir$)
                 i = i + 1
             case "-d", "--debug"
                 options.debug = TRUE
@@ -384,7 +468,7 @@ sub parse_cmd_line_args()
                     options.terminal_mode = TRUE
                     fatalerror arg$ + " requires argument"
                 end if
-                options.preload = command$(i + 1)
+                options.preload = locate_path$(command$(i + 1), _startdir$)
                 i = i + 1
             case else
                 if left$(arg$, 1) = "-" then
