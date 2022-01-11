@@ -280,7 +280,7 @@ function end            none      integer?
 function environ        string    integer
 function environ        string    string
 function eof            long      long
-# erase
+function erase          none      @any_array
 # erdev
 # erl
 # err

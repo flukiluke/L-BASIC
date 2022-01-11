@@ -8,6 +8,15 @@ case TOK_DIM
     imm_eval child, v1
     result.n = imm_get_at_addr_n(imm_add_offset(v1.n, 1))
 
+case TOK_ERASE
+    child = ast_get_child(node, 1)
+    addr = imm_get_addr(child)
+    data_addr = imm_get_at_addr_n(addr)
+    if data_addr <> 0 then
+        imm_heap_free data_addr
+        imm_set_at_addr_n addr, 0
+    end if
+
 case TOK_OPTION
     'The OPTION function to check if an OPTION variable was passed
     child = ast_get_child(node, 1)
