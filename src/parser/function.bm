@@ -125,6 +125,7 @@ sub ps_funcarg(root, candidate$, suppress_comma)
             goto arg_done
         elseif expected_flags AND TYPE_CONTEXTUAL then
             l = instr(ast_constants(expected_type), "|" + ucase$(tok_content$) + "|")
+            ast_nodes(expr).ref2 = 0
             if l then
                 'We have found a matching contextual argument
                 typ = expected_type

@@ -47,8 +47,6 @@ function ps_stmt
         case TOK_INPUT, TOK_LINEINPUT
             'These two are so similar, we parse them as the same function
             stmt = ps_stmt_input
-        case TOK_OPEN
-            stmt = ps_open
         case TOK_PRINT
             stmt = ps_print
         case TOK_SELECT

@@ -226,14 +226,12 @@ function abs            quad      quad
 # access
 # alias
 # any
-# append
 function asc            integer   string,integer64?
 function atn            single    single
 function atn            double    double
 function atn            quad      quad
 
 function beep           none
-generic binary
 # bload
 # bsave
 generic byref
@@ -372,10 +370,9 @@ function _newimage      long      long,long,long?
 # oct
 # off
 # on com|error|key|pen|play|strig|timer|uevent|gosub
-function open           none      string,flags,%long,long?
+function open           none      string,'for,$random|input|output|binary|append,'as,%long,'len?,'equals?,long?
 function option         long      @any
 # out
-generic output
 
 # paint
 # palette
@@ -401,7 +398,6 @@ function put            none      %long,integer64?,quad?
 #put graphics
 # put
 
-generic random
 function randomize      none      double?
 function randomize      none      "using,double
 # read
