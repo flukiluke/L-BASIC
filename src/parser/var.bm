@@ -14,7 +14,7 @@ function ps_dim
     if ps_consumed(TOK__PRESERVE) then preserve = TRUE
     if ps_consumed(TOK_SHARED) then is_shared = TRUE
     if is_static then
-        if is_shared then ps_error "Cannot be SHARED and STATIC"
+        if is_shared or preserve then ps_error "Cannot be SHARED or _PRESERVE when STATIC"
         if ps_last_nested(AST_PROCEDURE) = 0 then ps_error "Not in function"
         'Switch back to the main program's var counter so that statics are allocated
         'in the main program's stack frame.

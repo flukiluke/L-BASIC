@@ -2,6 +2,16 @@
 'SPDX-License-Identifier: Apache-2.0
 'array.bm - Array handling functions
 
+sub imm_do_array_establish(node)
+    array = ast_get_child(node, 1)
+    'get address of descriptor
+    info_base_addr = imm_get_addr(array)
+    'get data block address
+    data_addr = imm_get_at_addr_n(info_base_addr)
+    if data_addr <> 0 then exit sub
+    imm_array_init node
+end sub
+    
 sub imm_do_array_delete(node)
     array = ast_get_child(node, 1)
     'get address of descriptor
@@ -93,9 +103,9 @@ sub imm_do_array_resize(node, preserve)
         next i
         old_data_size = old_data_size * type_fixed_size(element_type)
         new_data_size = new_data_size * type_fixed_size(element_type)
-        if new_data_size < old_data_size then
-            'Array is shrinking. Since we don't have the ability to shrink allocations, just leave it
-            'the same size.
+        if new_data_size <= old_data_size then
+            'Array is shrinking or staying the same. Since we don't have the ability
+            'to shrink allocations, just leave it the same size.
             'TODO implement heap shrinking
         else
             'Array is expanding. Copy data to a new allocation.

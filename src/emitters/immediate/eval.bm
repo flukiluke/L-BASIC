@@ -42,6 +42,8 @@ sub imm_eval(node, result as imm_value_t)
         imm_do_array_resize node, TRUE
     case AST_ARRAY_DELETE
         imm_do_array_delete node
+    case AST_ARRAY_ESTABLISH
+        imm_do_array_establish node
     case AST_CAST
         imm_do_cast node, result
     case AST_GOTO

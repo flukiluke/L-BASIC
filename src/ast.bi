@@ -92,9 +92,12 @@ const AST_ARRAY_CREATE = 20
 const AST_ARRAY_RESIZE = 21
 'Free an array's heap allocation, effectively a destructor. First child is an lvalue.
 const AST_ARRAY_DELETE = 22
+'Like _CREATE, with the exception that the array is not touched if memory is already
+'allocated. Added to support STATIC arrays.
+const AST_ARRAY_ESTABLISH = 23
 
 'Sets the return value of the current function. first child is expr to return.
-const AST_SET_RETURN = 23
+const AST_SET_RETURN = 24
 
 'Flag is a value defined in cmdflags.bi.
 const AST_FLAG_MANUAL = 1
