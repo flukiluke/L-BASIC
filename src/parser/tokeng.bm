@@ -151,7 +151,12 @@ function tok_next_ts$(text$, ts_type)
         if c > 127 then ps_error "Character outside character set (" + ltrim$(str$(c)) + ")"
         command = t_states~%(c, tokeng_state.curstate)
         'Rules of the form "A: B ~ Error" encode to 0
-        if command = 0 then ps_error chr$(34) + chr$(c) + chr$(34) + " from " + t_statenames$(tokeng_state.curstate) + " illegal"
+        if command = 0 then
+            'As an affordance to interactive mode, skip over the bad character so we don't get caught in an
+            'infinite loop when we restart after error
+            tokeng_state.index = i + 1
+            ps_error chr$(34) + chr$(c) + chr$(34) + " from " + t_statenames$(tokeng_state.curstate) + " illegal"
+        end if
         'High byte is next state, low byte is token, high bit of low byte is pushback flag
         ts_type_internal = command and 127
         pushback = command and 128
