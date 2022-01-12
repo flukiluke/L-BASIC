@@ -20,12 +20,16 @@ $if VERSION < 2.0 then
 $end if
 
 'Control which components produce debugging messages when debugging is on
+$let DEBUG_TIMINGS = 0
 $let DEBUG_PARSE_TRACE = 0
 $let DEBUG_TOKEN_STREAM = 0
 $let DEBUG_CALL_RESOLUTION = 0
-$let DEBUG_PARSE_RESULT = 1
-$let DEBUG_MEM_TRACE = 1
-$let DEBUG_HEAP = 1
+$let DEBUG_PARSE_RESULT = 0
+$let DEBUG_MEM_TRACE = 0
+$let DEBUG_HEAP = 0
+$if DEBUG_TIMINGS then
+debug_timing_mark# = timer(0.001)
+$end if
 
 dim shared VERSION$
 VERSION$ = "0.1.0"
@@ -120,7 +124,6 @@ dim shared input_file_command_offset
 '$include: 'emitters/immediate/immediate.bi'
 
 parse_cmd_line_args
-
 if not options.terminal_mode then
     _screenshow
     _dest 0
@@ -132,6 +135,10 @@ open_file "SCRN:", logging_file_handle, TRUE
 
 'Setup AST and constants
 ast_init
+
+$if DEBUG_TIMINGS then
+debuginfo "Boot time:" + str$(timer(0.001) - debug_timing_mark#)
+$end if
 
 'Preload files can override built-in commands; handle that now
 if options.preload <> "" then preload_file
@@ -371,13 +378,25 @@ sub run_mode
     input_files(input_files_last).handle = freefile
     open_file options.mainarg, input_files(input_files_last).handle, FALSE
     tok_init
+    $if DEBUG_TIMINGS then
+    debug_timing_mark# = timer(0.001)
+    $end if
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
+    $if DEBUG_TIMINGS then
+    debuginfo "Parse time:" + str$(timer(0.001) - debug_timing_mark#)
+    $end if
     Error_context = 0
     close #input_files(input_files_last).handle
     imm_init
     Error_context = 2
+    $if DEBUG_TIMINGS then
+    debug_timing_mark# = timer(0.001)
+    $end if
     imm_run AST_ENTRYPOINT
+    $if DEBUG_TIMINGS then
+    debuginfo "Run time:" + str$(timer(0.001) - debug_timing_mark#)
+    $end if
     Error_context = 0
     $if DEBUG_HEAP then
     if options.debug then imm_heap_stats
