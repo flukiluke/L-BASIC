@@ -21,7 +21,7 @@ function ps_const
         var = ast_nodes(lval).ref
 
         ps_default_type = prev_default
-        symtab(var).v3 = TRUE 'Mark constant
+        symtab(var).v3 = symtab(var).v3 or SYM_VARIABLE_CONST 'Mark constant
         node = ast_add_node(AST_ASSIGN)
         ast_attach root, node
         ast_attach node, lval

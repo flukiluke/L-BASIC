@@ -17,15 +17,17 @@ function imm_get_addr(node)
         'Always a stack address. Even arrays, because a reference to the entire array
         'refers to the dimension info block that sits on the stack (unless it's an
         'array in a UDT in an array, but that wouldn't be an AST_VAR).
-        if left$(symtab(ast_nodes(node).ref).identifier, 1) = "@" then
+        if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_MAINFRAME then
+            'shared or static variable
+            addr = symtab(ast_nodes(node).ref).v2
+        else
             'local variable
             addr = imm_stack_base + symtab(ast_nodes(node).ref).v2
-        else
-            'shared variable
-            addr = symtab(ast_nodes(node).ref).v2
         end if
         'Dereference if needed
-        if symtab(ast_nodes(node).ref).v4 then addr = imm_get_at_addr_n(addr)
+        if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_DEREF then
+            addr = imm_get_at_addr_n(addr)
+        end if
         imm_get_addr = addr
     case AST_UDT_ACCESS
         'TODO: Is a dereference check needed here?

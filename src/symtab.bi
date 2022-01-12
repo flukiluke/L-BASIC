@@ -26,8 +26,7 @@ const SYM_PREFIX = 3
 'A variable.
 'v1 -> the data type
 'v2 -> index in this scope (in each scope, first variable has 1, second has 2 etc.)
-'v3 -> constant (cannot be reassigned)
-'v4 -> TRUE if variable needs to be dereferenced before access (to support pass-by-reference)
+'v3 -> various SYM_VARIABLE_* flags
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature
@@ -59,6 +58,14 @@ const SYM_TYPE_INTERNAL = 0
 const SYM_TYPE_UDT = 1
 'Stored as the element type followed by parentheses and the number of dimensions, e.g. INTEGER(2)
 const SYM_TYPE_ARRAY = 2
+
+'Settings for SYM_VARIABLE
+'This variable is a constant and cannot be reassigned
+const SYM_VARIABLE_CONST = 1
+'This variable must be dereferenced before access (to support pass-by-reference)
+const SYM_VARIABLE_DEREF = 2
+'This variable is stored in the main program's stack frame, not the frame of any scoping function (SHARED or STATIC)
+const SYM_VARIABLE_MAINFRAME = 4
 
 'Further categorisation of SYM_FUNCTION
 'Functions that are handled directly based on their name

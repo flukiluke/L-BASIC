@@ -151,7 +151,7 @@ sub ast_dump_pretty(root, indent_level)
     case AST_VAR
         print #logging_file_handle, "var(";
         var = ast_nodes(root).ref
-        if symtab(var).v3 then print #logging_file_handle, "CONST ";
+        if symtab(var).v3 AND SYM_VARIABLE_CONST then print #logging_file_handle, "CONST ";
         print #logging_file_handle, symtab(var).identifier; ")";
     case AST_UDT_ACCESS
         print #logging_file_handle, "udt(";

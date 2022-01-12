@@ -33,8 +33,9 @@ function ps_stmt
             stmt = ps_const
         case TOK_DECLARE
             stmt = ps_declare
-        case TOK_DIM, TOK_REDIM
-            'REDIM is treated as an alias for DIM
+        case TOK_DIM, TOK_REDIM, TOK_STATIC
+            'REDIM is treated as an alias for DIM.
+            'STATIC is so similar we handle it here too.
             stmt = ps_dim
         case TOK_DO
             stmt = ps_do

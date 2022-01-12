@@ -25,7 +25,7 @@ case TOK_OPTION
         imm_error "OPTION check not supported on arrays & UDTs"
     end if
     sym = ast_nodes(child).ref
-    if symtab(sym).v4 = 0 then
+    if (symtab(sym).v3 AND SYM_VARIABLE_DEREF) = 0 then
         'Not pass-by-reference, so could not have been optional
         result.n = TRUE
     else

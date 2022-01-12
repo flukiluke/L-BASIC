@@ -2,16 +2,26 @@
 'SPDX-License-Identifier: Apache-2.0
 'var.bm - Parse rules for DIM and variables
 
-'Expects: TOK_DIM or TOK_REDIM
+'Expects: TOK_DIM, TOK_REDIM or TOK_STATIC
 'Results: token after last declaration
-'Format: DIM variablelist
+'Format: DIM [STATIC] [_PRESERVE] [SHARED] variablelist
 function ps_dim
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start dim"
     $end if
-    tok_advance
+    if tok_token = TOK_DIM or tok_token = TOK_REDIM then tok_advance
+    if ps_consumed(TOK_STATIC) then is_static = TRUE
     if ps_consumed(TOK__PRESERVE) then preserve = TRUE
     if ps_consumed(TOK_SHARED) then is_shared = TRUE
+    if is_static then
+        if is_shared then ps_error "Cannot be SHARED and STATIC"
+        if ps_last_nested(AST_PROCEDURE) = 0 then ps_error "Not in function"
+        'Switch back to the main program's var counter so that statics are allocated
+        'in the main program's stack frame.
+        inner_next_var_index = ps_next_var_index
+        ps_next_var_index = ps_main_next_var_index
+    end if
+
     'Check for Dim As Long style syntax
     typ = ps_opt_sigil
     do
@@ -27,14 +37,20 @@ function ps_dim
             'Array declaration.
             'The block holds all resizes declared in this DIM statement
             if block = 0 then block = ast_add_node(AST_BLOCK)
-            ps_dim_array name_token, variable_name$, sigil, block, is_shared, preserve
+            ps_dim_array name_token, variable_name$, sigil, block, is_shared, preserve, is_static
         else
             'Just a regular variable
             if name_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
-            dummy = ps_new_var_pp(variable_name$, sigil, is_shared)
+            sym = ps_new_var_pp(variable_name$, sigil, is_shared)
+            if is_static then symtab(sym).v3 = symtab(sym).v3 OR SYM_VARIABLE_MAINFRAME
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_dim = block
+
+    if is_static then
+        ps_main_next_var_index = ps_next_var_index
+        ps_next_var_index = inner_next_var_index
+    end if
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed dim"
     $end if
@@ -49,7 +65,9 @@ end function
 
 function ps_lvalue_mutable
     node = ps_lvalue
-    if symtab(ast_nodes(node).ref).v3 then ps_error "Cannot reassign CONST"
+    if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_CONST then
+        ps_error "Cannot reassign CONST"
+    end if
     ps_lvalue_mutable = node
 end function
 
@@ -162,6 +180,7 @@ function ps_new_var_pp(var_name$, sigil, is_shared)
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
     sym.v2 = ps_next_var_index
     ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+    if is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
     symtab_add_entry sym
     ps_new_var_pp = symtab_last_entry
 end function

@@ -62,8 +62,8 @@ function ps_userfunc
     root = ast_add_node(AST_PROCEDURE)
     ps_add_nested_structure root
     ps_scope_identifier$ = sym.identifier
-    'Save this value so we can restore it later
-    saved_var_index = ps_next_var_index
+    'Save this value so we can restore it later (and so STATIC can access it)
+    ps_main_next_var_index = ps_next_var_index
     ps_next_var_index = 1
 
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
@@ -111,7 +111,7 @@ function ps_userfunc
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
     symtab(proc_id).v4 = ps_next_var_index - 1
-    ps_next_var_index = saved_var_index
+    ps_next_var_index = ps_main_next_var_index
 
     ps_scope_identifier$ = ""
     ps_remove_nested_structure
@@ -164,7 +164,7 @@ function ps_formal_args$(root)
             ps_allow_implicit_vars = old_implicit_allow
             if (flags AND TYPE_BYVAL) = 0 then
                 'Default to making the argument pass-by-reference
-                symtab(ast_nodes(var).ref).v4 = TRUE
+                symtab(ast_nodes(var).ref).v3 = symtab(ast_nodes(var).ref).v3 AND SYM_VARIABLE_DEREF
             end if
             ast_attach root, var
             typ = type_of_var(var)

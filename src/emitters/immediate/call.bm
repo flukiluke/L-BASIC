@@ -68,7 +68,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
         elseif ast_nodes(arg_node).typ = AST_NONE then
             'Not supplied optional argument, pass a null pointer
             imm_set_at_addr_n old_stack_last + i, 0
-        elseif symtab(ast_nodes(ast_get_child(proc_node, i + 1)).ref).v4 then
+        elseif symtab(ast_nodes(ast_get_child(proc_node, i + 1)).ref).v3 AND SYM_VARIABLE_DEREF then
             'Callee needs a reference. Can we just provide a pointer to a passed variable?
             if ast_is_lvalue(arg_node) then
                 'Yes, passed argument is an lvalue so we can get a reference to it
@@ -90,7 +90,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     next i
     'If we're expected to return a value, allocate an extra stack slot
     'after the formal arguments and shadow copies to hold that value
-    if type_sig_return(ast_nodes(node).ref2) <> 0 then
+    if type_sig_return(ast_nodes(node).ref2) <> TYPE_NONE then
         has_return_value = TRUE
         imm_reinit imm_stack_last + 1
     end if
@@ -99,7 +99,6 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     imm_stack_base = old_stack_last
     'Do the call!
     imm_eval ast_get_child(symtab(proc_id).v3, 1), result
-    'TODO: Free heap allocations
     'Collect return value if relevant
     if has_return_value then imm_get_at_addr imm_stack_last, result
     'Restore previous stack frame

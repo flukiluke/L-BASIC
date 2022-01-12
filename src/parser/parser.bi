@@ -9,6 +9,10 @@
 'restore this value so it is preserved for the main program.
 dim shared ps_next_var_index as long
 ps_next_var_index = 1
+'When in a sub/function, we make the main program's counter available too so that
+'STATIC variables can be made part of the main program's stack allocation. This
+'value is only valid when in a sub/function.
+dim shared ps_main_next_var_index as long
 
 'actual as opposed to any explicit old-timey line numbers/labels in the program
 dim shared ps_actual_linenum as long

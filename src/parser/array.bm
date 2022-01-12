@@ -7,7 +7,7 @@
 'This sub produces AST_ARRAY_DELETE and AST_ARRAY_RESIZE operations
 'and adds them to the supplied block. It also generates the symtab entries
 'for the array itself and its type.
-sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve)
+sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start dim array"
     $end if
@@ -71,8 +71,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve)
         sym.v1 = array_type_sym
         sym.v2 = ps_next_var_index
         ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
-        sym.v3 = false
-        sym.v4 = false
+        if is_static or is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
         symtab_add_entry sym
         var = symtab_last_entry
     else
@@ -97,7 +96,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve)
     proc = ps_last_nested(AST_PROCEDURE)
     if proc > 0 and _
             symtab(ast_nodes(proc).ref).identifier = ps_get_scope$(var) and _
-            not symtab(var).v4 then
+            (symtab(var).v3 AND SYM_VARIABLE_DEREF) = 0 then
         'Have a check to see if there's already a destructor.
         'This could occur if there are multiple DIMs in the same function.
         for i = 1 to len(ps_queued_nodes$) - 3 step 4
