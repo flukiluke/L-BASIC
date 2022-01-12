@@ -1,0 +1,27 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'font.bm - Executors for font handling functions
+
+case TOK__FONTHEIGHT
+    c1 = ast_get_child(node, 1)
+    if ast_is_none(c1) then
+        result.n = _fontheight
+    else
+        imm_eval c1, v1
+        result.n = _fontheight(v1.n)
+    end if
+
+case TOK__FONTWIDTH
+    c1 = ast_get_child(node, 1)
+    if ast_is_none(c1) then
+        result.n = _fontwidth
+    else
+        imm_eval c1, v1
+        result.n = _fontwidth(v1.n)
+    end if
+
+case TOK__PRINTWIDTH
+    imm_eval ast_get_child(node, 1), v1
+    c2 = ast_get_child(node, 2)
+    if ast_is_none(c2) then v2.n = _dest else imm_eval c2, v2
+    result.n = _printwidth(v1.s, v2.n)

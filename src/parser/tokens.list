@@ -299,6 +299,8 @@ function files          none      string?
 function fix            single    single
 function fix            double    double
 function fix            quad      quad
+function _fontheight    integer   long?
+function _fontwidth     integer   long?
 # fre
 function freefile       long
 
@@ -393,6 +395,8 @@ function play           none      string
 # pos
 # preset
 function print          none      list
+function _printstring   none      'oparen,single,single,'cparen,string,long?
+function _printwidth    long      string,long?
 # pset
 function put            none      %long,integer64?,string?
 function put            none      %long,integer64?,integer?
@@ -412,6 +416,10 @@ function randomize      none      "using,double
 # restore
 # resume
 # return
+function _rgb32         long      integer
+function _rgb32         long      integer,integer
+function _rgb32         long      integer,integer,integer
+function _rgb32         long      integer,integer,integer,integer
 function right          string    string,integer64
 function rmdir          none      string
 function rnd            single    single?

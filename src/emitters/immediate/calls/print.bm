@@ -1,6 +1,6 @@
 'Copyright 2020 Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'print.bm - Executor for PRINT statement
+'print.bm - Executor for PRINT statement and friends
 
 case TOK_PRINT
     for i = 1 to ast_num_children(node)
@@ -32,3 +32,13 @@ case TOK_PRINT
             end select
         end if
     next i
+
+case TOK__PRINTSTRING
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    imm_eval ast_get_child(node, 3), v3
+    v4.n = _dest
+    c4 = ast_get_child(node, 4)
+    if not ast_is_none(c4) then imm_eval c4, v4
+    _printstring (v1.n, v2.n), v3.s, v4.n
+

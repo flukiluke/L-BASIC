@@ -22,6 +22,7 @@ sub imm_do_call_internal(node, result as imm_value_t)
     select case ast_nodes(node).ref
     '$include: 'calls/input.bm'
     '$include: 'calls/file.bm'
+    '$include: 'calls/font.bm'
     '$include: 'calls/graphics.bm'
     '$include: 'calls/keyboard.bm'
     '$include: 'calls/logic.bm'
