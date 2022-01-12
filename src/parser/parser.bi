@@ -39,3 +39,7 @@ dim shared ps_scope_identifier$
 'Sometimes we need to run cleanup code just before exiting a scope. This is
 'a list of nodes to be added to the end of a scope's block.
 dim shared ps_queued_nodes$
+
+'Set to FALSE if OPTION _EXPLICIT is in effect
+dim shared ps_allow_implicit_vars
+ps_allow_implicit_vars = TRUE

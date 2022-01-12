@@ -218,6 +218,9 @@ generic redim
 generic shared
 generic _preserve
 
+generic _explicit
+generic _explicitarray
+
 # functions with return type none are subs
 function abs            integer   integer
 function abs            long      long

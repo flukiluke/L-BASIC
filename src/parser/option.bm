@@ -1,0 +1,17 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'option.bm - Parse rules for the OPTION statement
+
+'Expects: TOK_OPTION
+'Results: NEWLINE
+sub ps_stmt_option
+    ps_consume TOK_OPTION
+    if ps_consumed(TOK__EXPLICIT) then
+        ps_allow_implicit_vars = FALSE
+    elseif ps_consumed(TOK__EXPLICITARRAY) then
+        'Arrays are never allowed to be implicit so this is always in effect.
+        'Ignore silently for compatibility.
+    else
+        ps_error "Expected OPTION _EXPLICIT"
+    end if
+end sub

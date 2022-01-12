@@ -91,6 +91,7 @@ function ps_simple_variable_p(head, content$)
     node = ast_add_node(AST_VAR)
     if head = TOK_UNKNOWN then
         'Add new variable (implicit declaration)
+        if not ps_allow_implicit_vars then ps_error "Implicit variable declaration"
         ast_nodes(node).ref = ps_new_var_p(content$)
     elseif symtab(head).typ <> SYM_VARIABLE then
         ps_error "Expected variable"

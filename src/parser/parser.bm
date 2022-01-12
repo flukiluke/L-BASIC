@@ -132,6 +132,7 @@ end function
 '$include: 'labels.bm'
 '$include: 'loop.bm'
 '$include: 'metacommands.bm'
+'$include: 'option.bm'
 '$include: 'pratt.bm'
 '$include: 'preload.bm'
 '$include: 'print.bm'
