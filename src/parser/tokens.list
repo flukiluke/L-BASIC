@@ -327,6 +327,7 @@ function int            quad      quad
 # interrupt
 
 # key
+function _keyclear      none
 function _keyhit        long
 function kill           none      string
 
