@@ -47,10 +47,13 @@ on error goto error_handler
 '1 => Parsing code; parser line number is valid
 '2 => Immediate runtime
 '3 => Dump code
+'4 => Trying to open a file
 dim shared Error_context
 'Because we can only throw a numeric error code, this holds a more
 'detailed explanation.
 dim shared Error_message$
+'Set TRUE whenever an error is triggered
+dim shared Error_occurred
 
 'We distinguish the runtime platform (where L-BASIC is running) from the target
 'platform (where the binaries we produce are running).
@@ -125,7 +128,7 @@ end if
 
 'Send out debugging info to the screen
 logging_file_handle = freefile
-open "SCRN:" for output as #logging_file_handle
+open_file "SCRN:", logging_file_handle, TRUE
 
 'Setup AST and constants
 ast_init
@@ -154,6 +157,7 @@ interactive_recovery:
     interactive_mode TRUE
 
 error_handler:
+    Error_occurred = TRUE
     select case Error_context
     case 1 'Parsing code
         print "Parser: ";
@@ -177,10 +181,8 @@ error_handler:
         print "Dump: ";
         if err <> 101 then goto internal_error
         print Error_message$
-    case 4 'Run mode
-        print "Runtime error: ";
-        if err = 101 then print Error_message$; else print _errormessage$(err);
-        print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
+    case 4 'File access check
+        resume next
     case else
         internal_error:
         if _inclerrorline then
@@ -243,13 +245,27 @@ end function
 
 sub preload_file
     input_files(input_files_last).handle = freefile
-    open options.preload for input as #input_files(input_files_last).handle
+    open_file options.preload, input_files(input_files_last).handle, FALSE
     tok_init
     Error_context = 1
     ps_preload_file
     close #input_files(input_files_last).handle
     options.preload = ""
-end sub    
+end sub
+
+'Open a file and trigger a fatal error if we couldn't
+sub open_file(filename$, handle, is_output)
+    old_ctx = Error_context
+    Error_context = 4
+    Error_occurred = FALSE
+    if is_output then
+        open filename$ for output as #handle
+    else
+        open filename$ for input as #handle
+    end if
+    if Error_occurred then fatalerror "Could not open file " + filename$
+    Error_context = old_ctx
+end sub
 
 sub interactive_mode(recovery)
     if recovery then
@@ -332,7 +348,7 @@ sub compile_mode
     options.mainarg = locate_path$(options.mainarg, _startdir$)
     input_files(input_files_last).dirname = dirname$(options.mainarg)
     input_files(input_files_last).handle = freefile
-    open options.mainarg for input as #input_files(input_files_last).handle
+    open_file options.mainarg, input_files(input_files_last).handle, FALSE
     tok_init
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
@@ -340,7 +356,7 @@ sub compile_mode
     close #input_files(input_files_last).handle
     close #logging_file_handle
     logging_file_handle = freefile
-    open options.outputfile for output as #logging_file_handle
+    open_file options.outputfile, logging_file_handle, TRUE
     Error_context = 3
     dump_program
     Error_context = 0
@@ -353,14 +369,14 @@ sub run_mode
     options.mainarg = locate_path$(options.mainarg, _startdir$)
     input_files(input_files_last).dirname = dirname$(options.mainarg)
     input_files(input_files_last).handle = freefile
-    open options.mainarg for input as #input_files(input_files_last).handle
+    open_file options.mainarg, input_files(input_files_last).handle, FALSE
     tok_init
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
     close #input_files(input_files_last).handle
     imm_init
-    Error_context = 4
+    Error_context = 2
     imm_run AST_ENTRYPOINT
     Error_context = 0
     $if DEBUG_HEAP then

@@ -72,7 +72,7 @@ sub ps_meta_include
     'A relative path is relative to the location of the including file
     filename$ = locate_path$(filename$, input_files(input_files_last - 1).dirname)
     input_files(input_files_last).dirname = dirname$(filename$)
-    open filename$ for input as #input_files(input_files_last).handle
+    open_file filename$, input_files(input_files_last).handle, FALSE
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed $include"
     $end if
