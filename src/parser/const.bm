@@ -14,33 +14,27 @@ function ps_const
 
     do
         if tok_token <> TOK_UNKNOWN then ps_error "CONST already defined"
-        'Change default type because we want to infer it from the rvalue
-        prev_default = ps_default_type
-        ps_default_type = TYPE_NONE
-        'Force allow implicit variable declarations because that is how we
-        'parse consts.
-        old_implicit_allow = ps_allow_implicit_vars
-        ps_allow_implicit_vars = TRUE
-        lval = ps_simple_variable
-        ps_allow_implicit_vars = old_implicit_allow
-        var = ast_nodes(lval).ref
-
-        ps_default_type = prev_default
+        const_name$ = tok_content$
+        tok_advance
+        sigil = ps_opt_sigil
+        var = ps_new_var_pp(const_name$, sigil, TRUE)
+        lval = ast_add_node(AST_VAR)
+        ast_nodes(lval).ref = var
         symtab(var).v3 = symtab(var).v3 or SYM_VARIABLE_CONST 'Mark constant
-        node = ast_add_node(AST_ASSIGN)
-        ast_attach root, node
-        ast_attach node, lval
+        assignment = ast_add_node(AST_ASSIGN)
+        ast_attach root, assignment
+        ast_attach assignment, lval
         ps_consume TOK_EQUALS
 
         expr = ps_expr
-        if type_of_lvalue(lval) = TYPE_NONE then
+        if sigil = 0 then
             symtab(var).v1 = type_of_expr(expr)
-            ast_attach node, expr
-        elseif type_can_cast(symtab(var).v1, type_of_expr(expr)) then
+            ast_attach assignment, expr
+        elseif type_can_cast(type_of_expr(expr), sigil) then
             cast = ast_add_node(AST_CAST)
-            ast_nodes(cast).ref = type_of_lvalue(lval)
+            ast_nodes(cast).ref = sigil
             ast_attach cast, expr
-            ast_attach node, cast
+            ast_attach assignment, cast
         else
             ps_error "Type mismatch"
         end if
