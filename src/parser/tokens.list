@@ -338,7 +338,7 @@ function _keydown       integer   long
 function _keyhit        long
 function kill           none      string
 
-function lbound         integer   any_array,integer?
+function lbound         integer64 any_array,integer?
 function lcase          string    string
 function left           string    string,integer64
 function len            integer64 string
@@ -480,7 +480,7 @@ function _title         string
 function _trim          string    string
 # type
 
-function ubound         integer   any_array,integer?
+function ubound         integer64 any_array,integer?
 function ucase          string    string
 # uevent
 # unlock
