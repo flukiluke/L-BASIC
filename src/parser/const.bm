@@ -17,7 +17,12 @@ function ps_const
         'Change default type because we want to infer it from the rvalue
         prev_default = ps_default_type
         ps_default_type = TYPE_NONE
+        'Force allow implicit variable declarations because that is how we
+        'parse consts.
+        old_implicit_allow = ps_allow_implicit_vars
+        ps_allow_implicit_vars = TRUE
         lval = ps_simple_variable
+        ps_allow_implicit_vars = old_implicit_allow
         var = ast_nodes(lval).ref
 
         ps_default_type = prev_default
