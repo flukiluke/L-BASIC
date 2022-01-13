@@ -278,6 +278,7 @@ function date           string
 function _deflate       string    string
 function _delay         none      single
 function dim            integer   any_array
+function _display       none
 function draw           none      string
 
 function end            none      integer?

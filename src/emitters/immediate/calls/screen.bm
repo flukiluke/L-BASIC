@@ -31,6 +31,9 @@ case TOK_COLOR
 case TOK_CSRLIN
     result.n = csrlin
 
+case TOK__DISPLAY
+    _display
+
 case TOK__HEIGHT
     c1 = ast_get_child(node, 1)
     if ast_is_none(c1) then
