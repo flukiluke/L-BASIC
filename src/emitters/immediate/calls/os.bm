@@ -48,3 +48,11 @@ case TOK_SYSTEM
     if options.debug then imm_heap_stats
     $end if
     system v1.n
+
+case TOK__TITLE
+    if return_type = TYPE_STRING then
+        result.s = _title$
+    else
+        imm_eval ast_get_child(node, 1), v1
+        _title v1.s
+    end if

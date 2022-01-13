@@ -470,6 +470,8 @@ function tan            double    double
 function tan            quad      quad
 function time           string
 function timer          double    single?
+function _title         none      string
+function _title         string
 function _trim          string    string
 # type
 
