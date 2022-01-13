@@ -18,7 +18,6 @@ sub tok_init
         next b
     next s
 
-    tok_reinit
 
     'Populate token and type signature data
     'TODO check if this impacts startup times
@@ -26,6 +25,8 @@ sub tok_init
 
     tokeng_data:
     '$include: 'ts_data.bm'
+
+    tok_reinit
     $if DEBUG_TIMINGS then
     debuginfo "Parser init time:" + str$(timer(0.001) - debug_timing_mark#)
     $end if

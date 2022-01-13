@@ -68,6 +68,22 @@ case TOK_LBOUND
     end if
     result.n = imm_get_at_addr_n(imm_add_offset(v1.n, v2.n * 2))
 
+case TOK_SWAP
+    l = ast_get_child(node, 1)
+    r = ast_get_child(node, 2)
+    l_addr = imm_get_addr(l)
+    r_addr = imm_get_addr(r)
+    l_type = type_of_lvalue(l)
+    r_type = type_of_lvalue(r)
+    'TODO check this at compile time!
+    if l_type <> r_type then imm_error "Bad SWAP"
+    for i = 1 to type_fixed_size(l_type)
+        imm_get_at_addr l_addr, v1
+        imm_get_at_addr r_addr, v2
+        imm_set_at_addr l_addr, v2
+        imm_set_at_addr r_addr, v1
+    next i
+
 case TOK_UBOUND
     imm_eval ast_get_child(node, 1), v1
     dimension = ast_get_child(node, 2)

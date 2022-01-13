@@ -332,6 +332,7 @@ function int            quad      quad
 
 # key
 function _keyclear      none
+function _keydown       integer   long
 function _keyhit        long
 function kill           none      string
 
@@ -462,7 +463,7 @@ function _strcmp        integer   string,string
 function _stricmp       integer   string,string
 # strig
 # string
-# swap
+function swap           none      @any,@any
 function system         none      integer?
 
 # tab

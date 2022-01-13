@@ -209,7 +209,7 @@ sub fatalerror(msg$)
 end sub
 
 sub debuginfo(msg$)
-    if options.debug then print #logging_file_handle, msg$
+    if options.debug then print #logging_file_handle, ps_actual_linenum; msg$
 end sub
 
 'This function and the next are called from tokeng.
@@ -288,6 +288,7 @@ sub interactive_mode(recovery)
         AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
         ast_commit
         tok_init
+        ps_init
     end if
     do
         Error_context = 1
