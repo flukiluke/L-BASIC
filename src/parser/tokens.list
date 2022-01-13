@@ -222,6 +222,10 @@ generic static
 generic _explicit
 generic _explicitarray
 
+generic byref
+generic byval
+generic call
+
 # functions with return type none are subs
 function abs            integer   integer
 function abs            long      long
@@ -240,10 +244,6 @@ function atn            quad      quad
 function beep           none
 # bload
 # bsave
-generic byref
-generic byval
-
-# call
 # calls
 function cdbl           double    double
 # chain

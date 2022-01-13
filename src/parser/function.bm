@@ -2,6 +2,21 @@
 'SPDX-License-Identifier: Apache-2.0
 'function.bm - Parse rules for function calls
 
+'Expects: TOK_CALL
+'Results: NEWLINE
+function ps_call
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start call"
+    $end if
+    ps_consume TOK_CALL
+    token = tok_token
+    tok_advance
+    ps_call = ps_funccall_p(token)
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed call"
+    $end if
+end function
+
 'Expects: function token
 'Results: token after last argument
 function ps_funccall

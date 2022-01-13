@@ -29,6 +29,8 @@ function ps_stmt
             ps_meta_include
         case META_UNKNOWN
             ps_meta_unknown
+        case TOK_CALL
+            stmt = ps_call
         case TOK_CONST
             stmt = ps_const
         case TOK_DECLARE

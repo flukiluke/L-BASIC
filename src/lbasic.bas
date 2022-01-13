@@ -21,10 +21,10 @@ $end if
 
 'Control which components produce debugging messages when debugging is on
 $let DEBUG_TIMINGS = 0
-$let DEBUG_PARSE_TRACE = 0
+$let DEBUG_PARSE_TRACE = 1
 $let DEBUG_TOKEN_STREAM = 0
-$let DEBUG_CALL_RESOLUTION = 0
-$let DEBUG_PARSE_RESULT = 0
+$let DEBUG_CALL_RESOLUTION = 1
+$let DEBUG_PARSE_RESULT = 1
 $let DEBUG_MEM_TRACE = 0
 $let DEBUG_HEAP = 0
 $if DEBUG_TIMINGS then
