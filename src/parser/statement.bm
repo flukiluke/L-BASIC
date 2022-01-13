@@ -63,7 +63,8 @@ function ps_stmt
         case TOK_SUB
             stmt = ps_userfunc
         case TOK_TYPE
-            stmt = ps_udt
+            'A TYPE is processed in the prepass, so ignore it here
+            ps_udt_ignore
         case TOK_WHILE
             stmt = ps_while
         case TOK_UNKNOWN

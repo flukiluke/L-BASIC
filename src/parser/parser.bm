@@ -2,6 +2,13 @@
 'SPDX-License-Identifier: Apache-2.0
 'parser.bm - Recursive Descent Parser
 
+sub ps_init
+    ps_next_var_index = 1
+    ps_actual_linenum = 1
+    ps_default_type = TYPE_SINGLE
+    ps_allow_implicit_vars = TRUE
+end sub
+
 function ps_is_linejoin
     ps_is_linejoin = tok_token = TOK_NEWLINE and tok_content$ = ":"
 end function
@@ -118,6 +125,47 @@ function ps_block
     debuginfo "End block"
     $end if
 end function
+
+'Because some program elements can be referenced before they are defined, we need to
+'do a first pass through the program to identify these declarations. We contrast this
+'"prepass" with a main pass, usually an invocation of ps_block or similar.
+'The prepass will detect and instantiate the following objects:
+' - SUB/FUNCTION definitions
+' - DIM SHARED variables
+' - TYPE definitions
+'everything else is ignored. Importantly, the ast will be reset after this so no nodes
+'or constants can be created.
+sub ps_prepass
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start prepass"
+    $end if
+
+    do
+        select case tok_token
+        case TOK_SUB, TOK_FUNCTION
+            dummy = ps_declare_p
+        case TOK_EXIT, TOK_END
+            'These could be followed by SUB or FUNCTION which would cause confusion
+            tok_advance
+            tok_advance
+        case TOK_DIM
+            tok_advance
+            if tok_token = TOK__PRESERVE then tok_advance
+            if tok_token <> TOK_SHARED then exit select
+            'TODO handle shared variable
+        case TOK_TYPE
+            dummy = ps_udt
+        case TOK_NEWLINE
+            ps_line_prelude
+        case else
+            tok_advance
+        end select
+    loop until ps_consumed(TOK_IEOF)
+     
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed prepass"
+    $end if
+end sub
 
 '$include: 'array.bm'
 '$include: 'assignment.bm'

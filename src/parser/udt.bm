@@ -4,6 +4,29 @@
 
 'Expects: TOK_TYPE
 'Results: token after END TYPE
+sub ps_udt_ignore
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start ignored UDT"
+    $end if
+    ps_consume TOK_TYPE
+    tok_advance 'type name
+    if ps_consumed(TOK_NEWLINE) then ps_line_prelude
+    do
+        dummy = ps_opt_sigil
+        do
+            tok_advance 'field name
+            dummy = ps_opt_sigil
+        loop while ps_consumed(TOK_COMMA)
+        if ps_consumed(TOK_NEWLINE) then ps_line_prelude
+    loop until ps_consumed(TOK_END)
+    ps_consume TOK_TYPE
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed ignored UDT"
+    $end if
+end sub
+
+'Expects: TOK_TYPE
+'Results: token after END TYPE
 function ps_udt
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start UDT definition"

@@ -17,25 +17,29 @@ sub tok_init
             t_states~%(b, s) = cmd
         next b
     next s
-    tokeng_state.index = 1
-    tokeng_state.curstate = 1
-    tokeng_state.has_data = FALSE
-    tokeng_state.linestart = TRUE
-    tokeng_state.recovery_mode = FALSE
+
+    tok_reinit
 
     'Populate token and type signature data
     'TODO check if this impacts startup times
     '$include: 'token_registrations.bm'
-
-    'Fill the 'next' buffer and propagate to tok_token
-    tok_read_next_token
-    tok_advance
 
     tokeng_data:
     '$include: 'ts_data.bm'
     $if DEBUG_TIMINGS then
     debuginfo "Parser init time:" + str$(timer(0.001) - debug_timing_mark#)
     $end if
+end sub
+
+sub tok_reinit
+    tokeng_state.index = 1
+    tokeng_state.curstate = 1
+    tokeng_state.has_data = FALSE
+    tokeng_state.linestart = TRUE
+    tokeng_state.recovery_mode = FALSE
+    'Fill the 'next' buffer and propagate to tok_token
+    tok_read_next_token
+    tok_advance
 end sub
 
 sub tok_advance

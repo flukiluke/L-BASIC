@@ -23,8 +23,8 @@ $end if
 $let DEBUG_TIMINGS = 0
 $let DEBUG_PARSE_TRACE = 1
 $let DEBUG_TOKEN_STREAM = 0
-$let DEBUG_CALL_RESOLUTION = 1
-$let DEBUG_PARSE_RESULT = 1
+$let DEBUG_CALL_RESOLUTION = 0
+$let DEBUG_PARSE_RESULT = 0
 $let DEBUG_MEM_TRACE = 0
 $let DEBUG_HEAP = 0
 $if DEBUG_TIMINGS then
@@ -133,8 +133,9 @@ end if
 logging_file_handle = freefile
 open_file "SCRN:", logging_file_handle, TRUE
 
-'Setup AST and constants
+'Setup AST, constants and parser settings
 ast_init
+ps_init
 
 $if DEBUG_TIMINGS then
 debuginfo "Boot time:" + str$(timer(0.001) - debug_timing_mark#)
@@ -381,6 +382,11 @@ sub run_mode
     $if DEBUG_TIMINGS then
     debug_timing_mark# = timer(0.001)
     $end if
+    ps_prepass
+    seek input_files(input_files_last).handle, 1
+    tok_reinit
+    ps_init
+    ast_rollback
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     $if DEBUG_TIMINGS then

@@ -5,10 +5,14 @@
 'Expects: TOK_DECLARE
 'Results: NEWLINE
 function ps_declare
-    $if DEBUG_PARSE_TRACE then
-    debuginfo "Start declare"
-    $end if
     ps_consume TOK_DECLARE
+    ps_declare = ps_declare_p
+end function
+
+function ps_declare_p
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start declare_p"
+    $end if
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
     if tok_token <> TOK_UNKNOWN then
         ps_error "Name already in use"
@@ -29,9 +33,9 @@ function ps_declare
     sym.v3 = 0 'We have no implementation for this function yet
     symtab_add_entry sym
     proc_id = symtab_last_entry
-    ps_declare = 0
+    ps_declare_p = 0
     $if DEBUG_PARSE_TRACE then
-    debuginfo "Completed declare"
+    debuginfo "Completed declare_p"
     $end if
 end function
 
