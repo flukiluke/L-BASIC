@@ -25,8 +25,8 @@ $let DEBUG_PARSE_TRACE = 0
 $let DEBUG_TOKEN_STREAM = 0
 $let DEBUG_CALL_RESOLUTION = 0
 $let DEBUG_PARSE_RESULT = 0
-$let DEBUG_MEM_TRACE = 1
-$let DEBUG_HEAP = 1
+$let DEBUG_MEM_TRACE = 0
+$let DEBUG_HEAP = 0
 $if DEBUG_TIMINGS then
 debug_timing_mark# = timer(0.001)
 $end if
@@ -210,7 +210,7 @@ sub fatalerror(msg$)
 end sub
 
 sub debuginfo(msg$)
-    if options.debug then print #logging_file_handle, ps_actual_linenum; msg$
+    if options.debug then print #logging_file_handle, msg$
 end sub
 
 'This function and the next are called from tokeng.
