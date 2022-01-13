@@ -8,7 +8,7 @@
 'This applies to the current scope - the parser for subs/functions will save and
 'restore this value so it is preserved for the main program.
 dim shared ps_next_var_index as long
-ps_next_var_index = 1
+
 'When in a sub/function, we make the main program's counter available too so that
 'STATIC variables can be made part of the main program's stack allocation. This
 'value is only valid when in a sub/function.
@@ -16,10 +16,8 @@ dim shared ps_main_next_var_index as long
 
 'actual as opposed to any explicit old-timey line numbers/labels in the program
 dim shared ps_actual_linenum as long
-ps_actual_linenum = 1
 
 dim shared ps_default_type as long
-ps_default_type = TYPE_SINGLE
 
 'Set TRUE if processing a preload file, meaning internal functions
 'can be overridden with user-supplied ones.
@@ -46,4 +44,3 @@ dim shared ps_queued_nodes$
 
 'Set to FALSE if OPTION _EXPLICIT is in effect
 dim shared ps_allow_implicit_vars
-ps_allow_implicit_vars = TRUE

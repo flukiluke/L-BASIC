@@ -242,6 +242,7 @@ function atn            double    double
 function atn            quad      quad
 
 function beep           none
+function _blue32        long      long
 # bload
 # bsave
 # calls
@@ -313,6 +314,7 @@ function get            none      %long,integer64?,@single?
 function get            none      %long,integer64?,@double?
 function get            none      %long,integer64?,@quad?
 function get            none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,@any_array,long?
+function _green32       long      long
 # gosub
 
 function _height        long      long?
@@ -413,6 +415,7 @@ function put            none      %long,integer64?,quad?
 function randomize      none      double?
 function randomize      none      "using,double
 # read
+function _red32         long      long
 # redim
 # reset
 # restore

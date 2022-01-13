@@ -176,6 +176,7 @@ function ps_formal_args$(root)
             'Stripped down variable parser used just for declarations
             tok_advance 'Skip name
             typ = ps_opt_sigil
+            if typ = 0 then typ = ps_default_type
         end if
         result$ = type_sigt_add_arg(result$, typ, flags)
     loop while ps_consumed(TOK_COMMA)

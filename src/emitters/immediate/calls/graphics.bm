@@ -2,6 +2,10 @@
 'SPDX-License-Identifier: Apache-2.0
 'graphics.bm - Executors for graphics functions
 
+case TOK__BLUE32
+    imm_eval ast_get_child(node, 1), v1
+    result.n = _red32(v1.n)
+
 case TOK_CIRCLE
     'Node 1 is flag for STEP
     imm_eval ast_get_child(node, 2), v1
@@ -28,6 +32,10 @@ case TOK_CIRCLE
 case TOK_DRAW
     imm_eval ast_get_child(node, 1), v1
     draw v1.s
+
+case TOK__GREEN32
+    imm_eval ast_get_child(node, 1), v1
+    result.n = _green32(v1.n)
 
 case TOK_LINE
     if ast_num_children(node) = 6 then
@@ -83,6 +91,10 @@ case TOK__NEWIMAGE
         imm_eval ast_get_child(node, 3), v3
         result.n = _newimage(v1.n, v2.n, v3.n)
     end if
+
+case TOK__RED32
+    imm_eval ast_get_child(node, 1), v1
+    result.n = _red32(v1.n)
 
 case TOK__RGB32
     select case ast_num_children(node)
