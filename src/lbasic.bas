@@ -21,11 +21,11 @@ $end if
 
 'Control which components produce debugging messages when debugging is on
 $let DEBUG_TIMINGS = 0
-$let DEBUG_PARSE_TRACE = 1
+$let DEBUG_PARSE_TRACE = 0
 $let DEBUG_TOKEN_STREAM = 0
 $let DEBUG_CALL_RESOLUTION = 0
-$let DEBUG_PARSE_RESULT = 1
-$let DEBUG_MEM_TRACE = 0
+$let DEBUG_PARSE_RESULT = 0
+$let DEBUG_MEM_TRACE = 1
 $let DEBUG_HEAP = 1
 $if DEBUG_TIMINGS then
 debug_timing_mark# = timer(0.001)
@@ -49,9 +49,10 @@ on error goto error_handler
 'give a more meaningful error message.
 '0 => Unknown location
 '1 => Parsing code; parser line number is valid
-'2 => Immediate runtime
+'2 => Immediate runtime (interactive)
 '3 => Dump code
 '4 => Trying to open a file
+'5 => Immediate runtime (non-interactive)
 dim shared Error_context
 'Because we can only throw a numeric error code, this holds a more
 'detailed explanation.
@@ -178,13 +179,13 @@ error_handler:
             if options.preload <> "" then print "In preload file: ";
             print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
         end if
-    case 2 'Immediate mode
+    case 2, 5 'Immediate mode
         'We have no good way of distinguishing between user program errors and internal errors
         'Of course, the internal code is perfect so it *must* be a user program error
         print "Runtime error: ";
         if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
-        resume interactive_recovery
+        if Error_context = 2 then resume interactive_recovery
     case 3 'Dump mode
         print "Dump: ";
         if err <> 101 then goto internal_error
@@ -396,7 +397,7 @@ sub run_mode
     Error_context = 0
     close #input_files(input_files_last).handle
     imm_init
-    Error_context = 2
+    Error_context = 5
     $if DEBUG_TIMINGS then
     debug_timing_mark# = timer(0.001)
     $end if
