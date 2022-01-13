@@ -2,7 +2,7 @@ $title: simple udt
 type t
     a as long
     b$
-    c
+    as double c
 end type
 dim q as t
 q.a = 3
@@ -11,6 +11,25 @@ q.c = 2.3
 print q.a; q.c; q.b
 $expect: stdout
 3  2.3 hello
+$finish
+
+$title: udt format variations
+type t1
+    a as long
+    as string b, c
+    d as integer, e&
+end type
+type t2 a$ end type
+dim q as t1, q2 as t2
+q.a = 10
+q.b = "hello"
+q.c = "bye"
+q.d = 5
+q.e = 7
+q2.a = "boo"
+print q.a; q.b; q.c; q.d; q.e; q2.a
+$expect: stdout
+10 hellobye 5  7 boo
 $finish
 
 $title: nested udt

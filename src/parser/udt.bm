@@ -17,27 +17,30 @@ function ps_udt
     if tok_token <> TOK_UNKNOWN then ps_error "UDT name already in use"
     udt_sym.identifier = ucase$(tok_content$)
     tok_advance
-    ps_consume TOK_NEWLINE
-    ps_line_prelude
-
+    if ps_consumed(TOK_NEWLINE) then ps_line_prelude
     do
-        elem = ps_udt_element(udt_sym)
-        udt_sym.v1 = udt_sym.v1 + type_fixed_size(symtab(elem).v1)
+        'Handle As Long X style definitions
+        typ = ps_opt_sigil
+        do
+            elem = ps_udt_element(udt_sym, typ)
+            udt_sym.v1 = udt_sym.v1 + type_fixed_size(symtab(elem).v1)
+        loop while ps_consumed(TOK_COMMA)
         'If we ever need to keep a list of all the elements in a UDT,
         'this is where we'd build it.
+        if ps_consumed(TOK_NEWLINE) then ps_line_prelude
     loop until ps_consumed(TOK_END)
+    ps_consume TOK_TYPE
 
     symtab_add_entry udt_sym
     ps_udt = 0 'Never generate any ast nodes
-    ps_consume TOK_TYPE
     $if DEBUG_PARSE_TRACE then
     debuginfo "End UDT definition"
     $end if
 end function
 
 'Expects: Element identifier
-'Results: token after newline
-function ps_udt_element(udt_sym as symtab_entry_t)
+'Results: token after variable (comma or newline)
+function ps_udt_element(udt_sym as symtab_entry_t, pre_typ)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start UDT element"
     $end if
@@ -66,15 +69,17 @@ function ps_udt_element(udt_sym as symtab_entry_t)
     tok_advance
 
     'Set type from sigil, AS clause or default type
-    elem_sym.v1 = ps_opt_sigil
-    if elem_sym.v1 = 0 then elem_sym.v1 = ps_default_type
+    sigil = ps_opt_sigil
+    if pre_typ > 0 and sigil > 0 and pre_typ <> sigil then
+        ps_error "Declared type does not match"
+    end if
+    if sigil = 0 then sigil = pre_typ
+    if sigil = 0 then elem_sym.v1 = ps_default_type else elem_sym.v1 = sigil
 
     'Get offset of element in UDT
     elem_sym.v2 = udt_sym.v1
     symtab_add_entry elem_sym
     
-    ps_consume TOK_NEWLINE
-    ps_line_prelude
     ps_udt_element = symtab_last_entry
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed UDT element"
