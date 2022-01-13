@@ -92,6 +92,18 @@ case TOK__NEWIMAGE
         result.n = _newimage(v1.n, v2.n, v3.n)
     end if
 
+case TOK_PSET
+    imm_eval ast_get_child(node, 2), v1
+    imm_eval ast_get_child(node, 3), v2
+    v3.n = _defaultcolor
+    c3 = ast_get_child(node, 4)
+    if not ast_is_none(c3) then imm_eval c3, v3
+    if not ast_is_none(ast_get_child(node, 1)) then
+        pset step (v1.n, v2.n), v3.n
+    else
+        pset (v1.n, v2.n), v3.n
+    end if
+
 case TOK__RED32
     imm_eval ast_get_child(node, 1), v1
     result.n = _red32(v1.n)

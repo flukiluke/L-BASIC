@@ -401,7 +401,7 @@ function play           none      string
 function print          none      list
 function _printstring   none      'oparen,single,single,'cparen,string,long?
 function _printwidth    long      string,long?
-# pset
+function pset           none      "step?,'oparen,single,single,'cparen,long?
 function put            none      %long,integer64?,string?
 function put            none      %long,integer64?,integer?
 function put            none      %long,integer64?,long?
