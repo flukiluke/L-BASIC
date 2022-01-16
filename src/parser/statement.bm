@@ -63,8 +63,13 @@ function ps_stmt
         case TOK_SUB
             stmt = ps_userfunc
         case TOK_TYPE
-            'A TYPE is processed in the prepass, so ignore it here
-            ps_udt_ignore
+            'For non-interactive modes a TYPE is processed in the prepass, so ignore
+            'it here
+            if options.compile_mode or options.run_mode then
+                ps_udt_ignore
+            else
+                stmt = ps_udt
+            end if
         case TOK_WHILE
             stmt = ps_while
         case TOK_UNKNOWN

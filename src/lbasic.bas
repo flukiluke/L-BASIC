@@ -360,6 +360,11 @@ sub compile_mode
     input_files(input_files_last).handle = freefile
     open_file options.mainarg, input_files(input_files_last).handle, FALSE
     tok_init
+    ps_prepass
+    seek input_files(input_files_last).handle, 1
+    tok_reinit
+    ps_init
+    ast_rollback
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
@@ -526,6 +531,8 @@ sub parse_cmd_line_args()
         end select
     next i
     if options.mainarg = "" then options.interactive_mode = TRUE
+    if not options.interactive_mode and not options.compile_mode and _
+        not options.command_mode then options.run_mode = TRUE
 end sub
 
 '$include: 'type.bm'
