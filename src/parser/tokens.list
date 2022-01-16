@@ -278,6 +278,8 @@ function date           string
 # def*
 function _deflate       string    string
 function _delay         none      single
+function _dest          none      long
+function _dest          long
 function dim            integer   any_array
 function _display       none
 function draw           none      string
@@ -453,6 +455,8 @@ function sin            quad      quad
 function sleep          none      long?
 generic  _smooth
 function sound          none      double,double
+function _source        none      long
+function _source        long
 function space          string    long    
 # spc
 function sqr            single    single

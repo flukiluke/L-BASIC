@@ -31,6 +31,14 @@ case TOK_COLOR
 case TOK_CSRLIN
     result.n = csrlin
 
+case TOK__DEST
+    if return_type = TYPE_NONE then
+        imm_eval ast_get_child(node, 1), v1
+        _dest v1.n
+    else
+        result.n = _dest
+    end if
+
 case TOK__DISPLAY
     _display
 
@@ -64,6 +72,14 @@ case TOK_LOCATE
         else
             locate v1.n, v2.n, v3.n
         end if
+    end if
+
+case TOK__SOURCE
+    if return_type = TYPE_NONE then
+        imm_eval ast_get_child(node, 1), v1
+        _source v1.n
+    else
+        result.n = _source
     end if
 
 case TOK__WIDTH

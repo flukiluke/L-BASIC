@@ -213,8 +213,11 @@ function general_next_line$
     if options.preload <> "" then
         line input #input_files(input_files_last).handle, s$
     elseif options.interactive_mode then
+        old_dest = _dest
+        _dest 0
         print "> ";
         line input s$
+        _dest old_dest
     elseif options.command_mode then
         s$ = options.mainarg
         options.mainarg = ""
