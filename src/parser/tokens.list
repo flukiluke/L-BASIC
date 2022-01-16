@@ -411,6 +411,9 @@ function put            none      %long,integer64?,double?
 function put            none      %long,integer64?,quad?
 #put graphics
 # put
+# Unforunately _putimage is just too complicated to express as a regular command so
+# it has a custom parser.
+function _putimage      none      flags,single,single,single,single,long,long,single,single,single,single
 
 function randomize      none      double?
 function randomize      none      "using,double
@@ -448,6 +451,7 @@ function sin            single    single
 function sin            double    double
 function sin            quad      quad
 function sleep          none      long?
+generic  _smooth
 function sound          none      double,double
 function space          string    long    
 # spc

@@ -1,0 +1,85 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'putimage.bm - Parse rules for _PUTIMAGE statement
+
+'Expects: TOK__PUTIMAGE
+'Results: NEWLINE
+'Format: [[STEP] (single, single) [- [STEP] (single, single)]], [long], [long], [[STEP] (single, single) [- STEP (single, single)]] [, _SMOOTH]
+
+function ps__putimage
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start _putimage"
+    $end if
+
+    root = ast_add_node(AST_CALL)
+    ast_nodes(root).ref = TOK__PUTIMAGE
+    ast_nodes(root).ref2 = symtab(TOK__PUTIMAGE).v1
+    ps_consume TOK__PUTIMAGE
+    flag_node = ast_add_node(AST_FLAGS)
+    ast_nodes(flag_node).ref = AST_FLAG_MANUAL
+    ast_attach root, flag_node
+
+    if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_SRC1
+    if ps_consumed(TOK_OPAREN) then
+        ast_attach root, ps_expr
+        ps_consume TOK_COMMA
+        ast_attach root, ps_expr
+        ps_consume TOK_CPAREN
+    else
+        ast_attach root, ast_add_node(AST_NONE)
+        ast_attach root, ast_add_node(AST_NONE)
+    end if
+    if ps_consumed(TOK_DASH) then
+        if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_SRC2
+        ps_consume TOK_OPAREN
+        ast_attach root, ps_expr
+        ps_consume TOK_COMMA
+        ast_attach root, ps_expr
+        ps_consume TOK_CPAREN
+    else
+        ast_attach root, ast_add_node(AST_NONE)
+        ast_attach root, ast_add_node(AST_NONE)
+    end if
+    if not ps_consumed(TOK_COMMA) then goto putimage_parse_done
+    if tok_token <> TOK_COMMA then ast_attach root, ps_expr else ast_attach root, ast_add_node(AST_NONE)
+    if not ps_consumed(TOK_COMMA) then goto putimage_parse_done
+    if tok_token <> TOK_COMMA then ast_attach root, ps_expr else ast_attach root, ast_add_node(AST_NONE)
+    if not ps_consumed(TOK_COMMA) then goto putimage_parse_done
+    if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_DEST1
+    if ps_consumed(TOK_OPAREN) then
+        ast_attach root, ps_expr
+        ps_consume TOK_COMMA
+        ast_attach root, ps_expr
+        ps_consume TOK_CPAREN
+    else
+        ast_attach root, ast_add_node(AST_NONE)
+        ast_attach root, ast_add_node(AST_NONE)
+    end if
+    if ps_consumed(TOK_DASH) then
+        if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_DEST2
+        ps_consume TOK_OPAREN
+        ast_attach root, ps_expr
+        ps_consume TOK_COMMA
+        ast_attach root, ps_expr
+        ps_consume TOK_CPAREN
+    else
+        ast_attach root, ast_add_node(AST_NONE)
+        ast_attach root, ast_add_node(AST_NONE)
+    end if
+    if ps_consumed(TOK_COMMA) then
+        ps_consume TOK__SMOOTH
+        flags = flags OR PUTIMAGE_SMOOTH
+    end if
+
+    putimage_parse_done:
+    ast_nodes(flag_node).ref2 = flags
+    'Fill in any missing arguments on the end
+    for i = ast_num_children(root) + 1 to 11
+        ast_attach root, ast_add_node(AST_NONE)
+    next i
+    ps__putimage = root
+
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed _putimage"
+    $end if
+end function

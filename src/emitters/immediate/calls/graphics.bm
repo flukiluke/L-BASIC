@@ -104,6 +104,59 @@ case TOK_PSET
         pset (v1.n, v2.n), v3.n
     end if
 
+case TOK__PUTIMAGE
+    flags = ast_nodes(ast_get_child(node, 1)).ref2
+    v1.n = 0
+    v2.n = 0
+    imm_eval ast_get_child(node, 2), v1
+    imm_eval ast_get_child(node, 3), v2
+    old_source = _source
+    _source _dest
+    if flags AND PUTIMAGE_STEP_SRC1 then
+        v1.n = v1.n + point(2)
+        v2.n = v2.n + point(3)
+    end if
+    _source old_source
+
+    v3.n = _width(_dest)
+    v4.n = _height(_dest)
+    imm_eval ast_get_child(node, 4), v3
+    imm_eval ast_get_child(node, 5), v4
+    if flags AND PUTIMAGE_STEP_SRC2 then
+        v3.n = v3.n + v1.n
+        v4.n = v4.n + v2.n
+    end if
+
+    v5.n = _source
+    v6.n = _dest
+    imm_eval ast_get_child(node, 6), v5
+    imm_eval ast_get_child(node, 7), v6
+
+    v7.n = 0
+    v8.n = 0
+    imm_eval ast_get_child(node, 8), v7
+    imm_eval ast_get_child(node, 9), v8
+    if flags AND PUTIMAGE_STEP_DEST1 then
+        v7.n = v7.n + point(2)
+        v8.n = v8.n + point(3)
+    end if
+
+    v9.n = _width(_source)
+    v10.n = _height(_source)
+    imm_eval ast_get_child(node, 10), v9
+    imm_eval ast_get_child(node, 11), v10
+    if flags AND PUTIMAGE_STEP_DEST2 then
+        v9.n = v9.n + v7.n
+        v10.n = v10.n + v8.n
+    end if
+
+    if flags AND PUTIMAGE_SMOOTH then
+        _putimage (v1.n, v2.n)-(v3.n, v4.n), v5.n, v6.n, (v7.n, v8.n)-(v9.n, v10.n), _smooth
+    else
+        _putimage (v1.n, v2.n)-(v3.n, v4.n), v5.n, v6.n, (v7.n, v8.n)-(v9.n, v10.n)
+    end if
+    
+    
 case TOK__RED32
     imm_eval ast_get_child(node, 1), v1
     result.n = _red32(v1.n)

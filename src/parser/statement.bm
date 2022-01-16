@@ -58,6 +58,8 @@ function ps_stmt
             ps_stmt_option
         case TOK_PRINT
             stmt = ps_print
+        case TOK__PUTIMAGE
+            stmt = ps__putimage
         case TOK_SELECT
             stmt = ps_select
         case TOK_SUB

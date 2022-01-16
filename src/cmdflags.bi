@@ -11,6 +11,12 @@ const PRINT_NEXT_FIELD = 1 'A comma used after a variable moves to the next 14-c
 const PRINT_NEWLINE = 2 'No comma or semicolon at the end of the list
 'Note: a semicolon sets no flag
 
+const PUTIMAGE_STEP_SRC1 = 1
+const PUTIMAGE_STEP_SRC2 = 2
+const PUTIMAGE_STEP_DEST1 = 4
+const PUTIMAGE_STEP_DEST2 = 8
+const PUTIMAGE_SMOOTH = 16
+
 const OPEN_INPUT = 1
 const OPEN_OUTPUT = 2
 const OPEN_BINARY = 4
