@@ -56,6 +56,8 @@ sub imm_eval(node, result as imm_value_t)
         dim temp as imm_value_t
         imm_eval ast_get_child(node, 1), temp
         imm_set_at_addr imm_stack_last, temp
+    case AST_NONE
+        'do nothing
     end select
 end sub
 
