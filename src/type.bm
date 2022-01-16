@@ -32,6 +32,8 @@ function type_of_expr(root)
         type_of_expr = type_of_cast(root)
     case AST_FLAGS
         type_of_expr = TYPE_FLAGS
+    case AST_SELECT_VALUE
+        type_of_expr = type_of_select_value(root)
     case else
         type_of_expr = TYPE_NONE
     end select
@@ -77,6 +79,10 @@ end function
 function type_is_lvalue(node)
     t = ast_nodes(node).typ
     type_is_lvalue = t = AST_VAR or t = AST_UDT_ACCESS or t = AST_ARRAY_ACCESS
+end function
+
+function type_of_select_value(node)
+    type_of_select_value = ast_nodes(node).ref
 end function
 
 'Can a be cast to b, even with loss?
@@ -313,8 +319,8 @@ end function
 'Function call resolution!
 'Each function name has one or more signatures. A signature gives the return type and the
 'type of each of its arguments. When a call is parsed, a candidate is built which is like
-'a signature in that it is a list of the type of each supplied argument (a candidate's
-'return type is always NONE because we can't reliably detect that).
+'a signature in that it is a list of the type of each supplied argument and return type
+'(a candidate's return type is always NONE or ANY because we can't reliably detect that).
 '
 'With the candidate we then have to find a signature that matches. The procedure:
 '1) 

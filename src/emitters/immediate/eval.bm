@@ -17,8 +17,10 @@ sub imm_eval(node, result as imm_value_t)
     case AST_FOR
         imm_do_for node
     case AST_SELECT
-        print "SELECT; skipping"
-    case AST_CALL
+        imm_do_select node
+    case AST_SELECT_VALUE
+        result = imm_select_value
+    case AST_CALL, AST_SELECT_IS
         imm_do_call node, result
     case AST_CONSTANT
         if type_of_constant(node) = TYPE_STRING then

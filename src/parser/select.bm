@@ -1,0 +1,126 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'select.bm - Parse rules for SELECT CASE statement
+
+'Expects: TOK_SELECT
+'Results: NEWLINE
+function ps_select
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start select"
+    $end if
+
+    root = ast_add_node(AST_SELECT)
+    ps_consume TOK_SELECT
+    ps_consume TOK_CASE
+    expr = ps_expr
+    ast_attach root, expr
+    ps_add_nested_structure root
+    ps_consume TOK_NEWLINE
+    ps_line_prelude
+    
+    while not ps_consumed(TOK_END)   
+        ast_attach root, ps_select_case(type_of_expr(expr))
+    wend
+
+    ps_consume TOK_SELECT
+    ps_remove_nested_structure
+    ps_select = root
+
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed select"
+    $end if
+end function
+
+function ps_select_case(typ)
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start select case"
+    $end if
+
+    ps_consume TOK_CASE
+    if ps_consumed(TOK_ELSE) then
+        node = ast_add_node(AST_SELECT_ELSE)
+    else
+        node = ast_add_node(AST_SELECT_LIST)
+        do
+            ast_attach node, ps_select_case_guard(typ)
+        loop while ps_consumed(TOK_COMMA)
+    end if
+    ast_attach node, ps_block
+    ps_select_case = node
+
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed select case"
+    $end if
+end function
+
+function ps_select_case_guard(typ)
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start select case guard"
+    $end if
+
+    if ps_consumed(TOK_IS) then
+        node = ast_add_node(AST_SELECT_IS)
+        ref = tok_token
+        ref_typ = symtab(ref).typ
+        if not (ref_typ = SYM_INFIX or ref_typ = SYM_PREFIX or ref_typ = SYM_FUNCTION) then
+            ps_error "Not a function"
+        end if
+        tok_advance
+        expr = ps_expr
+        candidate$ = type_sigt_create$(TYPE_INTEGER)
+        candidate$ = type_sigt_add_arg$(candidate$, typ, 0)
+        candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), 0)
+        sig = type_find_sig_match(ref, candidate$)
+        if sig = 0 then ps_error "Bad function"
+        ast_nodes(node).ref = ref
+        ast_nodes(node).ref2 = sig
+        value_node = ast_add_node(AST_SELECT_VALUE)
+        ast_nodes(value_node).ref = typ
+        ast_attach node, ast_add_cast(value_node, type_sig_argtype(sig, 1))
+        expr = ast_add_cast(expr, type_sig_argtype(sig, 2))
+        ast_attach node, expr
+    else
+        expr1 = ps_expr
+        if ps_consumed(TOK_TO) then
+            expr2 = ps_expr
+            'Lookup <= to confirm types are well-ordered. Note that we use <= for
+            'both bounds, which simplfied this code a little and allows future fancy
+            'stuff (custom orderings etc.) to only need to implement the one function.
+            node = ast_add_node(AST_SELECT_RANGE)
+            candidate$ = type_sigt_create$(TYPE_INTEGER)
+            candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr1), 0)
+            candidate$ = type_sigt_add_arg$(candidate$, typ, 0)
+            sig = type_find_sig_match(TOK_CMP_LTEQ, candidate$)
+            if sig = 0 then ps_error "Bad function"
+            if type_sig_argtype(sig, 1) <> type_sig_argtype(sig, 2) then
+                'The arguments need to have the same type so we can use it
+                'with reversed arguments too.
+                ps_error "Function does not have exchangable argument types"
+            end if
+            ast_nodes(node).ref = TOK_CMP_LTEQ
+            ast_nodes(node).ref2 = sig
+            ast_attach node, expr1
+            ast_attach node, expr2
+        else
+            'Simple CASE x
+            node = ast_add_node(AST_SELECT_IS)
+            candidate$ = type_sigt_create$(TYPE_INTEGER)
+            candidate$ = type_sigt_add_arg$(candidate$, typ, 0)
+            candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr1), 0)
+            sig = type_find_sig_match(TOK_EQUALS, candidate$)
+            if sig = 0 then ps_error "Cannot compare for equality"
+            ast_nodes(node).ref = TOK_EQUALS
+            ast_nodes(node).ref2 = sig
+            value_node = ast_add_node(AST_SELECT_VALUE)
+            ast_nodes(value_node).ref = typ
+            ast_attach node, ast_add_cast(value_node, type_sig_argtype(sig, 1))
+            expr1 = ast_add_cast(expr1, type_sig_argtype(sig, 2))
+            ast_attach node, expr1
+        end if
+    end if
+    ps_select_case_guard = node
+
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed select case guard"
+    $end if
+end function

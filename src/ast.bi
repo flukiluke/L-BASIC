@@ -37,17 +37,20 @@ const AST_ONE = 3
 dim shared AST_ENTRYPOINT
 
 'The types of node.
-'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, any of the lvalue types or NONE (if allowed).
+'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, SELECT_VALUE, any of the lvalue
+'types or NONE (if allowed).
 
 'Every SUB and FUNCTION is rooted in an AST_PROCEDURE.
-'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to right. ref is the symtab entry for the function name.
+'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to
+'right. ref is the symtab entry for the function name.
 'Note: the main program is not an AST_PROCEDURE, it is just an AST_BLOCK. See ast_init.
 const AST_PROCEDURE = 1
 'group of statements
 const AST_BLOCK = 2
 'assign lvalue expr => lvalue = expr
 const AST_ASSIGN = 3
-'if expr1 block1 [expr2 block2 ...] [block-n] => IF expr1 THEN block1 ELSEIF expr2 THEN block2 ... ELSE block-n
+'if expr1 block1 [expr2 block2 ...] [block-n] => IF expr1 THEN block1 ELSEIF expr2 THEN
+'block2 ... ELSE block-n
 const AST_IF = 4
 'while expr block => WHILE expr: block: WEND
 'Can't be an AST_DO_PRE because of EXIT
@@ -58,46 +61,64 @@ const AST_DO_PRE = 6
 const AST_DO_POST = 7
 'for lvalue expr1 expr2 expr3 block => FOR lvalue = expr1 TO expr2 STEP expr3
 const AST_FOR = 8
-'select expr1 (expr block)* block? => SELECT CASE expr1: CASE expr: block: CASE expr: block: CASE ELSE: block
+'select expr [AST_SELECT_LIST]* AST_SELECT_ELSE? => SELECT CASE expr CASE AST_SELECT_LIST... AST_SELECT_ELSE
 const AST_SELECT = 9
+'Children are AST_SELECT_IS or AST_SELECT_RANGE. Last child is block.
+const AST_SELECT_LIST = 10
+'ref is comparison function, ref2 is type sig. First child is AST_SELECT_VALUE, second
+'child is expr to compare against (second argument to function). Note that this is
+'the same format as AST_CALL.
+const AST_SELECT_IS = 11
+'ref is comparison function, ref2 is type sig. Left & right bounding expr are first and
+'second children respectively.
+const AST_SELECT_RANGE = 12
+'First child is block
+const AST_SELECT_ELSE = 13
+'When evaluated, returns the base expression value of the inner-most SELECT CASE. ref is
+'the type of the expression.
+const AST_SELECT_VALUE = 14
 'call param* => A function call to ref with type signature ref2 and parameters as children
-const AST_CALL = 10
+const AST_CALL = 15
 'ref is a reference to an entry in the constants table
-const AST_CONSTANT = 11
-'For now casts are first-class AST elements instead of just CALLs. We'll see if this is a good idea or not. ref is a type, child is a CALL, CONSTANT or VAR.
-const AST_CAST = 12
+const AST_CONSTANT = 16
+'Casts are first-class AST elements instead of just CALLs to a cast function. ref is a
+'type, child is a CALL, CONSTANT or VAR.
+const AST_CAST = 17
 'Used to pass extra data to some functions that have behaviour set by syntax (e.g. INPUT, LINE).
 'ref is one of AST_FLAG_* defined below. ref2 is the corresponding value.
-const AST_FLAGS = 13
-'If the goto is resolved, ref is the node to jump to. If unresolved, the label symtab. A fully-parsed program will have no unresolved labels.
-const AST_GOTO = 14
+const AST_FLAGS = 18
+'If the goto is resolved, ref is the node to jump to. If unresolved, the label symtab. A
+'fully-parsed program will have no unresolved labels.
+const AST_GOTO = 19
 'Used for empty optional arguments to functions
-const AST_NONE = 15
+const AST_NONE = 20
 'The EXIT statement. ref is the loop statement or function we're exiting.
-const AST_EXIT = 16
+const AST_EXIT = 21
 
 'These nodes may appear where-ever an lvalue is required
 'ref is reference to symtab
-const AST_VAR = 17
-'Access to a UDT element. First child is the lvalue we're accessing an element of, ref is the UDT element symbol.
-const AST_UDT_ACCESS = 18
-'Access to an array element. First child is the lvalue to be indexed. Second child is expression for the index in leftmost dimension, then so on for other dimensions.
-const AST_ARRAY_ACCESS = 19
+const AST_VAR = 22
+'Access to a UDT element. First child is the lvalue we're accessing an element of, ref is
+'the UDT element symbol.
+const AST_UDT_ACCESS = 23
+'Access to an array element. First child is the lvalue to be indexed. Second child is
+'expression for the index in leftmost dimension, then so on for other dimensions.
+const AST_ARRAY_ACCESS = 24
 
 'Emitted by DIM statements to initialise an array. First child is lvalue to be
 'initialised, then each pair of children after are expr for the lower and upper
 'bound of each dimension. The array is zeroed out.
-const AST_ARRAY_CREATE = 20
+const AST_ARRAY_CREATE = 25
 'Like above, but preserve the contents of the array if any.
-const AST_ARRAY_RESIZE = 21
+const AST_ARRAY_RESIZE = 26
 'Free an array's heap allocation, effectively a destructor. First child is an lvalue.
-const AST_ARRAY_DELETE = 22
+const AST_ARRAY_DELETE = 27
 'Like _CREATE, with the exception that the array is not touched if memory is already
 'allocated. Added to support STATIC arrays.
-const AST_ARRAY_ESTABLISH = 23
+const AST_ARRAY_ESTABLISH = 28
 
 'Sets the return value of the current function. first child is expr to return.
-const AST_SET_RETURN = 24
+const AST_SET_RETURN = 29
 
 'Flag is a value defined in cmdflags.bi.
 const AST_FLAG_MANUAL = 1

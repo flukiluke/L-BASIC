@@ -184,6 +184,7 @@ end sub
 '$include: 'pratt.bm'
 '$include: 'preload.bm'
 '$include: 'print.bm'
+'$include: 'select.bm'
 '$include: 'statement.bm'
 '$include: 'tokeng.bm'
 '$include: 'udt.bm'

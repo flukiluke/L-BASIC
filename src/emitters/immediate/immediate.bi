@@ -40,3 +40,7 @@ dim shared imm_exit_node
 'Allow for input code to use file handles without clashing with internally
 'opened files
 dim shared imm_filehandle_offset
+
+'When evaluating a SELECT CASE, this holds the base value which is returned
+'when AST_SELECT_VALUE is evaluated
+dim shared imm_select_value as imm_value_t

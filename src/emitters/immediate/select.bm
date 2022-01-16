@@ -1,0 +1,56 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'select.bm - Executor for SELECT statement
+
+sub imm_do_select(node)
+    if imm_next_jump then 'We're GOTOing a point
+        imm_run imm_next_jump
+        exit sub
+    end if
+
+    dim base_expr as imm_value_t
+    base_node = ast_get_child(node, 1)
+    base_type = type_of_expr(base_node)
+    imm_eval base_node, base_expr
+    for i = 2 to ast_num_children(node)
+        child = ast_get_child(node, i)
+        select case ast_nodes(child).typ
+        case AST_SELECT_LIST
+            'If any of the guards are true, execute the block
+            for j = 1 to ast_num_children(child) - 1
+                guard = ast_get_child(child, j)
+                if imm_select_eval_guard(guard, base_type, base_expr) then
+                    imm_run ast_get_child(child, ast_num_children(child))
+                    exit sub
+                end if
+            next j
+        case AST_SELECT_ELSE
+            imm_run ast_get_child(child, 1)
+            exit sub
+        case else
+            imm_error "Malformed SELECT CASE"
+        end select
+    next i
+end sub
+
+function imm_select_eval_guard(guard, base_type, base_expr as imm_value_t)
+    dim as imm_value_t l, r
+    select case ast_nodes(guard).typ
+    case AST_SELECT_RANGE
+        imm_eval ast_get_child(guard, 1), l
+        imm_eval ast_get_child(guard, 2), r
+        if type_is_number(base_type) then
+            if l.n <= base_expr.n and base_expr.n <= r.n then imm_select_eval_guard = TRUE
+        elseif base_type = TYPE_STRING then
+            if l.s <= base_expr.s and base_expr.s <= r.s then imm_select_eval_guard = TRUE
+        else
+            imm_error "Cannot evaluate range"
+        end if
+    case AST_SELECT_IS
+        'Because evaluating a guard could result in calling a function
+        'that uses SELECT CASE, we ensure the select value is current here.
+        imm_select_value = base_expr
+        imm_eval guard, l
+        imm_select_eval_guard = l.n
+    end select
+end function

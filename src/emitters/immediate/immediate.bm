@@ -49,3 +49,4 @@ end sub
 '$include: 'if.bm'
 '$include: 'loop.bm'
 '$include: 'memory.bm'
+'$include: 'select.bm'
