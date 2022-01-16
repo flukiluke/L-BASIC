@@ -19,14 +19,8 @@ $if VERSION < 2.0 then
     $error QB64 V2.0 or greater required
 $end if
 
-'Control which components produce debugging messages when debugging is on
-$let DEBUG_TIMINGS = 0
-$let DEBUG_PARSE_TRACE = 1
-$let DEBUG_TOKEN_STREAM = 1
-$let DEBUG_CALL_RESOLUTION = 1
-$let DEBUG_PARSE_RESULT = 1
-$let DEBUG_MEM_TRACE = 0
-$let DEBUG_HEAP = 0
+'$include: 'debugging_options.bm'
+
 $if DEBUG_TIMINGS then
 debug_timing_mark# = timer(0.001)
 $end if
