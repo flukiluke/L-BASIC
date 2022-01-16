@@ -356,6 +356,7 @@ function line           none      'dash,"step?,'oparen,single,single,'cparen,lon
 function line           none      "step?,'oparen,single,single,'cparen,'dash,"step?,'oparen,single,single,'cparen,long,$b|bf?,long?
 generic lineinput
 # loc
+function _loadimage     long      string,long?
 function locate         none      integer?,integer?,integer?
 function locate         none      integer?,integer?,integer?,integer,integer
 # lock
