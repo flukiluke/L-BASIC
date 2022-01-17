@@ -237,9 +237,13 @@ function abs            quad      quad
 # access
 # alias
 function asc            integer   string,integer64?
+function _atan2         single    single,single
+function _atan2         double    double,double
+function _atan2         quad      quad,quad
 function atn            single    single
 function atn            double    double
 function atn            quad      quad
+function _autodisplay   none
 
 function beep           none
 function _blue32        long      long

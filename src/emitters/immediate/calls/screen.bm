@@ -2,6 +2,9 @@
 'SPDX-License-Identifier: Apache-2.0
 'screen.bm - Executors for screen management commands
 
+case TOK__AUTODISPLAY
+    _autodisplay
+
 case TOK_CLS
     c1 = ast_get_child(node, 1)
     c2 = ast_get_child(node, 2)
