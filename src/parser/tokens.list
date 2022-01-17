@@ -275,7 +275,12 @@ function cvsmbf         single    string
 # data
 function date           string
 # def seg
-# def*
+generic _define
+generic defint
+generic deflng
+generic defsng
+generic defdbl
+generic defstr
 function _deflate       string    string
 function _delay         none      single
 function _dest          none      long

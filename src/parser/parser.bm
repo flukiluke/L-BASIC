@@ -170,6 +170,7 @@ end sub
 '$include: 'array.bm'
 '$include: 'assignment.bm'
 '$include: 'const.bm'
+'$include: 'default_type.bm'
 '$include: 'drawing.bm'
 '$include: 'exit.bm'
 '$include: 'for.bm'

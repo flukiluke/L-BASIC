@@ -1,0 +1,54 @@
+'Copyright 2020 Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'default_type.bm - Parse rules for DEF* A-Z and _DEFINE A-Z commands
+
+'Expects: TOK_DEF{INT,LNG,SNG,DBL,STR}
+'Results: NEWLINE
+sub ps_deftype
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start deftype"
+    $end if
+    token = tok_token
+    'Do error checking for making any changes
+    tok_advance
+    if ucase$(tok_content$) <> "A" then ps_error "Range must be A-Z"
+    tok_advance
+    ps_consume TOK_DASH
+    if ucase$(tok_content$) <> "Z" then ps_error "Range must be A-Z"
+    tok_advance
+    select case token
+    case TOK_DEFINT
+        ps_default_type = TYPE_INTEGER
+    case TOK_DEFLNG
+        ps_default_type = TYPE_LONG
+    case TOK_DEFSNG
+        ps_default_type = TYPE_SINGLE
+    case TOK_DEFDBL
+        ps_default_type = TYPE_DOUBLE
+    case TOK_DEFSTR
+        ps_default_type = TYPE_STRING
+    end select
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed deftype"
+    $end if
+end sub
+
+'Expects: TOK__DEFINE
+'Results: NEWLINE
+sub ps_define_type
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start define type"
+    $end if
+    ps_consume TOK__DEFINE
+    if ucase$(tok_content$) <> "A" then ps_error "Range must be A-Z"
+    tok_advance
+    ps_consume TOK_DASH
+    if ucase$(tok_content$) <> "Z" then ps_error "Range must be A-Z"
+    tok_advance
+    typ = ps_opt_sigil
+    if typ = 0 then ps_error "Expected type specifier"
+    ps_default_type = typ
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed define type"
+    $end if
+end sub

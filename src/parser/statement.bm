@@ -35,6 +35,10 @@ function ps_stmt
             stmt = ps_const
         case TOK_DECLARE
             stmt = ps_declare
+        case TOK__DEFINE
+            ps_define_type
+        case TOK_DEFINT, TOK_DEFLNG, TOK_DEFSNG, TOK_DEFDBL, TOK_DEFSTR
+            ps_deftype
         case TOK_DIM, TOK_REDIM, TOK_STATIC
             'REDIM is treated as an alias for DIM.
             'STATIC is so similar we handle it here too.
