@@ -444,6 +444,7 @@ function _red32         long      long
 # restore
 # resume
 # return
+function _rgb           long      integer,integer,integer,long?
 function _rgb32         long      integer
 function _rgb32         long      integer,integer
 function _rgb32         long      integer,integer,integer

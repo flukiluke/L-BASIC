@@ -187,6 +187,15 @@ case TOK__RED32
     imm_eval ast_get_child(node, 1), v1
     result.n = _red32(v1.n)
 
+case TOK__RGB
+    imm_eval ast_get_child(node, 1), v1
+    imm_eval ast_get_child(node, 2), v2
+    imm_eval ast_get_child(node, 3), v3
+    v4.n = _dest
+    imm_eval ast_get_child(node, 4), v4
+    r = _rgb(v1.n, v2.n, v3.n, v4.n)
+    result.n = r
+
 case TOK__RGB32
     select case ast_num_children(node)
     case 1
