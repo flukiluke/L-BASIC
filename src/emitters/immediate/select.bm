@@ -4,6 +4,7 @@
 
 sub imm_do_select(node)
     if imm_next_jump then 'We're GOTOing a point
+        imm_trim_jump 'Remove AST_SELECT_LIST or AST_SELECT_ELSE
         imm_run imm_next_jump
         exit sub
     end if

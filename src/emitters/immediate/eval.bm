@@ -58,6 +58,8 @@ sub imm_eval(node, result as imm_value_t)
         imm_set_at_addr imm_stack_last, temp
     case AST_NONE
         'do nothing
+    case else
+        imm_error "Cannot eval node " + str$(node)
     end select
 end sub
 
