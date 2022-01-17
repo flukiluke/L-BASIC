@@ -405,7 +405,7 @@ function open           none      string,'for,$random|input|output|binary|append
 function option         long      @any
 # out
 
-# paint
+function paint          none      "step?,'oparen,single,single,'cparen,long,long?
 # palette
 # pcopy
 # peek

@@ -102,6 +102,19 @@ case TOK__NEWIMAGE
         result.n = _newimage(v1.n, v2.n, v3.n)
     end if
 
+case TOK_PAINT
+    imm_eval ast_get_child(node, 2), v1
+    imm_eval ast_get_child(node, 3), v2
+    v3.n = _defaultcolor
+    imm_eval ast_get_child(node, 4), v3
+    v4.n = v3.n
+    imm_eval ast_get_child(node, 5), v4
+    if not ast_is_none(ast_get_child(node, 1)) then
+        paint step (v1.n, v2.n), v3.n, v4.n
+    else
+        paint (v1.n, v2.n), v3.n, v4.n
+    end if 
+
 case TOK_PSET
     imm_eval ast_get_child(node, 2), v1
     imm_eval ast_get_child(node, 3), v2
