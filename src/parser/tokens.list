@@ -413,7 +413,8 @@ function paint          none      "step?,'oparen,single,single,'cparen,long,long
 function _pi            double    single?
 function play           none      string
 # pmap
-# point
+function point          long      single,single
+function point          single    integer
 # poke
 # pos
 # preset

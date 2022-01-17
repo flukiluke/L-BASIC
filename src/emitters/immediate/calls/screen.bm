@@ -77,6 +77,16 @@ case TOK_LOCATE
         end if
     end if
 
+case TOK_POINT
+    if ast_num_children(node) = 1 then
+        imm_eval ast_get_child(node, 1), v1
+        result.n = point(v1.n)
+    else
+        imm_eval ast_get_child(node, 1), v1
+        imm_eval ast_get_child(node, 2), v2
+        result.n = point(v1.n, v2.n)
+    end if
+
 case TOK__SOURCE
     if return_type = TYPE_NONE then
         imm_eval ast_get_child(node, 1), v1
