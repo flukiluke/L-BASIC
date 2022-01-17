@@ -207,3 +207,4 @@ case TOK_SCREEN
     c3 = ast_get_child(node, 4)
     if not ast_is_none(c3) then imm_eval c3, v3
     screen v1.n, , v2.n, v3.n
+    if options.terminal_mode then _screenshow
