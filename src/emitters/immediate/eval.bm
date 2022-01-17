@@ -3,6 +3,12 @@
 'eval.bm - Top level executor function
 
 sub imm_eval(node, result as imm_value_t)
+    imm_eval_stack_last = imm_eval_stack_last + 1
+    if imm_eval_stack_last > ubound(imm_eval_stack) then
+        redim _preserve imm_eval_stack(imm_eval_stack_last)
+    end if
+    imm_eval_stack(imm_eval_stack_last) = node
+
     select case ast_nodes(node).typ
     case AST_ASSIGN
         imm_do_assign node
@@ -61,6 +67,8 @@ sub imm_eval(node, result as imm_value_t)
     case else
         imm_error "Cannot eval node " + str$(node)
     end select
+
+    imm_eval_stack_last = imm_eval_stack_last - 1
 end sub
 
 sub imm_do_cast(node, result as imm_value_t)
@@ -84,4 +92,11 @@ sub imm_enforce_type(result as imm_value_t, typ)
     case TYPE_QUAD, TYPE_STRING
         'Nothing to do here
     end select
+end sub
+
+sub imm_show_eval_stack
+    print #logging_file_handle, "Eval stack (most recent eval last):"
+    for i = 1 to imm_eval_stack_last
+        ast_dump_summary imm_eval_stack(i), TRUE
+    next i
 end sub

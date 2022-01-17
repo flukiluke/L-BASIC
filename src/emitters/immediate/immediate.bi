@@ -44,3 +44,8 @@ dim shared imm_filehandle_offset
 'When evaluating a SELECT CASE, this holds the base value which is returned
 'when AST_SELECT_VALUE is evaluated
 dim shared imm_select_value as imm_value_t
+
+'Maintain a eval stack that can be printed for debugger purposes. Each element
+'is an ast node
+dim shared imm_eval_stack(0)
+dim shared imm_eval_stack_last

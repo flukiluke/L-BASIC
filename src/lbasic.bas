@@ -186,6 +186,7 @@ error_handler:
         print "Runtime error: ";
         if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
+        imm_show_eval_stack
         if Error_context = 2 then resume interactive_recovery
     case 3 'Dump mode
         print "Dump: ";
