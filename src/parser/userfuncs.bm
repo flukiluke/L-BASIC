@@ -25,9 +25,11 @@ function ps_declare_p
     if return_type = 0 then return_type = ps_default_type
     sym.v1 = type_add_sig(0, type_sigt_create$(return_type)) 
     if ps_consumed(TOK_OPAREN) then
-        sig$ = ps_formal_args$(0)
-        type_sig_merge sym.v1, sig$
-        ps_consume TOK_CPAREN
+        if not ps_consumed(TOK_CPAREN) then
+            sig$ = ps_formal_args$(0)
+            type_sig_merge sym.v1, sig$
+            ps_consume TOK_CPAREN
+        end if
     end if
     sym.v2 = SYM_FUNCTION_USER
     sym.v3 = 0 'We have no implementation for this function yet
@@ -75,9 +77,11 @@ function ps_userfunc
 
     new_sig = type_add_sig(0, type_sigt_create$(return_type)) 
     if ps_consumed(TOK_OPAREN) then
-        sig$ = ps_formal_args$(root)
-        type_sig_merge new_sig, sig$
-        ps_consume TOK_CPAREN
+        if not ps_consumed(TOK_CPAREN) then
+            sig$ = ps_formal_args$(root)
+            type_sig_merge new_sig, sig$
+            ps_consume TOK_CPAREN
+        end if
     end if
 
     if override_sym then
