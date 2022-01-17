@@ -47,7 +47,7 @@ Id: $punc ~ General & ID
 # now so we can unambiguously call : a command separator
 # Id: ": ~ General ! LINELABEL
 Id: $sp ~ General & ID
-Id: "' ~ Comment
+Id: "' ~ Comment & ID
 Id: $nl ~ Begin & ID
 
 Comment: * ~ Comment
