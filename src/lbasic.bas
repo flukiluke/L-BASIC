@@ -161,6 +161,12 @@ interactive_recovery:
 
 error_handler:
     Error_occurred = TRUE
+    old_dest = _dest
+    if not options.terminal_mode then
+        _dest 0
+    else
+        _dest _console
+    end if
     select case Error_context
     case 1 'Parsing code
         print "Parser: ";
@@ -168,6 +174,7 @@ error_handler:
         if options.interactive_mode and options.preload = "" then
             print Error_message$
             Error_message$ = ""
+            _dest old_dest
             resume interactive_recovery
         else
             if options.preload <> "" then print "In preload file: ";
@@ -185,6 +192,7 @@ error_handler:
         if err <> 101 then goto internal_error
         print Error_message$
     case 4 'File access check
+        _dest old_dest
         resume next
     case else
         internal_error:
