@@ -155,6 +155,10 @@ sub ps_prepass
             'TODO handle shared variable
         case TOK_TYPE
             dummy = ps_udt
+        case TOK__DEFINE
+            ps_define_type
+        case TOK_DEFINT, TOK_DEFLNG, TOK_DEFSNG, TOK_DEFDBL, TOK_DEFSTR
+            ps_deftype
         case TOK_NEWLINE
             ps_line_prelude
         case else
