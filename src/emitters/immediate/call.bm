@@ -30,6 +30,7 @@ sub imm_do_call_internal(node, result as imm_value_t)
     '$include: 'calls/keyboard.bm'
     '$include: 'calls/logic.bm'
     '$include: 'calls/maths.bm'
+    '$include: 'calls/mouse.bm'
     '$include: 'calls/os.bm'
     '$include: 'calls/print.bm'
     '$include: 'calls/random.bm'

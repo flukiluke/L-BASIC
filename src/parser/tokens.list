@@ -383,6 +383,13 @@ function mid            string    string,integer64,integer64?
 # mkl
 # mks
 # mksmbf
+function _mousebutton   integer   integer
+function _mouseinput    integer
+function _mousemovementx integer
+function _mousemovementy integer
+function _mousewheel    integer
+function _mousex        integer
+function _mousey        integer
 
 # name
 function _newimage      long      long,long,long?
