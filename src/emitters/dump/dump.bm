@@ -67,10 +67,12 @@ sub ast_dump_summary(root, newline)
     end if
     select case ast_nodes(root).typ
     case AST_ASSIGN
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         ast_dump_summary ast_get_child(root, 1),  FALSE
         print #logging_file_handle, " = ";
         ast_dump_summary ast_get_child(root, 2), FALSE
     case AST_CALL
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "call(";
         print #logging_file_handle, symtab(ast_nodes(root).ref).identifier;
         if len(ast_children(root)) then print #logging_file_handle, ", ";
@@ -80,6 +82,7 @@ sub ast_dump_summary(root, newline)
         next i
         print #logging_file_handle, ")";
     case AST_CONSTANT
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         if type_of_constant(root) = TYPE_STRING then
             print #logging_file_handle, chr$(34); ast_constants(ast_nodes(root).ref); chr$(34);
         else
@@ -91,10 +94,12 @@ sub ast_dump_summary(root, newline)
         if symtab(var).v3 AND SYM_VARIABLE_CONST then print #logging_file_handle, "CONST ";
         print #logging_file_handle, symtab(var).identifier; ")";
     case AST_UDT_ACCESS
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "udt(";
         ast_dump_summary ast_get_child(root, 1), FALSE
         print #logging_file_handle, ", "; symtab(ast_nodes(root).ref).identifier; ")";
     case AST_ARRAY_ACCESS
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         ast_dump_summary ast_get_child(root, 1), FALSE
         print #logging_file_handle, "(";
         for i = 2 to ast_num_children(root)
@@ -103,6 +108,7 @@ sub ast_dump_summary(root, newline)
         next i
         print #logging_file_handle, ")";
     case AST_ARRAY_CREATE, AST_ARRAY_RESIZE
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "REDIM ";
         if ast_nodes(root).typ = AST_ARRAY_RESIZE then print #logging_file_handle, "_PRESERVE ";
         ast_dump_summary ast_get_child(root, 1), FALSE
@@ -115,10 +121,12 @@ sub ast_dump_summary(root, newline)
         next i
         print #logging_file_handle, ")";
     case AST_CAST
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "cast("; type_human_readable$(type_of_cast(root)); ", ";
         ast_dump_summary ast_get_child(root, 1), FALSE
         print #logging_file_handle, ")";
     case AST_FLAGS
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "flag(";
         select case ast_nodes(root).ref
         case AST_FLAG_MANUAL, AST_FLAG_CONTEXTUAL
@@ -128,8 +136,10 @@ sub ast_dump_summary(root, newline)
         end select
         print #logging_file_handle, ")";
     case AST_NONE
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "[NONE]";
     case AST_SET_RETURN
+        if newline then print #logging_file_handle, "Line"; ast_nodes(root).linenum; ": ";
         print #logging_file_handle, "return ";
         ast_dump_summary ast_get_child(root, 1), FALSE
     case else

@@ -78,6 +78,7 @@ function ast_add_node(typ)
     if ast_last_node = ubound(ast_nodes) then ast_expand_nodes_arrays
     ast_last_node = ast_last_node + 1
     ast_nodes(ast_last_node).typ = typ
+    ast_nodes(ast_last_node).linenum = ps_actual_linenum
     ast_add_node = ast_last_node
 end function
 

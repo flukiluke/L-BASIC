@@ -9,6 +9,7 @@ type ast_node_t
     typ as long
     ref as long
     ref2 as long
+    linenum as long 'File line this node started to appear
 end type
 
 'The nodes themselves
