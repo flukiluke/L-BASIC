@@ -78,6 +78,43 @@ sub ps_meta_include
     $end if
 end sub
 
+'Expects: META_OPTION
+'Results: TOK_NEWLINE
+sub ps_meta_option
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start $option"
+    $end if
+    ps_consume META_OPTION
+    if tok_token <> TOK_METAPARAM then ps_error "Expected list of options"
+    redim options(0) as string
+    split ucase$(tok_content$), ",", options()
+    for i = 0 to ubound(options)
+        plus = TRUE
+        if left$(options(i), 1) = "+" then
+            plus = TRUE
+            options(i) = mid$(options(i), 2)
+        elseif left$(options(i), 1) = "-" then
+            plus = FALSE
+            options(i) = mid$(options(i), 2)
+        end if
+        select case _trim$(options(i))
+        case "_EXPLICIT", "EXPLICIT"
+            ps_allow_implicit_vars = not plus
+        case "_EXPLICITARRAY"
+            'Arrays are never allowed to be implicit so this is always in effect.
+            'Ignore silently for compatibility.
+        case "OVERFLOW"
+            imm_allow_overflow = plus
+        case else
+            ps_error "Unknown option " + options(i)
+        end select
+    next i
+    tok_advance
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed $option"
+    $end if
+end sub
+
 'Expects: unknown metacommand
 'Results: TOK_NEWLINE
 sub ps_meta_unknown

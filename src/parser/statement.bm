@@ -27,6 +27,8 @@ function ps_stmt
             ps_meta_debug
         case META_INCLUDE
             ps_meta_include
+        case META_OPTION
+            ps_meta_option
         case META_UNKNOWN
             ps_meta_unknown
         case TOK_CALL

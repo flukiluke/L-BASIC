@@ -49,3 +49,6 @@ dim shared imm_select_value as imm_value_t
 'is an ast node
 dim shared imm_eval_stack(0)
 dim shared imm_eval_stack_last
+
+'If FALSE, overflows generate an error. Otherwise, they are siliently ignored.
+dim shared imm_allow_overflow

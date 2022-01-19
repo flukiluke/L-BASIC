@@ -474,6 +474,26 @@ function dirname$(path$)
     end if
 end function
 
+'Split in$ into pieces, chopping at every occurrence of delimiter$. Multiple consecutive occurrences
+'of delimiter$ are treated as a single instance. The chopped pieces are stored in result$().
+'
+'result$() must have been REDIMmed previously.
+sub split(in$, delimiter$, result$())
+    redim result$(-1)
+    start = 1
+    do
+        while mid$(in$, start, len(delimiter$)) = delimiter$
+            start = start + len(delimiter$)
+            if start > len(in$) then exit sub
+        wend
+        finish = instr(start, in$, delimiter$)
+        if finish = 0 then finish = len(in$) + 1
+        redim _preserve result$(0 to ubound(result$) + 1)
+        result$(ubound(result$)) = mid$(in$, start, finish - start)
+        start = finish + len(delimiter$)
+    loop while start <= len(in$)
+end sub
+
 sub show_version
     print "The L-BASIC compiler version " + VERSION$
 end sub

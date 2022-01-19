@@ -19,6 +19,7 @@ generic linenum   ; nosym
 meta list
 meta debug
 meta include
+meta option
 # Represent an unknown metacommand so we can ignore it
 meta unknown            ; nosym
 

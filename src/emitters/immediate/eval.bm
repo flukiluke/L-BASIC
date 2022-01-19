@@ -79,16 +79,41 @@ end sub
 sub imm_enforce_type(result as imm_value_t, typ)
     select case typ
     case TYPE_INTEGER
-        result.n = cint(result.n)
+        if imm_allow_overflow then
+            dummy% = result.n
+            result.n = dummy%
+        else
+            result.n = cint(result.n)
+        end if
     case TYPE_LONG
-        result.n = clng(result.n)
+        if imm_allow_overflow then
+            dummy& = result.n
+            result.n = dummy&
+        else
+            result.n = clng(result.n)
+        end if
     case TYPE_INTEGER64
-        result.n = _round(result.n)
-        if result.n < -2147483648 or result.n > 2147483647 then error 6
+        if imm_allow_overflow then
+            dummy&& = result.n
+            result.n = dummy&&
+        else
+            result.n = _round(result.n)
+            if result.n < -2147483648 or result.n > 2147483647 then error 6
+        end if
     case TYPE_SINGLE
-        result.n = csng(result.n)
+        if imm_allow_overflow then
+            dummy! = result.n
+            result.n = dummy!
+        else
+            result.n = csng(result.n)
+        end if
     case TYPE_DOUBLE
-        result.n = cdbl(result.n)
+        if imm_allow_overflow then
+            dummy# = result.n
+            result.n = dummy#
+        else
+            result.n = cdbl(result.n)
+        end if
     case TYPE_QUAD, TYPE_STRING
         'Nothing to do here
     end select

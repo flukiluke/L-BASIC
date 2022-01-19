@@ -22,9 +22,9 @@ case TOK_PRINT
             case TYPE_INTEGER64
                 print _round(v1.n);
             case TYPE_SINGLE
-                print csng(v1.n);
+                if imm_allow_overflow then print v1.n else print csng(v1.n);
             case TYPE_DOUBLE
-                print cdbl(v1.n);
+                if imm_allow_overflow then print v1.n else print cdbl(v1.n);
             case TYPE_QUAD
                 print v1.n;
             case TYPE_STRING
