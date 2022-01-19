@@ -81,16 +81,24 @@ end if
 target_platform_settings = runtime_platform_settings
 
 'This is an array so we can handle included files.
-'The current "reading" file is input_files(input_files_last).
+'The current "reading" file is input_files(input_files_current).
+'Note that unlike other arrays, we never remove entries from this one. This allows
+'us to use the index as a reference to the file for generating diagnostics later on.
+'input_files(1) is used to represent user input.
 type input_file_t
     handle as long
     'Directory containing the file, further includes are relative to this
     dirname as string
     'To be used only for diagnostic messages
     filename as string
+    'Set TRUE if we have finished reading the file
+    finished as long
+    'The index of the file that triggered the inclusion of this one
+    included_by as long
 end type
-redim shared input_files(0) as input_file_t
-dim shared input_files_last
+redim shared input_files(1) as input_file_t
+input_files(1).filename = "[interactive]"
+dim shared input_files_current
 'The logging output is used for debugging output
 dim shared logging_file_handle
 
@@ -110,6 +118,9 @@ dim shared options as options_t
 
 'Allow immediate mode to access COMMAND$() without picking up interpreter options
 dim shared input_file_command_offset
+
+'Ensure that file accesses are relative to the users's working directory
+chdir _startdir$
 
 '$include: 'cmdflags.bi'
 '$include: 'type.bi'
@@ -219,9 +230,7 @@ end sub
 'This function and the next are called from tokeng.
 'They provide a uniform way of loading the next line.
 function general_next_line$
-    if options.preload <> "" then
-        line input #input_files(input_files_last).handle, s$
-    elseif options.interactive_mode then
+    if input_files_current = 1 then
         old_dest = _dest
         if not options.terminal_mode then
             _dest 0
@@ -231,44 +240,52 @@ function general_next_line$
         print "> ";
         line input s$
         _dest old_dest
-    elseif options.command_mode then
-        s$ = options.mainarg
-        options.mainarg = ""
     else
-        line input #input_files(input_files_last).handle, s$
+        line input #input_files(input_files_current).handle, s$
     end if
     general_next_line$ = s$
 end function
 
 function general_eof
-    if options.preload <> "" then
-        result = eof(input_files(input_files_last).handle)
-    elseif options.interactive_mode then
-        'Hopefully one day we'll be able to handle ^D/^Z here
-        result = FALSE
-    elseif options.command_mode then
-        result = options.mainarg = ""
+    if input_files_current = 0 then
+        'nothing is open
+        general_eof = TRUE
+    elseif input_files_current = 1 then
+        'reading from console
+        general_eof = FALSE
     else
-        result = eof(input_files(input_files_last).handle)
-        'An EOF in an include file just means close that and return to the
-        'outer file
-        if result and input_files_last > 0 then
-            close #input_files(input_files_last).handle
-            input_files_last = input_files_last - 1
-            'Call recursively in case the outer file has also ended
-            result = general_eof
-        end if
+        do
+            finished = eof(input_files(input_files_current).handle)
+            if finished then
+                close #input_files(input_files_current).handle
+                input_files_current = input_files(input_files_current).included_by
+            end if
+        loop while input_files(input_files_current).finished and input_files_current
+        general_eof = input_files_current = 0
     end if
-    general_eof = result
 end function
 
+sub add_input_file(filename$, as_include)
+    redim _preserve input_files(ubound(input_files) + 1) as input_file_t
+    u = ubound(input_files)
+    input_files(u).handle = freefile
+    input_files(u).filename = filename$
+    if as_include then
+        input_files(u).included_by = input_files_current
+    else
+        input_files(u).included_by = 0
+    end if
+    input_files(u).finished = FALSE
+    input_files(u).dirname = dirname$(filename$)
+    open_file filename$, input_files(u).handle, FALSE
+    input_files_current = u
+end sub
+
 sub preload_file
-    input_files(input_files_last).handle = freefile
-    open_file options.preload, input_files(input_files_last).handle, FALSE
+    add_input_file options.preload, FALSE
     tok_init
     Error_context = 1
     ps_preload_file
-    close #input_files(input_files_last).handle
     options.preload = ""
 end sub
 
@@ -295,6 +312,7 @@ sub interactive_mode(recovery)
         ast_rollback
         ast_clear_entrypoint
     else
+        input_files_current = 1 'interactive input
         imm_init
         AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
         ast_commit
@@ -363,22 +381,19 @@ end sub
 sub compile_mode
     if options.mainarg = "" then fatalerror "No input file"
     'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
-    if options.outputfile = "" then options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
-    input_files(input_files_last).filename = options.mainarg
-    options.mainarg = locate_path$(options.mainarg, _startdir$)
-    input_files(input_files_last).dirname = dirname$(options.mainarg)
-    input_files(input_files_last).handle = freefile
-    open_file options.mainarg, input_files(input_files_last).handle, FALSE
+    if options.outputfile = "" then
+        options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
+    end if
+    add_input_file options.mainarg, FALSE
     tok_init
     ps_prepass
-    seek input_files(input_files_last).handle, 1
+    add_input_file options.mainarg, FALSE
     tok_reinit
     ps_init
     ast_rollback
     AST_ENTRYPOINT = ps_block
     ps_finish_labels AST_ENTRYPOINT
     Error_context = 0
-    close #input_files(input_files_last).handle
     close #logging_file_handle
     logging_file_handle = freefile
     open_file options.outputfile, logging_file_handle, TRUE
@@ -390,17 +405,13 @@ end sub
 
 sub run_mode
     if options.mainarg = "" then fatalerror "No input file"
-    input_files(input_files_last).filename = options.mainarg
-    options.mainarg = locate_path$(options.mainarg, _startdir$)
-    input_files(input_files_last).dirname = dirname$(options.mainarg)
-    input_files(input_files_last).handle = freefile
-    open_file options.mainarg, input_files(input_files_last).handle, FALSE
+    add_input_file options.mainarg, FALSE
     tok_init
     $if DEBUG_TIMINGS then
     debug_timing_mark# = timer(0.001)
     $end if
     ps_prepass
-    seek input_files(input_files_last).handle, 1
+    add_input_file options.mainarg, FALSE
     tok_reinit
     ps_init
     ast_rollback
@@ -410,7 +421,6 @@ sub run_mode
     debuginfo "Parse time:" + str$(timer(0.001) - debug_timing_mark#)
     $end if
     Error_context = 0
-    close #input_files(input_files_last).handle
     imm_init
     Error_context = 5
     $if DEBUG_TIMINGS then

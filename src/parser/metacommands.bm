@@ -51,10 +51,6 @@ sub ps_meta_include
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start $include"
     $end if
-    if input_files(input_files_last).handle = 0 then
-        'No file is open, we must be in interactive mode or similar
-        ps_error "Cannot include files in this mode"
-    end if
     ps_consume META_INCLUDE
     if tok_token <> TOK_METAPARAM then ps_error "Filename required"
     filename$ = _trim$(tok_content$)
@@ -63,16 +59,9 @@ sub ps_meta_include
         ps_error "Filename must be surrounded by single quotes"
     end if
     filename$ = mid$(filename$, 2, len(filename$) - 2)
-    input_files_last = input_files_last + 1
-    if ubound(input_files) < input_files_last then
-        redim _preserve input_files(input_files_last) as input_file_t
-    end if
-    input_files(input_files_last).handle = freefile
-    input_files(input_files_last).filename = filename$
     'A relative path is relative to the location of the including file
-    filename$ = locate_path$(filename$, input_files(input_files_last - 1).dirname)
-    input_files(input_files_last).dirname = dirname$(filename$)
-    open_file filename$, input_files(input_files_last).handle, FALSE
+    filename$ = locate_path$(filename$, input_files(input_files_current).dirname)
+    add_input_file filename$, TRUE
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed $include"
     $end if
