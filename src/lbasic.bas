@@ -213,7 +213,16 @@ sub fatalerror(msg$)
 end sub
 
 sub debuginfo(msg$)
-    if options.debug then print #logging_file_handle, msg$
+    if options.debug then
+        old_dest = _dest
+        if not options.terminal_mode then
+            _dest 0
+        else
+            _dest _console
+        end if
+        print msg$
+        _dest old_dest
+    end if
 end sub
 
 'This function and the next are called from tokeng.
