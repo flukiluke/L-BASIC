@@ -5,7 +5,7 @@
 %class letter = abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_
 %class number = 0123456789
 # The comment character (') is not in this list
-%class punc = ~!#$%^&*()-+=\5c:;"<>,./?
+%class punc = ~!#$%^&*()[]{}-+=\5c:;"<>,./?
 %class hexchar = 0123456789ABCDEFabcdef
 %class sp = \09\0b\0c\20
 %class nl = \0a
@@ -68,6 +68,10 @@ General: $amp ~ AmpersandPfx
 General: "* ~ General ! STAR
 General: "( ~ General ! OPAREN
 General: ") ~ General ! CPAREN
+General: "[ ~ General ! OBRACKET
+General: "] ~ General ! CBRACKET
+General: "{ ~ General ! OBRACE
+General: "} ~ General ! CBRACE
 General: "- ~ General ! DASH
 General: "+ ~ General ! PLUS
 General: "= ~ General ! EQUALS
