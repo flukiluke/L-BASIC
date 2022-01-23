@@ -4,6 +4,10 @@
 'make commits with these set to true, to avoid releasing versions that are slower
 'than they should be (debugging info is calculated even if debug mode is not enabled
 'at runtime).
+'You may find it useful to tell git to ignore local modifications to this file:
+'   git update-index --skip-worktree src/debugging_options.bm
+'you can undo this with:
+'   git update-index --no-skip-worktree src/debugging_options.bm
 
 $let DEBUG_TIMINGS = 0
 $let DEBUG_PARSE_TRACE = 0
