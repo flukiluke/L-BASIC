@@ -3,8 +3,7 @@
 'immediate.bm - Execute a parsed program
 
 sub imm_init
-    'ps_next_var_index describes number of variables in the main program
-    imm_stack_last = ps_next_var_index - 1
+    imm_stack_last = ps_scope_frame_size
     redim imm_stack(1 to imm_stack_last) as imm_value_t
     'No, I'm not crazy - this explicit initialisation is to
     'work around a QB64 bug where it doesn't set these values
