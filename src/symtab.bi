@@ -25,14 +25,15 @@ const SYM_INFIX = 2
 const SYM_PREFIX = 3
 'A variable.
 'v1 -> the data type
-'v2 -> index in this scope (in each scope, first variable has 1, second has 2 etc.)
+'v2 -> stack offset in the scope. Simple variables and references each take up 1 slot,
+'       arrays and UDTs take up multiple.
 'v3 -> various SYM_VARIABLE_* flags
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 -> reference to the type signature
 'v2 -> One of SYM_FUNCTION_*, see below
 'v3 -> If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
-'v4 -> IF SYM_FUNCTION_USER, the number of local variables in this function including arguments
+'v4 -> IF SYM_FUNCTION_USER, the stack frame size required to hold locals, including arguments
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
 'v1 -> AST node that is labelled.

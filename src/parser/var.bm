@@ -16,10 +16,10 @@ function ps_dim
     if is_static then
         if is_shared or preserve then ps_error "Cannot be SHARED or _PRESERVE when STATIC"
         if ps_last_nested(AST_PROCEDURE) = 0 then ps_error "Not in function"
-        'Switch back to the main program's var counter so that statics are allocated
-        'in the main program's stack frame.
-        inner_next_var_index = ps_next_var_index
-        ps_next_var_index = ps_main_next_var_index
+        'Switch back to the main program's frame so that statics are allocated
+        'in there instead of locally.
+        inner_frame_size = ps_scope_frame_size
+        ps_scope_frame_size = ps_main_frame_size
     end if
 
     'Check for Dim As Long style syntax
@@ -48,8 +48,8 @@ function ps_dim
     ps_dim = block
 
     if is_static then
-        ps_main_next_var_index = ps_next_var_index
-        ps_next_var_index = inner_next_var_index
+        ps_main_frame_size = ps_scope_frame_size
+        ps_scope_frame_size = inner_frame_size
     end if
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed dim"
@@ -178,8 +178,8 @@ function ps_new_var_pp(var_name$, sigil, is_shared)
     end if
     sym.typ = SYM_VARIABLE
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
-    sym.v2 = ps_next_var_index
-    ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+    sym.v2 = ps_scope_frame_size
+    ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
     if is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
     symtab_add_entry sym
     ps_new_var_pp = symtab_last_entry

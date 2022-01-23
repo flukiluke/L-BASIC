@@ -69,8 +69,8 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         end if
         sym.typ = SYM_VARIABLE
         sym.v1 = array_type_sym
-        sym.v2 = ps_next_var_index
-        ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+        sym.v2 = ps_scope_frame_size
+        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
         if is_static or is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
         symtab_add_entry sym
         var = symtab_last_entry

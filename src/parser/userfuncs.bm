@@ -69,8 +69,8 @@ function ps_userfunc
     ps_add_nested_structure root
     ps_scope_identifier$ = sym.identifier
     'Save this value so we can restore it later (and so STATIC can access it)
-    ps_main_next_var_index = ps_next_var_index
-    ps_next_var_index = 1
+    ps_main_frame_size = ps_scope_frame_size
+    ps_scope_frame_size = 0
 
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
     if return_type = 0 then return_type = ps_default_type
@@ -118,8 +118,8 @@ function ps_userfunc
     ast_pre_attach root, block
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
-    symtab(proc_id).v4 = ps_next_var_index - 1
-    ps_next_var_index = ps_main_next_var_index
+    symtab(proc_id).v4 = ps_scope_frame_size
+    ps_scope_frame_size = ps_main_frame_size
 
     ps_scope_identifier$ = ""
     ps_remove_nested_structure
