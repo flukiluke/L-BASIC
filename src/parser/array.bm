@@ -56,7 +56,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     'We need to create the array type based on number of bounds if it's not in the type
     if not type_is_array(sigil) then sigil = type_make_array(sigil, dimensions)
 
-    'sigil is now guaranteed to be an array type. Ensure we're not chaing the type
+    'sigil is now guaranteed to be an array type. Ensure we're not changing the type
     'of an existing array.
     if existing_array > 0 and symtab(existing_array).v1 <> array_type_sym then
         ps_error "Cannot change array type"

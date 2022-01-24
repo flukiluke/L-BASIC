@@ -162,45 +162,44 @@ function ps_formal_args$(root)
         if ((flags AND TYPE_BYVAL) <> 0) and ((flags AND TYPE_OPTIONAL) <> 0) then
             ps_error "Optional arguments cannot be BYVAL"
         end if
+        if tok_token <> TOK_UNKNOWN then
+            ps_error "Expected new variable name"
+        end if
+        'We need to do a bit of jumping around to check for arrays, and sigils in
+        'multiple places
+        var_name$ = tok_content$
+        tok_advance
+        sigil = ps_opt_sigil
+        if ps_consumed(TOK_OPAREN) then
+            is_array = TRUE
+            ps_consume TOK_CPAREN
+        end if
+        sigil2 = ps_opt_sigil
+        if sigil2 > 0 and sigil > 0 then ps_error "Cannot give type twice"
+        if sigil2 then sigil = sigil2
+        if sigil = 0 then sigil = ps_default_type
+        'The array is always non-concrete, so if the sigil doesn't have dimension
+        'information we let it accept any dimension of array.
+        if is_array and not type_is_array(sigil) then sigil = type_make_array(sigil, 0)
+        is_array = type_is_array(sigil)
+        if is_array and ((flags AND TYPE_BYVAL) <> 0) then
+            ps_error "Array must be passed by reference"
+        end if
         if root then
-            'Force allow implicit variable declarations because that is how we
-            'parse parameters.
-            old_implicit_allow = ps_allow_implicit_vars
-            ps_allow_implicit_vars = TRUE
-            var = ps_simple_variable
-            ps_allow_implicit_vars = old_implicit_allow
+            var = ast_add_node(AST_VAR)
+            ast_nodes(var).ref = ps_new_var_pp(var_name$, sigil, FALSE)
             if (flags AND TYPE_BYVAL) = 0 then
                 'Default to making the argument pass-by-reference
                 symtab(ast_nodes(var).ref).v3 = symtab(ast_nodes(var).ref).v3 OR SYM_VARIABLE_DEREF
             end if
             ast_attach root, var
-            typ = type_of_var(var)
-        else
-            'Stripped down variable parser used just for declarations
-            tok_advance 'Skip name
-            typ = ps_opt_sigil
-            if typ = 0 then typ = ps_default_type
         end if
-        result$ = type_sigt_add_arg(result$, typ, flags)
+        result$ = type_sigt_add_arg(result$, sigil, flags)
     loop while ps_consumed(TOK_COMMA)
     ps_formal_args$ = result$
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed formal args"
     $end if
-end function
-
-'Expects: variable name
-'Results: token after full declaration
-'Note: handles simple variables, arrays and UDTs
-function ps_formal_arg$(is_ref)
-    $if DEBUG_PARSE_TRACE then
-    debuginfo "Start formal arg"
-    $end if
-    node = ast_add_node(AST_VAR)
-    if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
-    ast_nodes(node).ref = ps_new_var
-
-
 end function
 
 'Expects: function name token

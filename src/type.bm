@@ -139,7 +139,13 @@ function type_make_array(basetype, dimensions)
         ' - etc.
         ' - lbound of rightmost dimension
         ' - ubound of rightmost dimension
-        sym.v1 = 2 + dimensions * 2
+        if dimensions = 0 then
+            '0 means any number of dimensions. Since we can't know how big the descriptor
+            'will be, it is treated as a simple pointer to descriptor and thus has size 1.
+            sym.v1 = 1
+        else
+            sym.v1 = 2 + dimensions * 2
+        end if
         sym.v2 = SYM_TYPE_ARRAY
         sym.v3 = basetype
         sym.v4 = dimensions
