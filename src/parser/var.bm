@@ -33,7 +33,7 @@ function ps_dim
         sigil = ps_opt_sigil
         if typ > 0 and sigil > 0 and typ <> sigil then ps_error "Variable type does not match DIM type"
         if typ then sigil = typ
-        if ps_consumed(TOK_OPAREN) then
+        if tok_token = TOK_OPAREN or type_is_array(sigil) then
             'Array declaration.
             'The block holds all resizes declared in this DIM statement
             if block = 0 then block = ast_add_node(AST_BLOCK)
@@ -158,6 +158,14 @@ function ps_opt_sigil
         end select
     end if
     if typ then tok_advance
+    if ps_consumed(TOK_OBRACKET) then
+        'array type
+        ps_assert TOK_NUMINT
+        dimensions = val(tok_content$)
+        tok_advance
+        ps_consume TOK_CBRACKET
+        typ = type_make_array(typ, dimensions)
+    end if
     ps_opt_sigil = typ
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed optional sigil"

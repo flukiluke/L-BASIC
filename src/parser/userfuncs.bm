@@ -158,7 +158,6 @@ function ps_formal_args$(root)
                 exit do
             end select
         loop
-        if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
         'Our calling convention can't handle optional byval arguments
         if ((flags AND TYPE_BYVAL) <> 0) and ((flags AND TYPE_OPTIONAL) <> 0) then
             ps_error "Optional arguments cannot be BYVAL"
@@ -188,6 +187,20 @@ function ps_formal_args$(root)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed formal args"
     $end if
+end function
+
+'Expects: variable name
+'Results: token after full declaration
+'Note: handles simple variables, arrays and UDTs
+function ps_formal_arg$(is_ref)
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start formal arg"
+    $end if
+    node = ast_add_node(AST_VAR)
+    if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
+    ast_nodes(node).ref = ps_new_var
+
+
 end function
 
 'Expects: function name token

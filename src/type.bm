@@ -121,6 +121,33 @@ function type_can_safely_cast(a, b)
     end if
 end function
 
+function type_make_array(basetype, dimensions)
+    dim sym as symtab_entry_t
+    array_type_name$ = symtab(basetype).identifier + "[" + _trim$(str$(dimensions)) + "]"
+    array_type_sym = symtab_get_id(array_type_name$)
+    if array_type_sym then
+        'Already exists
+        type_make_array = array_type_sym
+    else
+        sym.identifier = array_type_name$
+        sym.typ = SYM_TYPE
+        'Array descriptor:
+        ' - pointer to data
+        ' - number of dimensions
+        ' - lbound of leftmost dimension
+        ' - ubound of leftmost dimension
+        ' - etc.
+        ' - lbound of rightmost dimension
+        ' - ubound of rightmost dimension
+        sym.v1 = 2 + dimensions * 2
+        sym.v2 = SYM_TYPE_ARRAY
+        sym.v3 = basetype
+        sym.v4 = dimensions
+        symtab_add_entry sym
+        type_make_array = symtab_last_entry
+    end if
+end function 
+    
 'The following functions are helpers to extract data from type signatures. type_sig_*
 'variants take a numeric indentifier, type_sigt_* variants take a string holding the
 'signature itself. arg_index is one-indexed, so 1 is the first argument in the signature.

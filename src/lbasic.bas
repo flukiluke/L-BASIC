@@ -337,7 +337,7 @@ sub interactive_mode(recovery)
             end if
             $end if
             'TODO remove this next line by adding the logic to imm_run or similar
-            imm_reinit ps_main_frame_size
+            imm_reinit ps_scope_frame_size
             Error_context = 2
             imm_run AST_ENTRYPOINT
             'Keep any symbols that were defined

@@ -13,6 +13,8 @@ sub imm_init
         imm_stack(i).s = ""
         imm_stack(i).n = 0
     next i
+    'Starting at 1 allows catching writes to address 0
+    imm_stack_base = 1
     imm_filehandle_offset = freefile - 1
     imm_heap_init
 end sub
