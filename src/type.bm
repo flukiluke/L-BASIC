@@ -97,10 +97,11 @@ function type_can_safely_cast(a, b)
     elseif b = TYPE_ANY then 'Generic type
         type_can_safely_cast = TRUE
     elseif type_is_array(a) or type_is_array(b) then
-        'Both arrays, same number of dimensions (or cast to indeterminate number), element type can be cast
+        'Both arrays, same number of dimensions (or cast to indeterminate number),
+        'and element type is identical (or cast to ANY)
         type_can_safely_cast = type_is_array(a) and type_is_array(b) and _
                                 (symtab(a).v4 = symtab(b).v4 or symtab(b).v4 = 0) and _
-                                type_can_safely_cast(symtab(a).v3, symtab(b).v3)
+                                (symtab(a).v3 = symtab(b).v3 or symtab(b).v3 = TYPE_ANY)
     elseif not (type_is_number(a) and type_is_number(b)) then
         type_can_safely_cast = FALSE
     else
