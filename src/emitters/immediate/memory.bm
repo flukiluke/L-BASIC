@@ -40,6 +40,10 @@ function imm_get_addr(node)
         info_base_addr = imm_get_addr(array)
         element_type = symtab(array_type).v3
         dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
+        'Make sure we have precisely enough indicies for the number of dimensions
+        if dimensions <> ast_num_children(node) - 1 then
+            imm_error "Incorrect number of indicies for array access"
+        end if
         'Array descriptor:
         ' - pointer to data
         ' - number of dimensions
@@ -54,7 +58,9 @@ function imm_get_addr(node)
             lower_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2))
             upper_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2 + 1))
             imm_eval ast_get_child(node, i + 1), index
-            'TODO: bounds checking
+            if index.n < lower_bound or index.n > upper_bound then
+                imm_error "Array access out of bounds"
+            end if
             offset = offset + (index.n - lower_bound) * block_size
             block_size = upper_bound - lower_bound + 1
         next i
