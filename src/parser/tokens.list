@@ -68,6 +68,15 @@ type contextual_argument
 generic oparen ; direct nosym
 generic cparen ; direct nosym
 
+# [ and ] are used to denote the number of array dimensions when their sizes
+# are otherwise unknown
+generic obracket ; direct nosym
+generic cbracket ; direct nosym
+
+# Not currently used for anything
+generic obrace ; direct nosym
+generic cbrace ; direct nosym
+
 # Numbers
 # numint: 1234, numdec: 12.34, numexp: 12.3E4, numbase: &H1234
 literal numint ; direct

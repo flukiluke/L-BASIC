@@ -16,10 +16,10 @@ function ps_dim
     if is_static then
         if is_shared or preserve then ps_error "Cannot be SHARED or _PRESERVE when STATIC"
         if ps_last_nested(AST_PROCEDURE) = 0 then ps_error "Not in function"
-        'Switch back to the main program's var counter so that statics are allocated
-        'in the main program's stack frame.
-        inner_next_var_index = ps_next_var_index
-        ps_next_var_index = ps_main_next_var_index
+        'Switch back to the main program's frame so that statics are allocated
+        'in there instead of locally.
+        inner_frame_size = ps_scope_frame_size
+        ps_scope_frame_size = ps_main_frame_size
     end if
 
     'Check for Dim As Long style syntax
@@ -33,7 +33,7 @@ function ps_dim
         sigil = ps_opt_sigil
         if typ > 0 and sigil > 0 and typ <> sigil then ps_error "Variable type does not match DIM type"
         if typ then sigil = typ
-        if ps_consumed(TOK_OPAREN) then
+        if tok_token = TOK_OPAREN or type_is_array(sigil) then
             'Array declaration.
             'The block holds all resizes declared in this DIM statement
             if block = 0 then block = ast_add_node(AST_BLOCK)
@@ -41,15 +41,15 @@ function ps_dim
         else
             'Just a regular variable
             if name_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
-            sym = ps_new_var_pp(variable_name$, sigil, is_shared)
+            sym = ps_new_var_pp(variable_name$, sigil, is_shared, FALSE)
             if is_static then symtab(sym).v3 = symtab(sym).v3 OR SYM_VARIABLE_MAINFRAME
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_dim = block
 
     if is_static then
-        ps_main_next_var_index = ps_next_var_index
-        ps_next_var_index = inner_next_var_index
+        ps_main_frame_size = ps_scope_frame_size
+        ps_scope_frame_size = inner_frame_size
     end if
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed dim"
@@ -158,6 +158,16 @@ function ps_opt_sigil
         end select
     end if
     if typ then tok_advance
+    if ps_consumed(TOK_OBRACKET) then
+        'Array type. If the element type hasn't been given, assume it to
+        'be the default type.
+        if typ = 0 then typ = ps_default_type
+        ps_assert TOK_NUMINT
+        dimensions = val(tok_content$)
+        tok_advance
+        ps_consume TOK_CBRACKET
+        typ = type_make_array(typ, dimensions)
+    end if
     ps_opt_sigil = typ
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed optional sigil"
@@ -166,10 +176,10 @@ end function
 
 function ps_new_var_p(var_name$)
     sigil = ps_opt_sigil
-    ps_new_var_p = ps_new_var_pp(var_name$, sigil, FALSE)
+    ps_new_var_p = ps_new_var_pp(var_name$, sigil, FALSE, FALSE)
 end function
 
-function ps_new_var_pp(var_name$, sigil, is_shared)
+function ps_new_var_pp(var_name$, sigil, is_shared, is_ref)
     dim sym as symtab_entry_t
     if is_shared then
         sym.identifier = ucase$(var_name$)
@@ -178,9 +188,14 @@ function ps_new_var_pp(var_name$, sigil, is_shared)
     end if
     sym.typ = SYM_VARIABLE
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
-    sym.v2 = ps_next_var_index
-    ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
+    sym.v2 = ps_scope_frame_size
+    if is_ref then
+        ps_scope_frame_size = ps_scope_frame_size + 1
+    else
+        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
+    end if
     if is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
+    if is_ref then sym.v3 = sym.v3 OR SYM_VARIABLE_DEREF
     symtab_add_entry sym
     ps_new_var_pp = symtab_last_entry
 end function

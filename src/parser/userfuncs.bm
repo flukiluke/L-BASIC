@@ -69,8 +69,8 @@ function ps_userfunc
     ps_add_nested_structure root
     ps_scope_identifier$ = sym.identifier
     'Save this value so we can restore it later (and so STATIC can access it)
-    ps_main_next_var_index = ps_next_var_index
-    ps_next_var_index = 1
+    ps_main_frame_size = ps_scope_frame_size
+    ps_scope_frame_size = 0
 
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
     if return_type = 0 then return_type = ps_default_type
@@ -118,8 +118,8 @@ function ps_userfunc
     ast_pre_attach root, block
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
-    symtab(proc_id).v4 = ps_next_var_index - 1
-    ps_next_var_index = ps_main_next_var_index
+    symtab(proc_id).v4 = ps_scope_frame_size
+    ps_scope_frame_size = ps_main_frame_size
 
     ps_scope_identifier$ = ""
     ps_remove_nested_structure
@@ -158,31 +158,41 @@ function ps_formal_args$(root)
                 exit do
             end select
         loop
-        if tok_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
         'Our calling convention can't handle optional byval arguments
         if ((flags AND TYPE_BYVAL) <> 0) and ((flags AND TYPE_OPTIONAL) <> 0) then
             ps_error "Optional arguments cannot be BYVAL"
         end if
-        if root then
-            'Force allow implicit variable declarations because that is how we
-            'parse parameters.
-            old_implicit_allow = ps_allow_implicit_vars
-            ps_allow_implicit_vars = TRUE
-            var = ps_simple_variable
-            ps_allow_implicit_vars = old_implicit_allow
-            if (flags AND TYPE_BYVAL) = 0 then
-                'Default to making the argument pass-by-reference
-                symtab(ast_nodes(var).ref).v3 = symtab(ast_nodes(var).ref).v3 OR SYM_VARIABLE_DEREF
-            end if
-            ast_attach root, var
-            typ = type_of_var(var)
-        else
-            'Stripped down variable parser used just for declarations
-            tok_advance 'Skip name
-            typ = ps_opt_sigil
-            if typ = 0 then typ = ps_default_type
+        if tok_token <> TOK_UNKNOWN then
+            ps_error "Expected new variable name"
         end if
-        result$ = type_sigt_add_arg(result$, typ, flags)
+        'We need to do a bit of jumping around to check for arrays, and sigils in
+        'multiple places. This somewhat duplicates the logic in parser/array.bm.
+        var_name$ = tok_content$
+        tok_advance
+        sigil = ps_opt_sigil
+        if ps_consumed(TOK_OPAREN) then
+            is_array = TRUE
+            ps_consume TOK_CPAREN
+        end if
+        sigil2 = ps_opt_sigil
+        if sigil2 > 0 and sigil > 0 then ps_error "Cannot give type twice"
+        if sigil2 then sigil = sigil2
+        if sigil = 0 then sigil = ps_default_type
+        'The array is always non-concrete, so if the sigil doesn't have dimension
+        'information we let it accept any dimension of array.
+        if is_array and not type_is_array(sigil) then sigil = type_make_array(sigil, 0)
+        is_array = type_is_array(sigil)
+        if is_array and ((flags AND TYPE_BYVAL) <> 0) then
+            ps_error "Array must be passed by reference"
+        end if
+        if root then
+            var = ast_add_node(AST_VAR)
+            'Argument is pass-by-reference, unless explicitly requesting BYVAL
+            is_ref = (flags AND TYPE_BYVAL) = 0
+            ast_nodes(var).ref = ps_new_var_pp(var_name$, sigil, FALSE, is_ref)
+            ast_attach root, var
+        end if
+        result$ = type_sigt_add_arg(result$, sigil, flags)
     loop while ps_consumed(TOK_COMMA)
     ps_formal_args$ = result$
     $if DEBUG_PARSE_TRACE then

@@ -97,10 +97,11 @@ function type_can_safely_cast(a, b)
     elseif b = TYPE_ANY then 'Generic type
         type_can_safely_cast = TRUE
     elseif type_is_array(a) or type_is_array(b) then
-        'Both arrays, same number of dimensions (or cast to indeterminate number), element type can be cast
+        'Both arrays, same number of dimensions (or cast to indeterminate number),
+        'and element type is identical (or cast to ANY)
         type_can_safely_cast = type_is_array(a) and type_is_array(b) and _
                                 (symtab(a).v4 = symtab(b).v4 or symtab(b).v4 = 0) and _
-                                type_can_safely_cast(symtab(a).v3, symtab(b).v3)
+                                (symtab(a).v3 = symtab(b).v3 or symtab(b).v3 = TYPE_ANY)
     elseif not (type_is_number(a) and type_is_number(b)) then
         type_can_safely_cast = FALSE
     else
@@ -121,6 +122,39 @@ function type_can_safely_cast(a, b)
     end if
 end function
 
+function type_make_array(basetype, dimensions)
+    dim sym as symtab_entry_t
+    array_type_name$ = symtab(basetype).identifier + "[" + _trim$(str$(dimensions)) + "]"
+    array_type_sym = symtab_get_id(array_type_name$)
+    if array_type_sym then
+        'Already exists
+        type_make_array = array_type_sym
+    else
+        sym.identifier = array_type_name$
+        sym.typ = SYM_TYPE
+        'Array descriptor:
+        ' - pointer to data
+        ' - number of dimensions
+        ' - lbound of leftmost dimension
+        ' - ubound of leftmost dimension
+        ' - etc.
+        ' - lbound of rightmost dimension
+        ' - ubound of rightmost dimension
+        if dimensions = 0 then
+            '0 means any number of dimensions. Since we can't know how big the descriptor
+            'will be, it is treated as a simple pointer to descriptor and thus has size 1.
+            sym.v1 = 1
+        else
+            sym.v1 = 2 + dimensions * 2
+        end if
+        sym.v2 = SYM_TYPE_ARRAY
+        sym.v3 = basetype
+        sym.v4 = dimensions
+        symtab_add_entry sym
+        type_make_array = symtab_last_entry
+    end if
+end function 
+    
 'The following functions are helpers to extract data from type signatures. type_sig_*
 'variants take a numeric indentifier, type_sigt_* variants take a string holding the
 'signature itself. arg_index is one-indexed, so 1 is the first argument in the signature.

@@ -2,65 +2,72 @@
 'SPDX-License-Identifier: Apache-2.0
 'array.bm - Parse rules for array declaration and usage
 
-'Expects: (
+'Expects: ( or other token
 'Results: token after ) or sigil, if present
 'This sub produces AST_ARRAY_DELETE and AST_ARRAY_RESIZE operations
 'and adds them to the supplied block. It also generates the symtab entries
-'for the array itself and its type.
+'for the array itself and its type. This somewhat duplicates the logic in
+'parser/userfuncs.bm.
 sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start dim array"
     $end if
-    'array declaration. dims$ will be a series of pairs of AST_EXPR,
-    'which are the lower and upper bounds for each dimension.
-    dim sym as symtab_entry_t
-    do
-        dims$ = dims$ + mkl$(ps_expr)
-        if ps_consumed(TOK_TO) then
-            dims$ = dims$ + mkl$(ps_expr)
-        else
-            'Whoops, there was in implicit lower bound. Add it in.
-            implicit_zero = ast_add_node(AST_CONSTANT)
-            ast_nodes(implicit_zero).ref = AST_FALSE
-            dims$ = left$(dims$, len(dims$) - 4) + mkl$(implicit_zero) + right$(dims$, 4)
-        end if
-    loop while ps_consumed(TOK_COMMA)
-    ps_assert TOK_CPAREN
-    tok_advance
+    if token <> TOK_UNKNOWN then existing_array = token
 
+    'This variable is updated as we go; see towards the bottom for a summary.
+    destruct = ps_last_nested(AST_PROCEDURE) > 0
+
+    'Note the parentheses may be omitted or empty if the number of dimensions
+    'is given in the type.
+    if ps_consumed(TOK_OPAREN) then
+        if tok_token <> TOK_CPAREN then
+            'dims$ will be a series of pairs of AST_EXPR, which are the lower and upper
+            'bounds for each dimension.
+            do
+                dims$ = dims$ + mkl$(ps_expr)
+                if ps_consumed(TOK_TO) then
+                    dims$ = dims$ + mkl$(ps_expr)
+                else
+                    'Whoops, there was in implicit lower bound. Add it in.
+                    implicit_zero = ast_add_node(AST_CONSTANT)
+                    ast_nodes(implicit_zero).ref = AST_FALSE
+                    dims$ = left$(dims$, len(dims$) - 4) + mkl$(implicit_zero) + right$(dims$, 4)
+                end if
+            dimensions = dimensions + 1
+            loop while ps_consumed(TOK_COMMA)
+        end if
+        ps_consume TOK_CPAREN
+    end if
+    'Empty or omitted parentheses mean this array is not concrete; we cannot actually
+    'instantiate it.
+    if dimensions > 0 then concrete_array = TRUE
+
+    'So far sigil is any type provided before the (), sigil2 is any type given after
+    'the (). They must match if they're both present.
     sigil2 = ps_opt_sigil
     if sigil2 > 0 and sigil > 0 then ps_error "Cannot give type twice"
     if sigil2 then sigil = sigil2
     if sigil = 0 then sigil = ps_default_type
 
-    if token <> TOK_UNKNOWN then existing_array = token
+    'If the type has a number of dimensions, ensure it matches the bounds if given.
+    if type_is_array(sigil) and _
+        concrete_array and _
+        symtab(sigil).v2 <> 0 and _
+        dimensions <> symtab(sigil).v2 then
+        ps_error "Number of bounded dimensions does not match number of dimensions in type"
+    end if
 
-    'First we construct the array's type
-    array_type_name$ = symtab(sigil).identifier + "(" + ltrim$(str$(len(dims$) / 4 / 2)) + ")"
-    array_type_sym = symtab_get_id(array_type_name$)
-    if existing_array and symtab(existing_array).v1 <> array_type_sym then
+    'We need to create the array type based on number of bounds if it's not in the type
+    if not type_is_array(sigil) then sigil = type_make_array(sigil, dimensions)
+
+    'sigil is now guaranteed to be an array type. Ensure we're not changing the type
+    'of an existing array.
+    if existing_array > 0 and symtab(existing_array).v1 <> array_type_sym then
         ps_error "Cannot change array type"
     end if
-    if array_type_sym = 0 then
-        sym.identifier = array_type_name$
-        sym.typ = SYM_TYPE
-        'Array descriptor:
-        ' - pointer to data
-        ' - number of dimensions
-        ' - lbound of leftmost dimension
-        ' - ubound of leftmost dimension
-        ' - etc.
-        ' - lbound of rightmost dimension
-        ' - ubound of rightmost dimension
-        sym.v1 = 2 + len(dims$) / 4
-        sym.v2 = SYM_TYPE_ARRAY
-        sym.v3 = sigil
-        sym.v4 = len(dims$) / 4 / 2
-        symtab_add_entry sym
-        array_type_sym = symtab_last_entry
-    end if
 
-    'Now we have a SYM_ for the type, we can create the actual array variable
+    'Now we can create the actual array variable
+    dim sym as symtab_entry_t
     if existing_array = 0 then
         if is_shared then
             sym.identifier = ucase$(var_name$)
@@ -68,36 +75,50 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
             sym.identifier = ps_scope$ + ucase$(var_name$)
         end if
         sym.typ = SYM_VARIABLE
-        sym.v1 = array_type_sym
-        sym.v2 = ps_next_var_index
-        ps_next_var_index = ps_next_var_index + type_fixed_size(sym.v1)
-        if is_static or is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
+        sym.v1 = sigil
+        sym.v2 = ps_scope_frame_size
+        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
+        if is_static or is_shared then
+            sym.v3 = SYM_VARIABLE_MAINFRAME
+            destruct = FALSE
+        else
+            sym.v3 = 0
+        end if
+        'Because we don't know the size of a descriptor for any-dimensional arrays,
+        'they are always a pointer to the descriptor.
+        if dimensions = 0 then sym.v3 = sym.v3 OR SYM_VARIABLE_DEREF
         symtab_add_entry sym
         var = symtab_last_entry
     else
         var = existing_array
+        destruct = FALSE
     end if
 
+    'Used for constructor and destructor
     var_node = ast_add_node(AST_VAR)
     ast_nodes(var_node).ref = var
-    if is_static then
-        node = ast_add_node(AST_ARRAY_ESTABLISH)
-    elseif preserve then
-        node = ast_add_node(AST_ARRAY_RESIZE)
-    else
-        node = ast_add_node(AST_ARRAY_CREATE)
+
+    'Only generate a constructor if we actually know the array size
+    if concrete_array then
+        if is_static then
+            node = ast_add_node(AST_ARRAY_ESTABLISH)
+        elseif preserve then
+            node = ast_add_node(AST_ARRAY_RESIZE)
+        else
+            node = ast_add_node(AST_ARRAY_CREATE)
+        end if
+        ast_attach node, var_node
+        ast_attach block, node
+        ast_children(node) = mkl$(var_node) + dims$
     end if
-    ast_attach node, var_node
-    ast_attach block, node
-    ast_children(node) = mkl$(var_node) + dims$
 
     'Generate an array destructor if:
     ' - we are in a procedure (no need to destruct at program exit), and
     ' - the array is not shared or static, and
-    ' - the variable is not a reference (would imply it is owned by a caller).
-    proc = ps_last_nested(AST_PROCEDURE)
-    v3 = symtab(var).v3
-    if proc > 0 and (v3 AND SYM_VARIABLE_MAINFRAME) = 0 and (v3 AND SYM_VARIABLE_DEREF) = 0 then
+    ' - the variable is not an existing array (would imply it is owned by another scope).
+    ' Note that we _do_ generate a destructor for non-concrete arrays, because those
+    ' variables may be assigned (and thus take ownership) of a concrete array.
+    if destruct then
         'Have a check to see if there's already a destructor.
         'This could occur if there are multiple DIMs in the same function.
         for i = 1 to len(ps_queued_nodes$) - 3 step 4
@@ -132,7 +153,9 @@ function ps_array_element_access(lvalue)
     loop while ps_consumed(TOK_COMMA)
     ps_assert TOK_CPAREN
     tok_advance
-    if ast_num_children(node) - 1 <> dimensions then ps_error "Incorrect number of dimensions"
+    if ast_num_children(node) - 1 <> dimensions and dimensions <> 0 then
+        ps_error "Incorrect number of dimensions"
+    end if
     ps_array_element_access = node
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed array element access"
