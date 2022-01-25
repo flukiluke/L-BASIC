@@ -17,7 +17,7 @@ function ps_const
         const_name$ = tok_content$
         tok_advance
         sigil = ps_opt_sigil
-        var = ps_new_var_pp(const_name$, sigil, TRUE)
+        var = ps_new_var_pp(const_name$, sigil, TRUE, FALSE)
         lval = ast_add_node(AST_VAR)
         ast_nodes(lval).ref = var
         symtab(var).v3 = symtab(var).v3 or SYM_VARIABLE_CONST 'Mark constant

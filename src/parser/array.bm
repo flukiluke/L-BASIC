@@ -14,6 +14,9 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     $end if
     if token <> TOK_UNKNOWN then existing_array = token
 
+    'This variable is updated as we go; see towards the bottom for a summary.
+    destruct = ps_last_nested(AST_PROCEDURE) > 0
+
     'Note the parentheses may be omitted or empty if the number of dimensions
     'is given in the type.
     if ps_consumed(TOK_OPAREN) then
@@ -75,11 +78,20 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         sym.v1 = sigil
         sym.v2 = ps_scope_frame_size
         ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
-        if is_static or is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
+        if is_static or is_shared then
+            sym.v3 = SYM_VARIABLE_MAINFRAME
+            destruct = FALSE
+        else
+            sym.v3 = 0
+        end if
+        'Because we don't know the size of a descriptor for any-dimensional arrays,
+        'they are always a pointer to the descriptor.
+        if dimensions = 0 then sym.v3 = sym.v3 OR SYM_VARIABLE_DEREF
         symtab_add_entry sym
         var = symtab_last_entry
     else
         var = existing_array
+        destruct = FALSE
     end if
 
     'Used for constructor and destructor
@@ -103,12 +115,10 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     'Generate an array destructor if:
     ' - we are in a procedure (no need to destruct at program exit), and
     ' - the array is not shared or static, and
-    ' - the variable is not a reference (would imply it is owned by a caller).
+    ' - the variable is not an existing array (would imply it is owned by another scope).
     ' Note that we _do_ generate a destructor for non-concrete arrays, because those
     ' variables may be assigned (and thus take ownership) of a concrete array.
-    proc = ps_last_nested(AST_PROCEDURE)
-    v3 = symtab(var).v3
-    if proc > 0 and (v3 AND SYM_VARIABLE_MAINFRAME) = 0 and (v3 AND SYM_VARIABLE_DEREF) = 0 then
+    if destruct then
         'Have a check to see if there's already a destructor.
         'This could occur if there are multiple DIMs in the same function.
         for i = 1 to len(ps_queued_nodes$) - 3 step 4

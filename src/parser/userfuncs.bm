@@ -187,11 +187,9 @@ function ps_formal_args$(root)
         end if
         if root then
             var = ast_add_node(AST_VAR)
-            ast_nodes(var).ref = ps_new_var_pp(var_name$, sigil, FALSE)
-            if (flags AND TYPE_BYVAL) = 0 then
-                'Default to making the argument pass-by-reference
-                symtab(ast_nodes(var).ref).v3 = symtab(ast_nodes(var).ref).v3 OR SYM_VARIABLE_DEREF
-            end if
+            'Argument is pass-by-reference, unless explicitly requesting BYVAL
+            is_ref = (flags AND TYPE_BYVAL) = 0
+            ast_nodes(var).ref = ps_new_var_pp(var_name$, sigil, FALSE, is_ref)
             ast_attach root, var
         end if
         result$ = type_sigt_add_arg(result$, sigil, flags)

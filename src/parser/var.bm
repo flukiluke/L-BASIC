@@ -41,7 +41,7 @@ function ps_dim
         else
             'Just a regular variable
             if name_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
-            sym = ps_new_var_pp(variable_name$, sigil, is_shared)
+            sym = ps_new_var_pp(variable_name$, sigil, is_shared, FALSE)
             if is_static then symtab(sym).v3 = symtab(sym).v3 OR SYM_VARIABLE_MAINFRAME
         end if
     loop while ps_consumed(TOK_COMMA)
@@ -176,10 +176,10 @@ end function
 
 function ps_new_var_p(var_name$)
     sigil = ps_opt_sigil
-    ps_new_var_p = ps_new_var_pp(var_name$, sigil, FALSE)
+    ps_new_var_p = ps_new_var_pp(var_name$, sigil, FALSE, FALSE)
 end function
 
-function ps_new_var_pp(var_name$, sigil, is_shared)
+function ps_new_var_pp(var_name$, sigil, is_shared, is_ref)
     dim sym as symtab_entry_t
     if is_shared then
         sym.identifier = ucase$(var_name$)
@@ -189,8 +189,13 @@ function ps_new_var_pp(var_name$, sigil, is_shared)
     sym.typ = SYM_VARIABLE
     if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
     sym.v2 = ps_scope_frame_size
-    ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
+    if is_ref then
+        ps_scope_frame_size = ps_scope_frame_size + 1
+    else
+        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
+    end if
     if is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
+    if is_ref then sym.v3 = sym.v3 OR SYM_VARIABLE_DEREF
     symtab_add_entry sym
     ps_new_var_pp = symtab_last_entry
 end function
