@@ -153,7 +153,9 @@ function ps_array_element_access(lvalue)
     loop while ps_consumed(TOK_COMMA)
     ps_assert TOK_CPAREN
     tok_advance
-    if ast_num_children(node) - 1 <> dimensions then ps_error "Incorrect number of dimensions"
+    if ast_num_children(node) - 1 <> dimensions and dimensions <> 0 then
+        ps_error "Incorrect number of dimensions"
+    end if
     ps_array_element_access = node
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed array element access"
