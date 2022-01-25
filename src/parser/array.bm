@@ -6,7 +6,8 @@
 'Results: token after ) or sigil, if present
 'This sub produces AST_ARRAY_DELETE and AST_ARRAY_RESIZE operations
 'and adds them to the supplied block. It also generates the symtab entries
-'for the array itself and its type.
+'for the array itself and its type. This somewhat duplicates the logic in
+'parser/userfuncs.bm.
 sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start dim array"

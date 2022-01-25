@@ -159,7 +159,9 @@ function ps_opt_sigil
     end if
     if typ then tok_advance
     if ps_consumed(TOK_OBRACKET) then
-        'array type
+        'Array type. If the element type hasn't been given, assume it to
+        'be the default type.
+        if typ = 0 then typ = ps_default_type
         ps_assert TOK_NUMINT
         dimensions = val(tok_content$)
         tok_advance

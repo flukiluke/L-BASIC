@@ -166,7 +166,7 @@ function ps_formal_args$(root)
             ps_error "Expected new variable name"
         end if
         'We need to do a bit of jumping around to check for arrays, and sigils in
-        'multiple places
+        'multiple places. This somewhat duplicates the logic in parser/array.bm.
         var_name$ = tok_content$
         tok_advance
         sigil = ps_opt_sigil
