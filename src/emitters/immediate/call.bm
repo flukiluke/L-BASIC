@@ -101,7 +101,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     end if
     'Set frame pointer appropriately (delayed to here so argument evaluation
     'occurs in the caller's stack frame)
-    imm_stack_base = old_stack_last
+    imm_stack_base = old_stack_last + 1
     'Do the call!
     imm_eval ast_get_child(symtab(proc_id).v3, 1), result
     'Collect return value if relevant

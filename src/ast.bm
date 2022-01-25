@@ -83,9 +83,10 @@ function ast_add_node(typ)
 end function
 
 function ast_add_cast(expr, vartyp)
-    if vartyp = type_of_expr(expr) or vartyp = TYPE_ANY or vartyp = TYPE_ANY_ARRAY then
-        'Don't cast to TYPE_ANY(_ARRAY) because that's just a shorthand
-        'for a function that can handle any type.
+    if vartyp = type_of_expr(expr) or vartyp = TYPE_ANY or type_is_array(vartyp) then
+        'Don't cast to TYPE_ANY because that's just a shorthand for a function that
+        'can handle any type. Don't cast when arrays are involved because they already
+        'have the element type matching exactly.
         ast_add_cast = expr
         exit function
     end if
