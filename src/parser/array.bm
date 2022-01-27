@@ -151,8 +151,7 @@ function ps_array_element_access(lvalue)
     do
         ast_attach node, ps_expr
     loop while ps_consumed(TOK_COMMA)
-    ps_assert TOK_CPAREN
-    tok_advance
+    ps_consume TOK_CPAREN
     if ast_num_children(node) - 1 <> dimensions and dimensions <> 0 then
         ps_error "Incorrect number of dimensions"
     end if

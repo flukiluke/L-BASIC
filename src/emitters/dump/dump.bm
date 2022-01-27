@@ -261,8 +261,9 @@ sub ast_dump_pretty(root, indent_level)
         ast_dump_pretty ast_get_child(root, 1), 0
         print #logging_file_handle, ", "; symtab(ast_nodes(root).ref).identifier; ")";
     case AST_ARRAY_ACCESS
+        print #logging_file_handle, "array(";
         ast_dump_pretty ast_get_child(root, 1), 0
-        print #logging_file_handle, "(";
+        print #logging_file_handle, ", ";
         for i = 2 to ast_num_children(root)
             ast_dump_pretty ast_get_child(root, i), 0
             if i <> ast_num_children(root) then print #logging_file_handle, ", ";
