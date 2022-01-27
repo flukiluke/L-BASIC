@@ -43,7 +43,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     if dimensions > 0 then concrete_array = TRUE
 
     'So far sigil is any type provided before the (), sigil2 is any type given after
-    'the (). They must match if they're both present.
+    'the ().
     sigil2 = ps_opt_sigil
     if sigil2 > 0 and sigil > 0 then ps_error "Cannot give type twice"
     if sigil2 then sigil = sigil2
@@ -62,8 +62,8 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
 
     'sigil is now guaranteed to be an array type. Ensure we're not changing the type
     'of an existing array.
-    if existing_array > 0 and symtab(existing_array).v1 <> array_type_sym then
-        ps_error "Cannot change array type"
+    if existing_array > 0 and symtab(existing_array).v1 <> sigil then
+        ps_error "Cannot change array type from " + type_human_readable$(symtab(existing_array).v1) + " to " + type_human_readable$(sigil)
     end if
 
     'Now we can create the actual array variable
