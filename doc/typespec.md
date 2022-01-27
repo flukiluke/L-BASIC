@@ -1,4 +1,5 @@
 ## Available Data Types
+ - ANY, a pseudo-type used internally to accept any data type
  - INTEGER (%), a signed 16 bit integer
  - LONG (&), a signed 32 bit integer
  - INTEGER64 (&&), a signed 64 bit integer
@@ -7,6 +8,7 @@
  - QUAD (##), a quadruple-precision floating-point number
  - STRING ($), a variable-length sequence of bytes
  - User Defined Types
+ - Arrays of the above
 
 ## Definitions
 * The types INTEGER, LONG, INTEGER64, SINGLE, DOUBLE and QUAD are considered NUMBER types.
@@ -16,10 +18,8 @@
 The following functions cast from any NUMBER type:
 * CINT%()
 * CLNG&()
-* CINT64&&()
 * CSNG!()
 * CDBL#()
-* CQUAD##()
 
 These functions may throw an Overflow error (ERR 6) at runtime if the value is outside the bounds of the desired type. Alternatively, the value may be wrapped or truncated without notice, depending on the implementation.
 
@@ -36,10 +36,16 @@ The type of non-NUMBER types is obvious (a string literal is of STRING type). If
 * If the number has a decimal point or an exponent (e.g. 3E8) or does not fit an INTEGER64, then its type is the smallest of SINGLE, DOUBLE or QUAD that can hold it (with respect to magnitude). If no type can hold it, the number is illegal.
 A type suffix may not specify a type smaller than what would be determined by the above rules.
 
+## Arrays
+An array's type is a combination of its element type and its number of dimensions. An array X may be cast to array Y for the purposes of passing as a function argument if and only if:
+* The element types are exactly equivalent, or Y's element type is ANY
+* The number of dimensions are exactly equal, or Y's number of dimensions is unspecified (given as 0).
+Arrays are always passed by reference.
+
 ## Function arguments
 A function has 0 or more arguments and a return type (or a not-considered return type if it is a SUB). A function declaration specifies the type of each argument and the return type. When called, arguments are passed in one of two ways:
-* If an argument is specified as a single variable, it is passed _by reference_. The type of the variable must exactly match the declared type of the argument.
-* If an argument is specified as an expression or constant, it is passed _by value_. If the expression and argument declaration are both NUMBER types, an implicit cast will be added.
+* If an argument is specified as a single variable and the type of the variable exactly matches the declared type of the argument, it is passed _by reference_.
+* If an argument is specified as an expression or constant, or is a variable of a different type but can be implicitly cast, it is passed _by value_.
 
 ### Binary Operators
 The operators `\`, `AND`, `OR`, `EQV`, `IMP` and `XOR` behave as follows:
@@ -57,8 +63,3 @@ The operators `+`, `-` and `*` have a return type that is the larger of the two 
 
 ### BYVAL and BYREF arguments
 A function argument may be declared as BYVAL or BYREF (but not both). This forces calls to pass the argument by value or reference, respectively. This means a BYREF argument must be passed a single variable of the correct type, never an expression or constant.
-
-### Multi-typed functions
-A function may be declared multiple times with the same name, as long as the arguments are identical except for the types of BYREF arguments and their return types. The compiler will select the correct function to call based on the type of variables passed to those BYREF arguments. Multiple declarations must not differ only on their return type.
-
-
