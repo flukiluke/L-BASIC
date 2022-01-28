@@ -52,6 +52,19 @@ function imm_heap_alloc(req_elems)
     loop
 end function
 
+'Make a copy of the block at address
+function imm_heap_copy_alloc(address)
+    size = imm_heap(-address - IMM_HEAP_HEADER_SIZE).n - IMM_HEAP_HEADER_SIZE
+    new_block = imm_heap_alloc(size)
+    $if DEBUG_HEAP then
+    debuginfo "Copying" + str$(size) + " elements from " + str$(address) + " to " + str$(new_block)
+    $end if
+    for i = 0 to size - 1
+        imm_heap(-new_block + i) = imm_heap(-address + i)
+    next i
+    imm_heap_copy_alloc = new_block
+end function
+
 'Free allocation at 'address'
 sub imm_heap_free(address)
     data_addr = -address 
