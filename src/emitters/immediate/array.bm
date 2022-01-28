@@ -38,6 +38,10 @@ sub imm_array_init(node)
     array_type = type_of_lvalue(array)
     element_type = symtab(array_type).v3
     dimensions = (ast_num_children(node) - 1) / 2
+    cur_dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
+    if cur_dimensions <> 0 and cur_dimensions <> dimensions then
+        imm_error "Cannot change number of array dimensions"
+    end if
     block_size = 1
     imm_set_at_addr_n imm_add_offset(info_base_addr, 1), dimensions
     for i = 1 to dimensions
@@ -81,6 +85,10 @@ sub imm_do_array_resize(node, preserve)
         array_type = type_of_lvalue(array)
         element_type = symtab(array_type).v3
         dimensions = (ast_num_children(node) - 1) / 2
+        cur_dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
+        if cur_dimensions <> 0 and cur_dimensions <> dimensions then
+            imm_error "Cannot change number of array dimensions"
+        end if
         old_block_size = 1
         new_block_size = 1
         for i = 1 to dimensions

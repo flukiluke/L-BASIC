@@ -61,9 +61,14 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     if not type_is_array(sigil) then sigil = type_make_array(sigil, dimensions)
 
     'sigil is now guaranteed to be an array type. Ensure we're not changing the type
-    'of an existing array.
-    if existing_array > 0 and symtab(existing_array).v1 <> sigil then
-        ps_error "Cannot change array type from " + type_human_readable$(symtab(existing_array).v1) + " to " + type_human_readable$(sigil)
+    'of an existing array. The exception is that if the existing array has no definite number
+    'of dimensions, we can specify any number of dimensions. This is somewhat dangerous, so
+    'a safe runtime will want to check this operation.
+    if existing_array > 0 then
+        existing_typ = symtab(existing_array).v1
+        if existing_typ <> sigil and symtab(existing_typ).v4 <> 0 then
+            ps_error "Cannot change array type from " + type_human_readable$(existing_typ) + " to " + type_human_readable$(sigil)
+        end if
     end if
 
     'Now we can create the actual array variable
