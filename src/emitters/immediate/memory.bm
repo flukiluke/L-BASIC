@@ -12,32 +12,39 @@ end function
 'and entire UDTs & arrays. If the returned value is < 0, it is a heap address. Otherwise,
 'it is a stack address.
 function imm_get_addr(node)
+    addr = imm_get_addr_loc(node)
+    'Dereference if needed
+    'TODO: Is a dereference check needed for UDT or array accesses?
+    if ast_nodes(node).typ = AST_VAR and _
+            symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_DEREF then
+        if addr = 0 then imm_error "Access to uninitialised variable"
+        addr = imm_get_at_addr_n(addr)
+    end if
+    imm_get_addr = addr
+end function
+
+'Like imm_get_addr, but does not do a final dereference even if the variable is a
+'reference. This is useful for initialising or otherwise setting the actual address
+'of a variable.
+function imm_get_addr_loc(node)
     select case ast_nodes(node).typ
     case AST_VAR
-        'Always a stack address. Even arrays, because a reference to the entire array
-        'refers to the dimension info block that sits on the stack (unless it's an
-        'array in a UDT in an array, but that wouldn't be an AST_VAR).
         if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_MAINFRAME then
             'shared or static variable
-            addr = symtab(ast_nodes(node).ref).v2
+            imm_get_addr_loc = symtab(ast_nodes(node).ref).v2
         else
             'local variable
-            addr = imm_stack_base + symtab(ast_nodes(node).ref).v2
+            imm_get_addr_loc = imm_stack_base + symtab(ast_nodes(node).ref).v2
         end if
-        'Dereference if needed
-        if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_DEREF then
-            addr = imm_get_at_addr_n(addr)
-        end if
-        imm_get_addr = addr
     case AST_UDT_ACCESS
-        'TODO: Is a dereference check needed here?
         base_addr = imm_get_addr(ast_get_child(node, 1))
         offset = symtab(ast_nodes(node).ref).v2
-        imm_get_addr = imm_add_offset(base_addr, offset)
+        imm_get_addr_loc = imm_add_offset(base_addr, offset)
     case AST_ARRAY_ACCESS
         array = ast_get_child(node, 1)
         array_type = type_of_lvalue(array)
         info_base_addr = imm_get_addr(array)
+        if info_base_addr = 0 then imm_error "Access to uninitialised array"
         element_type = symtab(array_type).v3
         dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
         'Make sure we have precisely enough indicies for the number of dimensions
@@ -65,7 +72,7 @@ function imm_get_addr(node)
             block_size = upper_bound - lower_bound + 1
         next i
         offset = offset * type_fixed_size(element_type)
-        imm_get_addr = imm_add_offset(imm_get_at_addr_n(info_base_addr), offset)
+        imm_get_addr_loc = imm_add_offset(imm_get_at_addr_n(info_base_addr), offset)
     case else
         imm_error "Attempt to take address of something not an lvalue"
     end select

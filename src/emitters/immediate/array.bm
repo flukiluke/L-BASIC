@@ -16,9 +16,17 @@ sub imm_do_array_delete(node)
     array = ast_get_child(node, 1)
     'get address of descriptor
     info_base_addr = imm_get_addr(array)
+    'don't free anything if descriptor does not exist
+    if info_base_addr = 0 then exit sub
     'get data block address
     data_addr = imm_get_at_addr_n(info_base_addr)
     imm_heap_free data_addr
+    if info_base_addr < 0 then
+        'descriptor is on the heap, free that too
+        imm_heap_free info_base_addr
+        'clear reference to descriptor
+        imm_set_at_addr_n imm_get_addr_loc(array), 0
+    end if
 end sub
 
 sub imm_array_init(node)
@@ -39,11 +47,13 @@ sub imm_array_init(node)
     element_type = symtab(array_type).v3
     dimensions = (ast_num_children(node) - 1) / 2
     cur_dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
-    if cur_dimensions <> 0 and cur_dimensions <> dimensions then
+    'Note that we refuse to init if the array currently has 0 dimensions,
+    'because we don't know if the descriptor is big enough.
+    'TODO: what if dimensions is also 0? Can that occur?
+    if cur_dimensions <> dimensions then
         imm_error "Cannot change number of array dimensions"
     end if
     block_size = 1
-    imm_set_at_addr_n imm_add_offset(info_base_addr, 1), dimensions
     for i = 1 to dimensions
         'evaluate upper and lower bounds for this dimension
         imm_eval ast_get_child(node, i * 2), temp
@@ -70,10 +80,21 @@ end sub
 sub imm_do_array_resize(node, preserve)
     dim temp as imm_value_t
     array = ast_get_child(node, 1)
+    dimensions = (ast_num_children(node) - 1) / 2
     'get address of descriptor
     info_base_addr = imm_get_addr(array)
-    'get data block address
-    data_addr = imm_get_at_addr_n(info_base_addr)
+    if info_base_addr = 0 then
+        'need to allocate descriptor
+        info_base_addr = imm_heap_alloc(2 + dimensions * 2)
+        imm_set_at_addr_n imm_get_addr_loc(array), info_base_addr
+        'explicitly set number of dimensions to 0 so that imm_array_init
+        'does not complain
+        imm_set_at_addr_n imm_add_offset(info_base_addr, 1), dimensions
+        data_addr = 0
+    else
+        'get data block address
+        data_addr = imm_get_at_addr_n(info_base_addr)
+    end if
     if data_addr = 0 then
         imm_array_init node
     elseif not preserve then
@@ -84,7 +105,6 @@ sub imm_do_array_resize(node, preserve)
         'rearrange all the data
         array_type = type_of_lvalue(array)
         element_type = symtab(array_type).v3
-        dimensions = (ast_num_children(node) - 1) / 2
         cur_dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
         if cur_dimensions <> 0 and cur_dimensions <> dimensions then
             imm_error "Cannot change number of array dimensions"

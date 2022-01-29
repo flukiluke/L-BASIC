@@ -27,9 +27,18 @@ sub imm_do_assign(node)
             imm_error "Cannot assign uninitialised array"
         end if
         src_dims = imm_get_at_addr_n(imm_add_offset(src_addr, 1))
-        dest_dims = imm_get_at_addr_n(imm_add_offset(dest_addr, 1))
-        if src_dims <> dest_dims then
-            imm_error "Array dimensions do not match"
+        if dest_addr = 0 then
+            'need to initialise dest array
+            dest_addr = imm_heap_alloc(2 + src_dims * 2)
+            imm_set_at_addr_n imm_get_addr_loc(lvalue), dest_addr
+            imm_set_at_addr_n dest_addr, 0 'No data block yet
+            imm_set_at_addr_n imm_add_offset(dest_addr, 1), src_dims
+            dest_dims = src_dims
+        else
+            dest_dims = imm_get_at_addr_n(imm_add_offset(dest_addr, 1))
+            if src_dims <> dest_dims then
+                imm_error "Array dimensions do not match"
+            end if
         end if
         'Copy data block, freeing old one if needed
         dest_data_addr = imm_get_at_addr_n(dest_addr)
