@@ -98,6 +98,10 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     if type_sig_return(ast_nodes(node).ref2) <> TYPE_NONE then
         has_return_value = TRUE
         imm_reinit imm_stack_last + 1
+        'This must be zeroed out so that if the function returns a reference,
+        'we can free referenced objects in the case that successive return values
+        'are set.
+        imm_set_at_addr_n imm_stack_last, 0
     end if
     'Set frame pointer appropriately (delayed to here so argument evaluation
     'occurs in the caller's stack frame)

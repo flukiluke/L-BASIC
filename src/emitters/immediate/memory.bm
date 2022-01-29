@@ -13,14 +13,16 @@ end function
 'it is a stack address.
 function imm_get_addr(node)
     addr = imm_get_addr_loc(node)
-    'Dereference if needed
-    'TODO: Is a dereference check needed for UDT or array accesses?
-    if ast_nodes(node).typ = AST_VAR and _
-            symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_DEREF then
+    if imm_needs_deref(node) then
         if addr = 0 then imm_error "Access to uninitialised variable"
         addr = imm_get_at_addr_n(addr)
     end if
     imm_get_addr = addr
+end function
+
+function imm_needs_deref(node)
+    'TODO: Is a dereference check needed for UDT or array accesses?
+    imm_needs_deref = ast_nodes(node).typ = AST_VAR and symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_DEREF 
 end function
 
 'Like imm_get_addr, but does not do a final dereference even if the variable is a

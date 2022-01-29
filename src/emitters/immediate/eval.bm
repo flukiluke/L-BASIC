@@ -60,8 +60,16 @@ sub imm_eval(node, result as imm_value_t)
         imm_exit_node = ast_nodes(node).ref
     case AST_SET_RETURN
         dim temp as imm_value_t
-        imm_eval ast_get_child(node, 1), temp
-        imm_set_at_addr imm_stack_last, temp
+        child = ast_get_child(node, 1)
+        imm_eval child, temp
+        if type_is_array(ast_nodes(node).ref) then
+            'Clear previously-set return value, if any
+            imm_array_delete imm_get_at_addr_n(imm_stack_last)
+            imm_set_at_addr_n imm_stack_last, 0
+            imm_array_copy temp.n, imm_stack_last, TRUE
+        else
+            imm_set_at_addr imm_stack_last, temp
+        end if
     case AST_NONE
         'do nothing
     case else

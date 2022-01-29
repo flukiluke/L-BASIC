@@ -236,6 +236,7 @@ function ps_func_return
     if not type_can_cast(expr_type, return_type) then ps_error "Function return type does not match that of expression"
     expr = ast_add_cast(expr, return_type)
     ast_attach root, expr
+    ast_nodes(root).ref = return_type
     ps_func_return = root
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed func return"

@@ -118,7 +118,8 @@ const AST_ARRAY_DELETE = 27
 'allocated. Added to support STATIC arrays.
 const AST_ARRAY_ESTABLISH = 28
 
-'Sets the return value of the current function. first child is expr to return.
+'Sets the return value of the current function. first child is expr to return, ref
+'is the return type.
 const AST_SET_RETURN = 29
 
 'Flag is a value defined in cmdflags.bi.
