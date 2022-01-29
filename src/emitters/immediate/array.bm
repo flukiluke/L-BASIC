@@ -47,13 +47,11 @@ sub imm_array_init(node)
     element_type = symtab(array_type).v3
     dimensions = (ast_num_children(node) - 1) / 2
     cur_dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
-    'Note that we refuse to init if the array currently has 0 dimensions,
-    'because we don't know if the descriptor is big enough.
-    'TODO: what if dimensions is also 0? Can that occur?
-    if cur_dimensions <> dimensions then
+    if cur_dimensions <> 0 and cur_dimensions <> dimensions then
         imm_error "Cannot change number of array dimensions"
     end if
     block_size = 1
+    imm_set_at_addr_n imm_add_offset(info_base_addr, 1), dimensions
     for i = 1 to dimensions
         'evaluate upper and lower bounds for this dimension
         imm_eval ast_get_child(node, i * 2), temp
