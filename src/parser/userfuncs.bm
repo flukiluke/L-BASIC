@@ -218,7 +218,7 @@ function ps_func_return
     proc_id = symtab_get_id(u$)
     'Is this actually a function, not a sub?
     return_type = type_sig_return(symtab(proc_id).v1)
-    if return_type = 0 then
+    if return_type = TYPE_NONE then
         $if DEBUG_PARSE_TRACE then
         debuginfo "Completed func return"
         $end if
