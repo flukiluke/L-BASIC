@@ -26,7 +26,7 @@ debug_timing_mark# = timer(0.001)
 $end if
 
 dim shared VERSION$
-VERSION$ = "0.1.1"
+VERSION$ = "0.1.2"
 
 '$dynamic
 'Setting the graphics window off by default allows running without a
