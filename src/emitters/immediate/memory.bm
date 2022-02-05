@@ -33,7 +33,8 @@ function imm_get_addr_loc(node)
     case AST_VAR
         if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_MAINFRAME then
             'shared or static variable
-            imm_get_addr_loc = symtab(ast_nodes(node).ref).v2
+            '+1 because the addresses are offsets, but memory starts at 1
+            imm_get_addr_loc = 1 + symtab(ast_nodes(node).ref).v2
         else
             'local variable
             imm_get_addr_loc = imm_stack_base + symtab(ast_nodes(node).ref).v2
