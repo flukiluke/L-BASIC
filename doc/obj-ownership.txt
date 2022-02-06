@@ -1,0 +1,66 @@
+sub s(a())
+'do not destruct a() because we are never the owner
+end sub
+
+'''
+
+dim b(2)
+'destruct b() because we are the owner
+
+'''
+
+function s2[1]()
+dim c(4)
+s2 = c 'Full copy
+'destruct c() because we are the owner
+return pointer to array copy @ X
+end function
+dim d()
+d = s2 'd points to array @ X
+'destruct d()
+
+'''
+
+sub s(a())
+end sub
+function s2[1]()
+dim c(4)
+s2 = c 'Full copy
+'destruct c() because we are the owner
+return pointer to array copy @ X
+end function
+s s2
+'array @ X is passed to s, but s does not free it!
+
+'''
+
+Solution: add a "owned" field to array descriptor
+sub s(a())
+'on entry, claim ownership of a() if it is unowned
+'on exit, destruct a() if we are the owner
+end sub
+function s2[1]()
+dim c(4) 'create c and claim ownership
+s2 = c 'copy and set s2 as unowned
+'destruct c() because we are the owner
+end function
+s s2 's will claim ownership of array and free it
+dim d()
+d = s2 'claim ownership of returned array
+
+Note: ownership needs to be linked to scope at runtime. Otherwise:
+sub s(a())
+ t a
+end sub
+sub t(b())
+end sub
+Assuming `s a` is called with a unowned, s will claim ownership. On t's exit, it cannot distinguish between it's ownership (which it doesn't have) and s's ownership.
+
+What about recursion though?
+sub s(a(), z)
+ if z > 0 then s a, z - 1
+ ? a(0)
+end sub
+Assume `s a 2` is called with a unowned. s claims ownership, then recurses several times. When the deepest invocation of s exits, it frees a because s owns a. But an outer invocation of s then wants to access a!
+
+Solution: ownership is claimed using base stack address as an identifier, since objects can never be owned by a scope that has exited.
