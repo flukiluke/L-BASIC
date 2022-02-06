@@ -1,4 +1,4 @@
-'Copyright 2020 Luke Ceddia
+'Copyright Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
 'tsgen.bas - Token Symbol Generator-generator
 'Create datatables used by the tokenisation engine.

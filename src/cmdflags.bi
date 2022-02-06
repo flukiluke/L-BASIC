@@ -1,4 +1,4 @@
-'Copyright 2020 Luke Ceddia
+'Copyright Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
 'cmdflags.bi - Flags for specifying aspects of a runtime function's behaviour.
 

@@ -1,4 +1,4 @@
-'Copyright 2020 Luke Ceddia
+'Copyright Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
 'tokgen.bas - Token Generator & Registerer
 'Create TOK_ definitions and register them in the lookup table
