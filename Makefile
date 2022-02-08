@@ -32,13 +32,15 @@ $(TS_FILES): $(SRC_DIR)/parser/ts.rules $(TOOLS_DIR)/tsgen.tool
 $(TOKEN_FILES): $(SRC_DIR)/parser/tokens.list $(TOOLS_DIR)/tokgen.tool
 	$(TOOLS_DIR)/tokgen.tool $(SRC_DIR)/parser/tokens.list $(TOKEN_FILES)
 
-# Main binary
-$(OUTPUT_BINARY): $(SRC_DIR)/lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi')
-	$(QB64) -x $< -o $@
+$(MERGED_SOURCE): $(SRC_DIR)/lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.pl
+	$(eval amalg := $(shell mktemp))
+	$(TOOLS_DIR)/incmerge.tool $(SRC_DIR)/lbasic.bas $(amalg)
+	$(TOOLS_DIR)/prep.pl < $(amalg) > $(MERGED_SOURCE)
+	rm $(amalg)
 
-# Source for distribution
-$(MERGED_SOURCE): $(OUTPUT_BINARY) $(TOOLS_DIR)/incmerge.tool
-	$(TOOLS_DIR)/incmerge.tool $(SRC_DIR)/lbasic.bas $(MERGED_SOURCE)
+# Main binary
+$(OUTPUT_BINARY): $(MERGED_SOURCE)
+	$(QB64) -x $< -o $@
 
 DOCKER_TAG?=lbasic
 .PHONY: docker
