@@ -2,7 +2,7 @@
 'SPDX-License-Identifier: Apache-2.0
 'parser.bi - Declarations for parser module
 
-'$include: 'tokeng.bi'
+$include: 'tokeng.bi'
 
 'How big does the stack frame for the current scope need to be?
 'This applies to the current scope - the parser for subs/functions will save and

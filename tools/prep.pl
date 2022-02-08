@@ -49,6 +49,9 @@ while (<>) {
         chomp;
         next unless length;
 
+        # Fix up the silliness that is $dynamic
+        s/[ \t]*\$dynamic/'\$dynamic/;
+
         # Apply macros
         foreach my $pattern (keys %macros) {
             $_ = gsub_copy($_, $pattern, $macros{$pattern});

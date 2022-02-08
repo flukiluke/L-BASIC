@@ -21,10 +21,10 @@ sub tok_init
 
     'Populate token and type signature data
     'TODO check if this impacts startup times
-    '$include: 'token_registrations.bm'
+    $include: 'token_registrations.bm'
 
     tokeng_data:
-    '$include: 'ts_data.bm'
+    $include: 'ts_data.bm'
 
     tok_reinit
     $if DEBUG_TIMINGS then

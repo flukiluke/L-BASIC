@@ -30,7 +30,7 @@ sub process (filename$)
     chdir dirname$(filename$)
     do
         line input #fh, l$
-        if instr(ltrim$(l$), "'$include") = 1 then
+        if instr(ltrim$(l$), "$include") = 1 then
             t$ = ltrim$(l$)
             q1 = instr(2, t$, "'")
             q2 = instr(q1 + 1, t$, "'")

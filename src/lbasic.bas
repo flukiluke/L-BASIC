@@ -19,7 +19,7 @@ $if VERSION < 2.0 then
     $error QB64 V2.0 or greater required
 $end if
 
-'$include: 'debugging_options.bm'
+$include: 'debugging_options.bm'
 
 $if DEBUG_TIMINGS then
 debug_timing_mark# = timer(0.001)
@@ -28,7 +28,7 @@ $end if
 dim shared VERSION$
 VERSION$ = "0.1.2"
 
-'$dynamic
+$dynamic
 'Setting the graphics window off by default allows running without a
 'graphics environment (and prevents an annoying popup).
 $console
@@ -111,12 +111,12 @@ dim shared options as options_t
 'Allow immediate mode to access COMMAND$() without picking up interpreter options
 dim shared input_file_command_offset
 
-'$include: 'cmdflags.bi'
-'$include: 'type.bi'
-'$include: 'symtab.bi'
-'$include: 'ast.bi'
-'$include: 'parser/parser.bi'
-'$include: 'emitters/immediate/immediate.bi'
+$include: 'cmdflags.bi'
+$include: 'type.bi'
+$include: 'symtab.bi'
+$include: 'ast.bi'
+$include: 'parser/parser.bi'
+$include: 'emitters/immediate/immediate.bi'
 
 parse_cmd_line_args
 if not options.terminal_mode then
@@ -575,10 +575,10 @@ sub parse_cmd_line_args()
         not options.command_mode then options.run_mode = TRUE
 end sub
 
-'$include: 'type.bm'
-'$include: 'ast.bm'
-'$include: 'symtab.bm'
-'$include: 'parser/parser.bm'
-'$include: 'emitters/dump/dump.bm'
-'$include: 'emitters/immediate/immediate.bm'
+$include: 'type.bm'
+$include: 'ast.bm'
+$include: 'symtab.bm'
+$include: 'parser/parser.bm'
+$include: 'emitters/dump/dump.bm'
+$include: 'emitters/immediate/immediate.bm'
 
