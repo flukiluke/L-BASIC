@@ -37,20 +37,27 @@ sub new_macro {
 }
 
 while (<>) {
-    if (/^[ \t]*\$macro[ \t]*:([^|]+)\|(.+)/) {
+    if (/^[ \t]*\$macro[ \t]*:([^|]+)\|(.+)/i) {
         new_macro trim($1), trim($2);
     }
     else {
+        # Leave double-commented and DATA lines entirely alone
+        if (/^[ \t]*(''|data)/i) {
+            print;
+            next;
+        }
+
         # Temporarily replace any quoted strings to protect their contents
         my @literals = m/\"[^"]*\"/g;
         s/\"[^"]*\"/@@/g;
+
         # Remove comments
-        s/[ \t]*'.*$//;
+        s/[ \t]*'[^'].*$//;
         chomp;
         next unless length;
 
         # Fix up the silliness that is $dynamic
-        s/[ \t]*\$dynamic/'\$dynamic/;
+        s/[ \t]*\$dynamic/'\$dynamic/i;
 
         # Apply macros
         foreach my $pattern (keys %macros) {
