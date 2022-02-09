@@ -1,4 +1,4 @@
-'Copyright 2020 Luke Ceddia
+'Copyright Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
 'This file controls what output is given when debug mode is enabled. Please do not
 'make commits with these set to true, to avoid releasing versions that are slower
