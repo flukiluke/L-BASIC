@@ -30,7 +30,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
                 else
                     'Whoops, there was in implicit lower bound. Add it in.
                     implicit_zero = ast_add_node(AST_CONSTANT)
-                    ast_nodes(implicit_zero).ref = AST_FALSE
+                    implicit_zero->ref = AST_FALSE
                     dims$ = left$(dims$, len(dims$) - 4) + mkl$(implicit_zero) + right$(dims$, 4)
                 end if
             dimensions = dimensions + 1
@@ -52,8 +52,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     'If the type has a number of dimensions, ensure it matches the bounds if given.
     if type_is_array(sigil) and _
         concrete_array and _
-        symtab(sigil).v2 <> 0 and _
-        dimensions <> symtab(sigil).v2 then
+        sigil->array_dims <> 0 and sigil->array_dims <> dimensions then
         ps_error "Number of bounded dimensions does not match number of dimensions in type"
     end if
 
@@ -65,8 +64,8 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     'of dimensions, we can specify any number of dimensions. This is somewhat dangerous, so
     'a safe runtime will want to check this operation.
     if existing_array > 0 then
-        existing_typ = symtab(existing_array).v1
-        if existing_typ <> sigil and symtab(existing_typ).v4 <> 0 then
+        existing_typ = existing_array->type
+        if existing_typ <> sigil and existing_typ->array_dims <> 0 then
             ps_error "Cannot change array type from " + type_human_readable$(existing_typ) + " to " + type_human_readable$(sigil)
         end if
     end if
@@ -79,19 +78,19 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         else
             sym.identifier = ps_scope$ + ucase$(var_name$)
         end if
-        sym.typ = SYM_VARIABLE
-        sym.v1 = sigil
-        sym.v2 = ps_scope_frame_size
-        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
+        sym-stype = SYM_VARIABLE
+        sym-type = sigil
+        sym-stack_offset = ps_scope_frame_size
+        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym-type)
         if is_static or is_shared then
-            sym.v3 = SYM_VARIABLE_MAINFRAME
+            sym-vflags = SYM_VARIABLE_MAINFRAME
             destruct = FALSE
         else
-            sym.v3 = 0
+            sym-vflags = 0
         end if
         'Because we don't know the size of a descriptor for any-dimensional arrays,
         'they are always a pointer to the descriptor.
-        if dimensions = 0 then sym.v3 = sym.v3 OR SYM_VARIABLE_DEREF
+        if dimensions = 0 then sym-vflags = sym-vflags OR SYM_VARIABLE_DEREF
         symtab_add_entry sym
         var = symtab_last_entry
     else
@@ -101,7 +100,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
 
     'Used for constructor and destructor
     var_node = ast_add_node(AST_VAR)
-    ast_nodes(var_node).ref = var
+    var_node->ref = var
 
     'Only generate a constructor if we actually know the array size
     if concrete_array then
@@ -112,8 +111,8 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         else
             node = ast_add_node(AST_ARRAY_CREATE)
         end if
-        ast_attach node, var_node
-        ast_attach block, node
+        node->attach(var_node)
+        block->attach(node)
         ast_children(node) = mkl$(var_node) + dims$
     end if
 
@@ -128,11 +127,12 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         'This could occur if there are multiple DIMs in the same function.
         for i = 1 to len(ps_queued_nodes$) - 3 step 4
             other = cvl(mid$(ps_queued_nodes$, i, 4))
-            if ast_nodes(other).typ = AST_ARRAY_DELETE and _
-                ast_nodes(ast_get_child(other, 1)).ref = var then goto array_dstr_dup
+            other_var = ast_get_child(other, 1)
+            if other->stype = AST_ARRAY_DELETE and _
+                other_var->ref = var then goto array_dstr_dup
         next i
         node = ast_add_node(AST_ARRAY_DELETE)
-        ast_attach node, var_node
+        node->attach(var_node)
         ps_queue_cleanup node
     end if
     array_dstr_dup:
@@ -149,12 +149,12 @@ function ps_array_element_access(lvalue)
     debuginfo "Start array element access"
     $end if
     array_type = type_of_lvalue(lvalue)
-    if symtab(array_type).v2 <> SYM_TYPE_ARRAY then ps_error "Value is not an array"
-    dimensions = symtab(array_type).v4
+    if array_type->tflags <> SYM_TYPE_ARRAY then ps_error "Value is not an array"
+    dimensions = array_type->array_dims
     node = ast_add_node(AST_ARRAY_ACCESS)
-    ast_attach node, lvalue
+    node->attach(lvalue)
     do
-        ast_attach node, ps_expr
+        node->attach(ps_expr)
     loop while ps_consumed(TOK_COMMA)
     ps_consume TOK_CPAREN
     if ast_num_children(node) - 1 <> dimensions and dimensions <> 0 then

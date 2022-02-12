@@ -77,8 +77,8 @@ end function
 function ast_add_node(typ)
     if ast_last_node = ubound(ast_nodes) then ast_expand_nodes_arrays
     ast_last_node = ast_last_node + 1
-    ast_nodes(ast_last_node).typ = typ
-    ast_nodes(ast_last_node).linenum = ps_actual_linenum
+    ast_last_node->atype = typ
+    ast_last_node->linenum = ps_actual_linenum
     ast_add_node = ast_last_node
 end function
 
@@ -91,8 +91,8 @@ function ast_add_cast(expr, vartyp)
         exit function
     end if
     cast_node = ast_add_node(AST_CAST)
-    ast_nodes(cast_node).ref = vartyp
-    ast_attach cast_node, expr
+    cast_node->ref = vartyp
+    cast_node->attach(expr)
     ast_add_cast = cast_node
 end function
 
@@ -103,7 +103,7 @@ sub ast_attach(parent, child)
         $end if
         exit sub
     end if
-    ast_nodes(child).parent = parent
+    child->parent = parent
     ast_children(parent) = ast_children(parent) + mkl$(child)
 end sub
 
@@ -114,7 +114,7 @@ sub ast_pre_attach(parent, child)
         $end if
         exit sub
     end if
-    ast_nodes(child).parent = parent
+    child->parent = parent
     ast_children(parent) = mkl$(child) + ast_children(parent)
 end sub
 
@@ -123,11 +123,11 @@ function ast_num_children(node)
 end function
 
 function ast_is_none(node)
-    ast_is_none = ast_nodes(node).typ = AST_NONE
+    ast_is_none = node->atype = AST_NONE
 end function
 
 function ast_is_lvalue(node)
-    select case ast_nodes(node).typ
+    select case node->atype
     case AST_VAR, AST_ARRAY_ACCESS, AST_UDT_ACCESS
         ast_is_lvalue = TRUE
     end select
@@ -177,7 +177,7 @@ function ast_abs_path$(node)
     n = node
     do
         r$ = mkl$(n) + r$
-        n = ast_nodes(n).parent
+        n = n->parent
     loop while n
     ast_abs_path$ = r$
 end function

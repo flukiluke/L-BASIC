@@ -8,7 +8,7 @@ sub imm_do_assign(node)
     imm_eval ast_get_child(node, 2), rvalue
     dest_addr = imm_get_addr(lvalue)  
     typ = type_of_lvalue(lvalue)
-    if symtab(typ).v2 = SYM_TYPE_UDT then
+    if typ->tflags = SYM_TYPE_UDT then
         src_addr = rvalue.n
         for i = 1 to type_fixed_size(typ)
             'TODO: Deep copy
@@ -18,7 +18,7 @@ sub imm_do_assign(node)
             src_addr = imm_add_offset(src_addr, 1)
             dest_addr = imm_add_offset(dest_addr, 1)
         next i
-    elseif symtab(typ).v2 = SYM_TYPE_ARRAY then
+    elseif typ->tflags = SYM_TYPE_ARRAY then
         imm_array_copy rvalue.n, imm_get_addr_loc(lvalue), imm_needs_deref(lvalue)
     else
         imm_set_at_addr dest_addr, rvalue

@@ -11,31 +11,31 @@ function ps_stmt_input
     debuginfo "Start stmt input"
     $end if
     root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = TOK_INPUT
-    ast_nodes(root).ref2 = symtab(TOK_INPUT).v1
+    root->ref = TOK_INPUT
+    root->ref2 = TOK_INPUT->sig
     flags = ast_add_node(AST_FLAGS)
-    ast_nodes(flags).ref = AST_FLAG_MANUAL
-    ast_attach root, flags
-    ast_nodes(flags).ref2 = 0
+    flags->ref = AST_FLAG_MANUAL
+    root->attach(flags)
+    flags->ref2 = 0
     if ps_consumed(TOK_LINEINPUT) then
-        ast_nodes(flags).ref2 = ast_nodes(flags).ref2 OR STMT_INPUT_LINEMODE
+        flags->ref2 = flags->ref2 OR STMT_INPUT_LINEMODE
         linemode = TRUE
     end if
     ps_consume TOK_INPUT
 
     if ps_consumed(TOK_SEMICOLON) then
-        ast_nodes(flags).ref2 = STMT_INPUT_NO_NEWLINE
+        flags->ref2 = STMT_INPUT_NO_NEWLINE
     end if
 
     'The prompt must be a literal string, no expressions. Crazy, right?
     if tok_token = TOK_STRINGLIT then
         prompt = ast_add_node(AST_CONSTANT)
-        ast_nodes(prompt).ref = ast_add_constant(tok_token, tok_content$, TYPE_STRINGLIT)
-        ast_nodes(flags).ref2 = ast_nodes(flags).ref2 OR STMT_INPUT_PROMPT
-        ast_attach root, prompt
+        prompt->ref = ast_add_constant(tok_token, tok_content$, TYPE_STRINGLIT)
+        flags->ref2 = flags->ref2 OR STMT_INPUT_PROMPT
+        root->attach(prompt)
         ps_consume TOK_STRINGLIT
         if tok_token = TOK_COMMA then
-            ast_nodes(flags).ref2 = ast_nodes(flags).ref2 OR STMT_INPUT_NO_QUESTION
+            flags->ref2 = flags->ref2 OR STMT_INPUT_NO_QUESTION
             ps_consume TOK_COMMA
         else
             ps_consume TOK_SEMICOLON
@@ -43,18 +43,18 @@ function ps_stmt_input
         'It turns out INPUT and LINE INPUT interpret the {;|,} with exactly opposite
         'meaning
         if linemode then
-            ast_nodes(flags).ref2 = ast_nodes(flags).ref2 XOR STMT_INPUT_NO_QUESTION
+            flags->ref2 = flags->ref2 XOR STMT_INPUT_NO_QUESTION
         end if
     end if
 
     if linemode then
         var = ps_lvalue_mutable
         if type_of_lvalue(var) <> TYPE_STRING then ps_error "Variable must be a string"
-        ast_attach root, var
+        root->attach(var)
     else
         do
             var = ps_lvalue_mutable
-            ast_attach root, var
+            root->attach(var)
         loop while ps_consumed(TOK_COMMA)
     end if
 

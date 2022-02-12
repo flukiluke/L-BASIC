@@ -20,17 +20,17 @@ case TOK_ERASE
 case TOK_OPTION
     'The OPTION function to check if an OPTION variable was passed
     child = ast_get_child(node, 1)
-    if ast_nodes(child).typ <> AST_VAR then
+    if child->atype <> AST_VAR then
         'TODO: Implement
         imm_error "OPTION check not supported on arrays & UDTs"
     end if
-    sym = ast_nodes(child).ref
-    if (symtab(sym).v3 AND SYM_VARIABLE_DEREF) = 0 then
+    sym = child->ref
+    if (sym->vflags AND SYM_VARIABLE_DEREF) = 0 then
         'Not pass-by-reference, so could not have been optional
         result.n = TRUE
     else
         'Don't use imm_get_addr because that'll attempt to dereference
-        addr = imm_stack_base + symtab(sym).v2
+        addr = imm_stack_base + sym->stack_offset
         if imm_get_at_addr_n(addr) then
             result.n = TRUE
         else

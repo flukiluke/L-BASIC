@@ -193,7 +193,7 @@ end function
 
 function tok_human_readable$(token)
     if token > 0 then
-        tok_human_readable$ = symtab(token).identifier
+        tok_human_readable$ = token->identifier
     else
         tok_human_readable$ = "LITERAL_" + mid$(str$(token), 2)
     end if

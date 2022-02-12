@@ -22,33 +22,35 @@ end function
 
 function imm_needs_deref(node)
     'TODO: Is a dereference check needed for UDT or array accesses?
-    imm_needs_deref = ast_nodes(node).typ = AST_VAR and symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_DEREF 
+    var = node->ref
+    imm_needs_deref = node->atype = AST_VAR and var->vflags AND SYM_VARIABLE_DEREF
 end function
 
 'Like imm_get_addr, but does not do a final dereference even if the variable is a
 'reference. This is useful for initialising or otherwise setting the actual address
 'of a variable.
 function imm_get_addr_loc(node)
-    select case ast_nodes(node).typ
+    var = node->ref
+    select case node->atype
     case AST_VAR
-        if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_MAINFRAME then
+        if var->vflags AND SYM_VARIABLE_MAINFRAME then
             'shared or static variable
             '+1 because the addresses are offsets, but memory starts at 1
-            imm_get_addr_loc = 1 + symtab(ast_nodes(node).ref).v2
+            imm_get_addr_loc = 1 + var->stack_offset
         else
             'local variable
-            imm_get_addr_loc = imm_stack_base + symtab(ast_nodes(node).ref).v2
+            imm_get_addr_loc = imm_stack_base + var->stack_offset
         end if
     case AST_UDT_ACCESS
         base_addr = imm_get_addr(ast_get_child(node, 1))
-        offset = symtab(ast_nodes(node).ref).v2
+        offset = var->stack_offset
         imm_get_addr_loc = imm_add_offset(base_addr, offset)
     case AST_ARRAY_ACCESS
         array = ast_get_child(node, 1)
         array_type = type_of_lvalue(array)
         info_base_addr = imm_get_addr(array)
         if info_base_addr = 0 then imm_error "Access to uninitialised array"
-        element_type = symtab(array_type).v3
+        element_type = array_type->array_type
         dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
         'Make sure we have precisely enough indicies for the number of dimensions
         if dimensions <> ast_num_children(node) - 1 then

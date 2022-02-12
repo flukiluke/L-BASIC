@@ -15,7 +15,7 @@ sub imm_do_select(node)
     imm_eval base_node, base_expr
     for i = 2 to ast_num_children(node)
         child = ast_get_child(node, i)
-        select case ast_nodes(child).typ
+        select case child->atype
         case AST_SELECT_LIST
             'If any of the guards are true, execute the block
             for j = 1 to ast_num_children(child) - 1
@@ -36,7 +36,7 @@ end sub
 
 function imm_select_eval_guard(guard, base_type, base_expr as imm_value_t)
     dim as imm_value_t l, r
-    select case ast_nodes(guard).typ
+    select case guard->atype
     case AST_SELECT_RANGE
         imm_eval ast_get_child(guard, 1), l
         imm_eval ast_get_child(guard, 2), r

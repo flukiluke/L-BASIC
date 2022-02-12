@@ -17,7 +17,8 @@ case TOK_INPUT
         'INPUT statement
         numvars = ast_num_children(node) - 1
         first_var_offset = 1
-        flags = ast_nodes(ast_get_child(node, 1)).ref2
+        c1 = ast_get_child(node, 1)
+        flags = c1->ref2
         if flags AND STMT_INPUT_PROMPT then
             imm_eval ast_get_child(node, 2), v1
             print v1.s;

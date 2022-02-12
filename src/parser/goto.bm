@@ -18,18 +18,18 @@ function ps_goto_p
     ps_assert TOK_NUMINT
     root = ast_add_node(AST_GOTO)
     id = symtab_get_id(tok_content$)
-    if id > 0 and symtab(id).v2 = TRUE and symtab(id).v1 > 0 then
+    if id > 0 and id->label_found and id->label_node > 0 then
         'Label exists, is resolved and is attached
         $if DEBUG_PARSE_TRACE then
-        debuginfo "Goto resolves to" + str$(symtab(id).v1)
+        debuginfo "Goto resolves to" + str$(id->label_node)
         $end if
-        ast_nodes(root).ref = symtab(id).v1
+        root->ref = id->label_node
     elseif id > 0 then
         'This case helps with things like "10 GOTO 10" (label resolved but not attached)
         $if DEBUG_PARSE_TRACE then
         debuginfo "Reference to pre-existing unresolved or unattached label"
         $end if
-        ast_nodes(root).ref = id
+        root->ref = id
         ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
     else
         $if DEBUG_PARSE_TRACE then
@@ -37,10 +37,10 @@ function ps_goto_p
         $end if
         dim symtab_label as symtab_entry_t
         symtab_label.identifier = tok_content$
-        symtab_label.typ = SYM_LABEL
         symtab_add_entry symtab_label
+        symtab_last_entry->stype = SYM_LABEL
         'Unresolved, so point directly to the label
-        ast_nodes(root).ref = symtab_last_entry
+        root->ref = symtab_last_entry
         ps_unresolved_jumps$ = ps_unresolved_jumps$ + mkl$(root)
     end if
     ps_consume TOK_NUMINT

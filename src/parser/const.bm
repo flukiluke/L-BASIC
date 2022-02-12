@@ -19,22 +19,22 @@ function ps_const
         sigil = ps_opt_sigil
         var = ps_new_var_pp(const_name$, sigil, TRUE, FALSE)
         lval = ast_add_node(AST_VAR)
-        ast_nodes(lval).ref = var
-        symtab(var).v3 = symtab(var).v3 or SYM_VARIABLE_CONST 'Mark constant
+        lval->ref = var
+        var->vflags = var->vflags or SYM_VARIABLE_CONST 'Mark constant
         assignment = ast_add_node(AST_ASSIGN)
-        ast_attach root, assignment
-        ast_attach assignment, lval
+        root->attach(assignment)
+        assignment->attach(lval)
         ps_consume TOK_EQUALS
 
         expr = ps_expr
         if sigil = 0 then
-            symtab(var).v1 = type_of_expr(expr)
+            var->type = type_of_expr(expr)
             ast_attach assignment, expr
         elseif type_can_cast(type_of_expr(expr), sigil) then
             cast = ast_add_node(AST_CAST)
-            ast_nodes(cast).ref = sigil
-            ast_attach cast, expr
-            ast_attach assignment, cast
+            cast->ref = sigil
+            cast->attach(expr)
+            assignment->attach(cast)
         else
             ps_error "Type mismatch"
         end if

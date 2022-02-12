@@ -12,42 +12,81 @@ type symtab_entry_t
     v4 as long
 end type
 
+$macro: @@->identifier | symtab(@1).identifier
+$macro: @@-identifier | @1.identifier
+$macro: @@->stype | symtab(@1).typ
+$macro: @@-stype | @1.typ
+$macro: @@->sig | symtab(@1).v1
+$macro: @@-sig | @1.v1
+$macro: @@->precedence | symtab(@1).v2
+$macro: @@-precedence | @1.v2
+$macro: @@->associativity | symtab(@1).v3
+$macro: @@-associativity | @1.v3
+$macro: @@->type | symtab(@1).v1
+$macro: @@-type | @1.v1
+$macro: @@->stack_offset | symtab(@1).v2
+$macro: @@-stack_offset | @1.v2
+$macro: @@->vflags | symtab(@1).v3
+$macro: @@-vflags | @1.v3
+$macro: @@->func_kind | symtab(@1).v2
+$macro: @@-func_kind | @1.v2
+$macro: @@->proc_node | symtab(@1).v3
+$macro: @@-proc_node | @1.v3
+$macro: @@->stack_size | symtab(@1).v4
+$macro: @@-stack_size | @1.v4
+$macro: @@->label_node | symtab(@1).v1
+$macro: @@-label_node | @1.v1
+$macro: @@->label_found | symtab(@1).v2
+$macro: @@-label_found | @1.v2
+$macro: @@->fixed_size | symtab(@1).v1
+$macro: @@-fixed_size | @1.v1
+$macro: @@->tflags | symtab(@1).v2
+$macro: @@-tflags | @1.v2
+$macro: @@->array_type | symtab(@1).v3
+$macro: @@-array_type | @1.v3
+$macro: @@->array_dims | symtab(@1).v4
+$macro: @@-array_dims | @1.v4
+$macro: @@->udt_element_offset | symtab(@1).v2
+$macro: @@-udt_element_offset | @1.v2
+
+
 'A generic entry. No vn parameters are used.
 const SYM_GENERIC = 1
 'A function with infix notation.
-'v1 -> reference to the type signature
-'v2 -> binding power (controls precedence)
-'v3 -> associativity (1/0 = right/left)
+'v1 ->sig | reference to the type signature
+'v2 ->precedence | binding power (controls precedence)
+'v3 ->associativity | associativity (1/0 = right/left)
 const SYM_INFIX = 2
 'A function with prefix notation (and parentheses are not required)
-'v1 -> reference to the type signature
-'v2 -> binding power (controls precedence)
+'v1 ->sig | reference to the type signature
+'v2 ->precedence | binding power (controls precedence)
 const SYM_PREFIX = 3
 'A variable.
-'v1 -> the data type
-'v2 -> stack offset in the scope. Simple variables and references each take up 1 slot,
-'       arrays and UDTs take up multiple.
-'v3 -> various SYM_VARIABLE_* flags
+'v1 ->type | the data type
+'v2 ->stack_offset | stack offset in the scope. Simple variables and references each take 
+'up 1 slot, arrays and UDTs take up multiple.
+'v3 ->vflags | various SYM_VARIABLE_* flags
 const SYM_VARIABLE = 4
 'A function (subs too!)
-'v1 -> reference to the type signature
-'v2 -> One of SYM_FUNCTION_*, see below
-'v3 -> If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
-'v4 -> IF SYM_FUNCTION_USER, the stack frame size required to hold locals, including arguments
+'v1 ->sig | reference to the type signature
+'v2 ->func_kind | One of SYM_FUNCTION_*, see below
+'v3 ->proc_node | If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
+'v4 ->stack_size | IF SYM_FUNCTION_USER, the stack frame size required to hold locals,
+'including arguments
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
-'v1 -> AST node that is labelled.
-'v2 -> Label has been located (if false, label has only been referenced)
+'v1 ->label_node | AST node that is labelled.
+'v2 ->label_found | Label has been located (if false, label has only been referenced)
 const SYM_LABEL = 6
 'Both internal types and UDTs
-'v1 -> Fixed size of data type
-'v2 -> One of SYM_TYPE_*, see below
-'v3 -> If SYM_TYPE_ARRAY, type of the array element
-'v4 -> If SYM_TYPE_ARRAY, number of dimensions
+'v1 ->fixed_size | Fixed size of data type
+'v2 ->tflags | One of SYM_TYPE_*, see below
+'v3 ->array_type | If SYM_TYPE_ARRAY, type of the array element
+'v4 ->array_dims | If SYM_TYPE_ARRAY, number of dimensions
 const SYM_TYPE = 7
 'An element of a udt, stored with the name "udt_name.element_name"
-'v1 -> the data type
-'v2 -> position of element in udt (first is 0, then incrementing by the fixed size of previous values)
+'v1 ->type | the data type
+'v2 ->udt_element_offset | position of element in udt (first is 0, then incrementing by the fixed size of previous values)
 const SYM_UDT_ELEMENT = 8
 'A metacommand, stored with its characteristic leading $ in the name
 const SYM_META = 9

@@ -3,7 +3,8 @@
 'call.bm - Executor for CALLs
 
 sub imm_do_call(node, result as imm_value_t)
-    if symtab(ast_nodes(node).ref).v2 = SYM_FUNCTION_USER then
+    f = node->ref
+    if f->func_kind = SYM_FUNCTION_USER then
         imm_do_call_userfunc node, result
     else
         imm_do_call_internal node, result
@@ -22,7 +23,7 @@ sub imm_do_call_internal(node, result as imm_value_t)
     dim v9 as imm_value_t
     dim v10 as imm_value_t
     return_type = type_of_call(node)
-    select case ast_nodes(node).ref
+    select case node->ref
     $include: 'calls/input.bm'
     $include: 'calls/file.bm'
     $include: 'calls/font.bm'
@@ -41,15 +42,15 @@ sub imm_do_call_internal(node, result as imm_value_t)
     $include: 'calls/time.bm'
     $include: 'calls/varinfo.bm'
     case else
-        imm_error "Unhandled call to " + tok_human_readable$(ast_nodes(node).ref)
+        imm_error "Unhandled call to " + tok_human_readable$(node->ref)
     end select
     imm_enforce_type result, type_of_call(node)
 end sub
 
 sub imm_do_call_userfunc(node, result as imm_value_t)
-    proc_id = ast_nodes(node).ref
-    proc_node = symtab(proc_id).v3
-    num_locals = symtab(proc_id).v4
+    proc_id = node->ref
+    proc_node = proc_id->proc_node
+    num_locals = proc_id->stack_size
     if proc_node = 0 then imm_error "Call to unimplemented function"
     'Create new stack frame
     $if DEBUG_MEM_TRACE then
@@ -70,7 +71,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
             'We still need to evaluate the argument being passed though in case
             'it has side effects.
             imm_eval arg_node, arg
-        elseif ast_nodes(arg_node).typ = AST_NONE then
+        elseif arg_node->atype = AST_NONE then
             'Not supplied optional argument, pass a null pointer
             imm_set_at_addr_n old_stack_last + i, 0
         elseif symtab(ast_nodes(ast_get_child(proc_node, i + 1)).ref).v3 AND SYM_VARIABLE_DEREF then
@@ -95,7 +96,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     next i
     'If we're expected to return a value, allocate an extra stack slot
     'after the formal arguments and shadow copies to hold that value
-    if type_sig_return(ast_nodes(node).ref2) <> TYPE_NONE then
+    if type_sig_return(node->ref2) <> TYPE_NONE then
         has_return_value = TRUE
         imm_reinit imm_stack_last + 1
         'This must be zeroed out so that if the function returns a reference,
@@ -107,7 +108,7 @@ sub imm_do_call_userfunc(node, result as imm_value_t)
     'occurs in the caller's stack frame)
     imm_stack_base = old_stack_last + 1
     'Do the call!
-    imm_eval ast_get_child(symtab(proc_id).v3, 1), result
+    imm_eval ast_get_child(proc_id->proc_node, 1), result
     'Collect return value if relevant
     if has_return_value then imm_get_at_addr imm_stack_last, result
     'Restore previous stack frame

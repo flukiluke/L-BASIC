@@ -10,20 +10,20 @@ sub ps_label
     debuginfo "Start label"
     $end if
     id = symtab_get_id(tok_content$)
-    if id > 0 and symtab(id).typ <> SYM_LABEL then
+    if id > 0 and id->stype <> SYM_LABEL then
         ps_error "Label name conflicts with existing identifier"
-    elseif id > 0 and symtab(id).v2 = TRUE then
+    elseif id > 0 and id->label_found then
         ps_error "Label already defined"
     elseif id > 0 then
         'This is a label that was only referenced until now; mark it found
-        symtab(id).v2 = TRUE
+        id->label_found = TRUE
     else
         dim symtab_label as symtab_entry_t
         symtab_label.identifier = tok_content$
-        symtab_label.typ = SYM_LABEL
-        symtab_label.v2 = TRUE
         symtab_add_entry symtab_label
         id = symtab_last_entry
+        id->stype = SYM_LABEL
+        id->label_found = TRUE
     end if
     ps_unattached_labels$ = ps_unattached_labels$ + mkl$(id)
     ps_consume TOK_LINENUM
@@ -41,14 +41,14 @@ sub ps_attach_labels(node)
         for i = 1 to len(ps_unattached_labels$) step 4
             label_id = cvl(mid$(ps_unattached_labels$, i, 4))
             $if DEBUG_PARSE_TRACE then
-            debuginfo "Attached label " + symtab(label_id).identifier
+            debuginfo "Attached label " + label_id->identifier
             $end if
-            symtab(label_id).v1 = node
+            label_id->label_node = node
             'Have we resolved an unresolved jump?
             for j = 1 to len(ps_unresolved_jumps$) step 4
                 unres_node = cvl(mid$(ps_unresolved_jumps$, j, 4))
-                if ast_nodes(unres_node).ref = label_id then
-                    ast_nodes(unres_node).ref = node
+                if unres_node->ref = label_id then
+                    unres_node->ref = node
                 else
                     still_unres$ = still_unres$ + mkl$(unres_node)
                 end if
@@ -65,13 +65,14 @@ end sub
 sub ps_finish_labels(block)
     if len(ps_unattached_labels$) > 0 then
         end_node = ast_add_node(AST_BLOCK)
-        ast_attach block, end_node
+        block->attach(end_node)
         ps_attach_labels end_node
     end if 
     if len(ps_unresolved_jumps$) then
-        labels$ = symtab(ast_nodes(cvl(left$(ps_unresolved_jumps$, 4))).ref).identifier
+        $macro: ps_finish_label_name(@@) | symtab(ast_nodes(cvl(mid$(ps_unresolved_jumps$, @1, 4))).ref).identifier
+        labels$ = ps_finish_label_name(1)
         for i = 5 to len(ps_unresolved_jumps$) step 4
-            labels$ = ", " + symtab(ast_nodes(cvl(mid$(ps_unresolved_jumps$, i, 4))).ref).identifier
+            labels$ = ", " + ps_finish_label_name(i)
         next i
         ps_error "Undefined label(s): " + labels$
     end if

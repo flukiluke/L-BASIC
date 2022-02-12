@@ -10,8 +10,8 @@ function ps_print
     debuginfo "Start print"
     $end if
     root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = TOK_PRINT
-    ast_nodes(root).ref2 = symtab(TOK_PRINT).v1
+    root->ref = TOK_PRINT
+    root->ref2 = TOK_PRINT->sig
     ps_consume TOK_PRINT
 
     newline = TRUE
@@ -20,9 +20,9 @@ function ps_print
         select case tok_token
         case TOK_COMMA
             node = ast_add_node(AST_FLAGS)
-            ast_nodes(node).ref = AST_FLAG_MANUAL
-            ast_nodes(node).ref2 = PRINT_NEXT_FIELD
-            ast_attach root, node
+            node->ref = AST_FLAG_MANUAL
+            node->ref2 = PRINT_NEXT_FIELD
+            root->attach(node)
             ps_consume TOK_COMMA
             newline = FALSE
         case TOK_SEMICOLON
@@ -30,15 +30,15 @@ function ps_print
             ps_consume TOK_SEMICOLON
             newline = FALSE
         case else
-            ast_attach root, ps_expr
+            root->attach(ps_expr)
             newline = TRUE
         end select
     loop
     if newline then
         node = ast_add_node(AST_FLAGS)
-        ast_nodes(node).ref = AST_FLAG_MANUAL
-        ast_nodes(node).ref2 = PRINT_NEWLINE
-        ast_attach root, node
+        node->ref = AST_FLAG_MANUAL
+        node->ref2 = PRINT_NEWLINE
+        root->attach(node)
     end if
     
     ps_print = root

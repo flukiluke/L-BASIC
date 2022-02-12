@@ -9,7 +9,7 @@ sub imm_eval(node, result as imm_value_t)
     end if
     imm_eval_stack(imm_eval_stack_last) = node
 
-    select case ast_nodes(node).typ
+    select case node->atype
     case AST_ASSIGN
         imm_do_assign node
     case AST_IF
@@ -30,16 +30,17 @@ sub imm_eval(node, result as imm_value_t)
         imm_do_call node, result
     case AST_CONSTANT
         if type_of_constant(node) = TYPE_STRING then
-            result.s = ast_constants(ast_nodes(node).ref)
+            result.s = ast_constants(node->ref)
         else
-            result.n = val(ast_constants(ast_nodes(node).ref))
+            result.n = val(ast_constants(node->ref))
         end if
     case AST_BLOCK
         imm_do_block node, result
     case AST_VAR, AST_UDT_ACCESS, AST_ARRAY_ACCESS
         addr = imm_get_addr(node)
         'Take address for a full UDT or array
-        if symtab(type_of_lvalue(node)).v2 then
+        typ = type_of_lvalue(node)
+        if typ->tflags then
             result.n = addr
         else
             imm_get_at_addr addr, result
@@ -57,12 +58,12 @@ sub imm_eval(node, result as imm_value_t)
     case AST_GOTO
         imm_do_goto node
     case AST_EXIT
-        imm_exit_node = ast_nodes(node).ref
+        imm_exit_node = node->ref
     case AST_SET_RETURN
         dim temp as imm_value_t
         child = ast_get_child(node, 1)
         imm_eval child, temp
-        if type_is_array(ast_nodes(node).ref) then
+        if type_is_array(node->ref) then
             'Clear previously-set return value, if any
             imm_array_delete imm_get_at_addr_n(imm_stack_last)
             imm_set_at_addr_n imm_stack_last, 0
@@ -81,7 +82,7 @@ end sub
 
 sub imm_do_cast(node, result as imm_value_t)
     imm_eval ast_get_child(node, 1), result
-    imm_enforce_type result, ast_nodes(node).ref
+    imm_enforce_type result, node->ref
 end sub
 
 sub imm_enforce_type(result as imm_value_t, typ)

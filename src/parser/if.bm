@@ -14,13 +14,13 @@ function ps_if
 
     condition = ps_expr
     if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
-    ast_attach root, condition
+    root->attach(condition)
     ps_consume TOK_THEN
 
     'A REM after THEN acts as a command; we remain in single-line if mode
     if ucase$(tok_content$) = "REM" then
         block = ast_add_node(AST_BLOCK)
-        ast_attach root, block
+        root->attach(block)
         ps_remove_nested_structure
         ps_if = root
         $if DEBUG_PARSE_TRACE then
@@ -33,27 +33,27 @@ function ps_if
         $if DEBUG_PARSE_TRACE then
         debuginfo "Single-line IF"
         $end if
-        ast_attach root, ps_if_stmts
+        root->attach(ps_if_stmts)
         if tok_token = TOK_ELSE then
             ps_consume TOK_ELSE
-            ast_attach root, ps_if_stmts
+            root->attach(ps_if_stmts)
         end if
     else
         $if DEBUG_PARSE_TRACE then
         debuginfo "Multi-line IF"
         $end if
-        ast_attach root, ps_block
+        root->attach(ps_block)
         do while tok_token = TOK_ELSEIF
             ps_consume TOK_ELSEIF
             condition = ps_expr
             if not type_is_number(type_of_expr(condition)) then ps_error "Condition must be a numeric expression"
-            ast_attach root, condition
+            root->attach(condition)
             ps_consume TOK_THEN
-            ast_attach root, ps_block
+            root->attach(ps_block)
         loop
         if tok_token = TOK_ELSE then
             ps_consume TOK_ELSE
-            ast_attach root, ps_block 
+            root->attach(ps_block)
         end if
         ps_consume TOK_END
         ps_consume TOK_IF
@@ -75,14 +75,14 @@ function ps_if_stmts
     $end if
     block = ast_add_node(AST_BLOCK)
     if tok_token = TOK_NUMINT then
-        ast_attach block, ps_goto_p
+        block->attach(ps_goto_p)
     else
         do
             while ps_is_linejoin
                 ps_consume TOK_NEWLINE
             wend
             stmt = ps_stmt
-            ast_attach block, stmt
+            block->attach(stmt)
             while ps_is_linejoin
                 ps_consume TOK_NEWLINE
             wend

@@ -88,7 +88,7 @@ function ps_scope$
 end function
 
 function ps_get_scope$(token)
-    varname$ = symtab(token).identifier
+    varname$ = token->identifier
     if left$(varname$, 1) <> "@" then
         ps_get_scope$ = ""
     else
@@ -119,7 +119,7 @@ function ps_block
         stmt = ps_stmt
         ' -2 -> SUB or FUNCTION definition, continue processing input
         if stmt = -1 then exit do 'use -1 to signal the end of a block
-        if stmt > 0 then ast_attach root, stmt '0 means that statement did not generate any ast nodes
+        if stmt > 0 then root->attach(stmt) '0 means that statement did not generate any ast nodes
     loop
     ps_block = root
     $if DEBUG_PARSE_TRACE then

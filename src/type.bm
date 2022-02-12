@@ -6,7 +6,7 @@
 'a variable of that type, but only counting the fixed-sized info (pointer and size)
 'for arrays.
 function type_fixed_size(typ)
-    type_fixed_size = symtab(typ).v1
+    type_fixed_size = typ->fixed_size
 end function
 
 function type_is_number(typ)
@@ -17,11 +17,11 @@ function type_is_number(typ)
 end function
 
 function type_is_array(typ)
-    type_is_array = symtab(typ).v2 = SYM_TYPE_ARRAY
+    type_is_array = typ->tflags = SYM_TYPE_ARRAY
 end function
 
 function type_of_expr(root)
-    select case ast_nodes(root).typ
+    select case root->atype
     case AST_CONSTANT
         type_of_expr = type_of_constant(root)
     case AST_CALL
@@ -40,7 +40,7 @@ function type_of_expr(root)
 end function
 
 function type_of_lvalue(node)
-    select case ast_nodes(node).typ
+    select case node->atype
     case AST_VAR
         type_of_lvalue = type_of_var(node)
     case AST_UDT_ACCESS
@@ -51,38 +51,40 @@ function type_of_lvalue(node)
 end function
 
 function type_of_constant(node)
-    type_of_constant = ast_constant_types(ast_nodes(node).ref)
+    type_of_constant = ast_constant_types(node->ref)
 end function
 
 function type_of_call(node)
-    type_of_call = type_sig_return(ast_nodes(node).ref2)
+    type_of_call = type_sig_return(node->ref2)
 end function
 
 function type_of_var(node)
-    type_of_var = symtab(ast_nodes(node).ref).v1
+    ref = node->ref
+    type_of_var = ref->type
 end function
 
 function type_of_cast(node)
-    type_of_cast = ast_nodes(node).ref
+    type_of_cast = node->ref
 end function
 
 function type_of_udt_access(node)
-    type_of_udt_access = symtab(ast_nodes(node).ref).v1
+    elem = node->ref
+    type_of_udt_access = elem->type
 end function
 
 function type_of_array_access(node)
     array = ast_get_child(node, 1)
     array_type = type_of_lvalue(array)
-    type_of_array_access = symtab(array_type).v3
+    type_of_array_access = array_type->array_type
 end function
 
 function type_is_lvalue(node)
-    t = ast_nodes(node).typ
+    t = node->atype
     type_is_lvalue = t = AST_VAR or t = AST_UDT_ACCESS or t = AST_ARRAY_ACCESS
 end function
 
 function type_of_select_value(node)
-    type_of_select_value = ast_nodes(node).ref
+    type_of_select_value = node->ref
 end function
 
 'Can a be cast to b, even with loss?
@@ -100,8 +102,8 @@ function type_can_safely_cast(a, b)
         'Both arrays, same number of dimensions (or cast to indeterminate number),
         'and element type is identical (or cast to ANY)
         type_can_safely_cast = type_is_array(a) and type_is_array(b) and _
-                                (symtab(a).v4 = symtab(b).v4 or symtab(b).v4 = 0) and _
-                                (symtab(a).v3 = symtab(b).v3 or symtab(b).v3 = TYPE_ANY)
+                                (a->array_dims = b->array_dims or b->array_dims = 0) and _
+                                (a->array_type = b->array_type or b->array_type = TYPE_ANY)
     elseif not (type_is_number(a) and type_is_number(b)) then
         type_can_safely_cast = FALSE
     else
@@ -124,14 +126,14 @@ end function
 
 function type_make_array(basetype, dimensions)
     dim sym as symtab_entry_t
-    array_type_name$ = symtab(basetype).identifier + "[" + _trim$(str$(dimensions)) + "]"
+    array_type_name$ = basetype->identifier + "[" + _trim$(str$(dimensions)) + "]"
     array_type_sym = symtab_get_id(array_type_name$)
     if array_type_sym then
         'Already exists
         type_make_array = array_type_sym
     else
-        sym.identifier = array_type_name$
-        sym.typ = SYM_TYPE
+        sym-identifier = array_type_name$
+        sym-stype = SYM_TYPE
         'Array descriptor:
         ' - pointer to data
         ' - number of dimensions
@@ -143,13 +145,13 @@ function type_make_array(basetype, dimensions)
         if dimensions = 0 then
             '0 means any number of dimensions. Since we can't know how big the descriptor
             'will be, it is treated as a simple pointer to descriptor and thus has size 1.
-            sym.v1 = 1
+            sym-fixed_size = 1
         else
-            sym.v1 = 2 + dimensions * 2
+            sym-fixed_size = 2 + dimensions * 2
         end if
-        sym.v2 = SYM_TYPE_ARRAY
-        sym.v3 = basetype
-        sym.v4 = dimensions
+        sym-tflags = SYM_TYPE_ARRAY
+        sym-array_type = basetype
+        sym-array_dims = dimensions
         symtab_add_entry sym
         type_make_array = symtab_last_entry
     end if
@@ -302,7 +304,7 @@ end function
 'Return format is list of mkl$(sig_index)
 function type_sig_prefix_compatibles$(func, candidate$)
     compatibles$ = type_sigt_create$(0)
-    sig_index = symtab(func).v1
+    sig_index = func->sig
     while sig_index <> 0
         if type_sig_is_prefix_compatible(sig_index, candidate$, 0) then
             compatibles$ = type_sigt_add_arg(compatibles$, sig_index, 0)
@@ -376,7 +378,7 @@ function type_find_sig_match(func, candidate$)
     $if DEBUG_CALL_RESOLUTION then
     debuginfo "Function resolution candidate is " + type_human_sig$(candidate$)
     $end if
-    sig_index = symtab(func).v1
+    sig_index = func->sig
     compatibles$ = type_sigt_create$(0)
     while sig_index <> 0
         if type_sig_is_compatible(sig_index, candidate$, 0) then
@@ -451,7 +453,7 @@ function type_sig_compatible_arg(sig_arg, sig_flags, c_arg, c_flags, checkmode)
 end function
 
 function type_human_readable$(typ)
-    id$ = symtab(typ).identifier
+    id$ = typ->identifier
     'Remove any name mangling
     if left$(id$, 1) = "|" then id$ = mid$(id$, 2)
     type_human_readable$ = id$

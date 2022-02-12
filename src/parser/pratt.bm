@@ -37,7 +37,7 @@ function nud(token, content$)
     select case token
     case TOK_NUMINT, TOK_NUMBASE, TOK_NUMDEC, TOK_NUMEXP, TOK_STRINGLIT
         node = ast_add_node(AST_CONSTANT)
-        ast_nodes(node).ref = ast_add_constant(token, content$, ps_opt_sigil)
+        node->ref = ast_add_constant(token, content$, ps_opt_sigil)
     case TOK_OPAREN
         node = pt_expr(0)
         ps_consume TOK_CPAREN
@@ -50,22 +50,23 @@ function nud(token, content$)
         node = ps_simple_variable_p(token, content$)
     case else
         negative_hack:
-        select case symtab(token).typ
+        select case token->stype
         case SYM_FUNCTION
             node = ps_funccall_p(token)
         case SYM_VARIABLE
             node = ps_lvalue_p(token, content$)
         case SYM_PREFIX
             node = ast_add_node(AST_CALL)
-            ast_nodes(node).ref = token
-            expr = pt_expr(symtab(token).v2)
+            node->ref = token
+            expr = pt_expr(token->precedence)
             if type_is_lvalue(expr) then candidate_flags = TYPE_BYREF
             candidate$ = type_sigt_create$(TYPE_ANY)
             candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), flags)
             matching_sig = type_find_sig_match(token, candidate$)
             if matching_sig = 0 then ps_error "Cannot find matching type signature"
-            ast_attach node, ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
-            ast_nodes(node).ref2 = matching_sig
+            cast = ast_add_cast(expr, type_sig_argtype(matching_sig, 1))
+            node->attach(cast)
+            node->ref2 = matching_sig
         case else
             ps_error "Unexpected " + tok_human_readable$(token)
         end select
@@ -80,9 +81,9 @@ function lbp(token, content$)
     case TOK_CPAREN
         lbp = 0
     case else
-        select case symtab(token).typ
+        select case token->stype
         case SYM_INFIX
-            lbp = symtab(token).v2
+            lbp = token->precedence
         case else
             'We've hit something that isn't part if the expression,
             'time to finish.
@@ -96,13 +97,13 @@ function led(token, content$, left_node)
     'This next line stops the warning about unused variables.
     content$ = content$
     node = ast_add_node(AST_CALL)
-    ast_nodes(node).ref = token
-    select case symtab(token).typ
+    node->ref = token
+    select case token->stype
     case SYM_INFIX
-        if symtab(token).v3 = 0 then 'Left-associative
-            right_node = pt_expr(symtab(token).v2)
+        if token->associativity = 0 then 'Left-associative
+            right_node = pt_expr(token->precedence)
         else 'right-associative
-            right_node = pt_expr(symtab(token).v2 - 1)
+            right_node = pt_expr(token->precedence - 1)
         end if
         candidate$ = type_sigt_create$(TYPE_ANY)
         if type_is_lvalue(left_node) then candidate_flags = TYPE_BYREF
@@ -111,9 +112,11 @@ function led(token, content$, left_node)
         candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(right_node), flags)
         matching_sig = type_find_sig_match(token, candidate$)
         if matching_sig = 0 then ps_error "Cannot find matching type signature"
-        ast_attach node, ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
-        ast_attach node, ast_add_cast(right_node, type_sig_argtype(matching_sig, 2))
-        ast_nodes(node).ref2 = matching_sig
+        cast = ast_add_cast(left_node, type_sig_argtype(matching_sig, 1))
+        node->attach(cast)
+        cast = ast_add_cast(right_node, type_sig_argtype(matching_sig, 2))
+        node->attach(cast)
+        node->ref2 = matching_sig
     case else
         ps_error "Unexpected led " + tok_human_readable$(token)
     end select

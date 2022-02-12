@@ -13,13 +13,14 @@ function ps_select
     ps_consume TOK_SELECT
     ps_consume TOK_CASE
     expr = ps_expr
-    ast_attach root, expr
+    root->attach(expr)
     ps_add_nested_structure root
     ps_consume TOK_NEWLINE
     ps_line_prelude
     
     while not ps_consumed(TOK_END)   
-        ast_attach root, ps_select_case(type_of_expr(expr))
+        c = ps_select_case(type_of_expr(expr))
+        root->attach(c)
     wend
 
     ps_consume TOK_SELECT
@@ -42,10 +43,11 @@ function ps_select_case(typ)
     else
         node = ast_add_node(AST_SELECT_LIST)
         do
-            ast_attach node, ps_select_case_guard(typ)
+            t = ps_select_case_guard(typ)
+            node->attach(t)
         loop while ps_consumed(TOK_COMMA)
     end if
-    ast_attach node, ps_block
+    node->attach(ps_block)
     ps_select_case = node
 
     $if DEBUG_PARSE_TRACE then
@@ -61,7 +63,7 @@ function ps_select_case_guard(typ)
     if ps_consumed(TOK_IS) then
         node = ast_add_node(AST_SELECT_IS)
         ref = tok_token
-        ref_typ = symtab(ref).typ
+        ref_typ = ref->stype
         if not (ref_typ = SYM_INFIX or ref_typ = SYM_PREFIX or ref_typ = SYM_FUNCTION) then
             ps_error "Not a function"
         end if
@@ -72,13 +74,14 @@ function ps_select_case_guard(typ)
         candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), 0)
         sig = type_find_sig_match(ref, candidate$)
         if sig = 0 then ps_error "Bad function"
-        ast_nodes(node).ref = ref
-        ast_nodes(node).ref2 = sig
+        node->ref = ref
+        node->ref2 = sig
         value_node = ast_add_node(AST_SELECT_VALUE)
-        ast_nodes(value_node).ref = typ
-        ast_attach node, ast_add_cast(value_node, type_sig_argtype(sig, 1))
+        value_node->ref = typ
+        c = ast_add_cast(value_node, type_sig_argtype(sig, 1))
+        node->attach(c)
         expr = ast_add_cast(expr, type_sig_argtype(sig, 2))
-        ast_attach node, expr
+        node->attach(expr)
     else
         expr1 = ps_expr
         if ps_consumed(TOK_TO) then
@@ -97,10 +100,10 @@ function ps_select_case_guard(typ)
                 'with reversed arguments too.
                 ps_error "Function does not have exchangable argument types"
             end if
-            ast_nodes(node).ref = TOK_CMP_LTEQ
-            ast_nodes(node).ref2 = sig
-            ast_attach node, expr1
-            ast_attach node, expr2
+            node->ref = TOK_CMP_LTEQ
+            node->ref2 = sig
+            node->attach(expr1)
+            node->attach(expr2)
         else
             'Simple CASE x
             node = ast_add_node(AST_SELECT_IS)
@@ -109,13 +112,14 @@ function ps_select_case_guard(typ)
             candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr1), 0)
             sig = type_find_sig_match(TOK_EQUALS, candidate$)
             if sig = 0 then ps_error "Cannot compare for equality"
-            ast_nodes(node).ref = TOK_EQUALS
-            ast_nodes(node).ref2 = sig
+            node->ref = TOK_EQUALS
+            node->ref2 = sig
             value_node = ast_add_node(AST_SELECT_VALUE)
-            ast_nodes(value_node).ref = typ
-            ast_attach node, ast_add_cast(value_node, type_sig_argtype(sig, 1))
+            value_node->ref = typ
+            c = ast_add_cast(value_node, type_sig_argtype(sig, 1))
+            node->attach(c)
             expr1 = ast_add_cast(expr1, type_sig_argtype(sig, 2))
-            ast_attach node, expr1
+            node->attach(expr1)
         end if
     end if
     ps_select_case_guard = node

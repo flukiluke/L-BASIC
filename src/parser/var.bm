@@ -42,7 +42,7 @@ function ps_dim
             'Just a regular variable
             if name_token <> TOK_UNKNOWN then ps_error "Expected new variable name"
             sym = ps_new_var_pp(variable_name$, sigil, is_shared, FALSE)
-            if is_static then symtab(sym).v3 = symtab(sym).v3 OR SYM_VARIABLE_MAINFRAME
+            if is_static then sym->vflags = sym->vflags OR SYM_VARIABLE_MAINFRAME
         end if
     loop while ps_consumed(TOK_COMMA)
     ps_dim = block
@@ -65,7 +65,8 @@ end function
 
 function ps_lvalue_mutable
     node = ps_lvalue
-    if symtab(ast_nodes(node).ref).v3 AND SYM_VARIABLE_CONST then
+    sym = node->ref
+    if sym->vflags AND SYM_VARIABLE_CONST then
         ps_error "Cannot reassign CONST"
     end if
     ps_lvalue_mutable = node
@@ -110,16 +111,16 @@ function ps_simple_variable_p(head, content$)
     if head = TOK_UNKNOWN then
         'Add new variable (implicit declaration)
         if not ps_allow_implicit_vars then ps_error "Implicit variable declaration"
-        ast_nodes(node).ref = ps_new_var_p(content$)
-    elseif symtab(head).typ <> SYM_VARIABLE then
+        node->ref = ps_new_var_p(content$)
+    elseif head->stype <> SYM_VARIABLE then
         ps_error "Expected variable"
     else
         'Existing variable
         sigil = ps_opt_sigil
-        current_type = symtab(head).v1
-        if symtab(current_type).v2 = SYM_TYPE_ARRAY then current_type = symtab(current_type).v3
+        current_type = head->type
+        if current_type->tflags = SYM_TYPE_ARRAY then current_type = current_type->array_type
         if sigil and sigil <> current_type then ps_error "Type suffix does not match existing variable type"
-        ast_nodes(node).ref = head
+        node->ref = head
     end if
 
     ps_simple_variable_p = node
@@ -136,7 +137,7 @@ function ps_opt_sigil
     $end if
     if ps_consumed(TOK_AS) then
         typ = tok_token
-        if typ = 0 or symtab(typ).typ <> SYM_TYPE then ps_error "Expected type name"
+        if typ = 0 or typ->stype <> SYM_TYPE then ps_error "Expected type name"
     else
         select case tok_token
         case TOK_INTEGER_SFX
@@ -182,20 +183,20 @@ end function
 function ps_new_var_pp(var_name$, sigil, is_shared, is_ref)
     dim sym as symtab_entry_t
     if is_shared then
-        sym.identifier = ucase$(var_name$)
+        sym-identifier = ucase$(var_name$)
     else
-        sym.identifier = ps_scope$ + ucase$(var_name$)
+        sym-identifier = ps_scope$ + ucase$(var_name$)
     end if
-    sym.typ = SYM_VARIABLE
-    if sigil then sym.v1 = sigil else sym.v1 = ps_default_type
-    sym.v2 = ps_scope_frame_size
+    sym-stype = SYM_VARIABLE
+    if sigil then sym-type = sigil else sym-type = ps_default_type
+    sym-stack_offset = ps_scope_frame_size
     if is_ref then
         ps_scope_frame_size = ps_scope_frame_size + 1
     else
-        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym.v1)
+        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym-type)
     end if
-    if is_shared then sym.v3 = SYM_VARIABLE_MAINFRAME else sym.v3 = 0
-    if is_ref then sym.v3 = sym.v3 OR SYM_VARIABLE_DEREF
+    if is_shared then sym-vflags = SYM_VARIABLE_MAINFRAME else sym-vflags = 0
+    if is_ref then sym-vflags = sym-vflags OR SYM_VARIABLE_DEREF
     symtab_add_entry sym
     ps_new_var_pp = symtab_last_entry
 end function

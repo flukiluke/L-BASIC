@@ -24,7 +24,7 @@ function ps_exit
     end select
     if target = 0 then ps_error "Not inside a " + tok_human_readable$(tok_token) + " block"
     tok_advance
-    ast_nodes(root).ref = target
+    root->ref = target
 
     ps_exit = root
     $if DEBUG_PARSE_TRACE then

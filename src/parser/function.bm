@@ -32,7 +32,7 @@ function ps_funccall_p(func)
     debuginfo "Start function call"
     $end if
     root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = func
+    root->ref = func
     sigil = ps_opt_sigil
     if tok_token = TOK_OPAREN then
         ps_consume TOK_OPAREN
@@ -42,10 +42,10 @@ function ps_funccall_p(func)
        'function has no arguments
         matching_sig = type_find_sig_match(func, type_sigt_create$(TYPE_ANY))
         if matching_sig = 0 then ps_error "Cannot find matching type signature"
-        ast_nodes(root).ref2 = matching_sig
+        root->ref2 = matching_sig
         'Add any optional arguments at end
         for i = 1 to type_sig_numargs(matching_sig)
-            ast_attach root, ast_add_node(AST_NONE)
+            root->attach_none
         next i
     end if
     if sigil > 0 and sigil <> type_of_call(root) then ps_error "Function must have correct type suffix if present"
@@ -81,9 +81,9 @@ sub ps_funcargs(root, candidate$, is_statement)
     'candidate$ may match multiple sigs; decide which fits "best". See type.bm for
     'details on what "best" means. This may still fail because the candidate has only
     'been checked as a prefix, never for an exect match on the number of arguments.
-    best_sig = type_find_sig_match(ast_nodes(root).ref, candidate$)
+    best_sig = type_find_sig_match(root->ref, candidate$)
     if best_sig = 0 then ps_error "Cannot find matching type signature"
-    ast_nodes(root).ref2 = best_sig
+    root->ref2 = best_sig
 
     'Modify argument nodes to add in casts where needed
     for i = 1 to ast_num_children(root)
@@ -104,7 +104,7 @@ sub ps_funcargs(root, candidate$, is_statement)
     next i
     'Add any optional arguments at end
     for i = ast_num_children(root) + 1 to type_sig_numargs_concrete(best_sig)
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
     next i
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed funcargs"
@@ -115,7 +115,7 @@ sub ps_funcarg(root, candidate$, suppress_comma)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start funcarg"
     $end if
-    func = ast_nodes(root).ref
+    func = root->ref
     expects$ = type_sig_prefix_nexts$(func, candidate$, 0)
     suppress_comma = FALSE
     'Step 1: Check if any tokens or contextual arguments are present
@@ -132,26 +132,26 @@ sub ps_funcarg(root, candidate$, suppress_comma)
             else
                 'We need to generate an AST_FLAGS for this
                 expr = ast_add_node(AST_FLAGS)
-                ast_nodes(expr).ref = AST_FLAG_TOKEN
-                ast_nodes(expr).ref2 = typ
+                expr->ref = AST_FLAG_TOKEN
+                expr->ref2 = typ
             end if
             tok_advance
             suppress_comma = TRUE
             goto arg_done
         elseif expected_flags AND TYPE_CONTEXTUAL then
             l = instr(ast_constants(expected_type), "|" + ucase$(tok_content$) + "|")
-            ast_nodes(expr).ref2 = 0
+            expr->ref2 = 0
             if l then
                 'We have found a matching contextual argument
                 typ = expected_type
                 flags = expected_flags
                 expr = ast_add_node(AST_FLAGS)
-                ast_nodes(expr).ref = AST_FLAG_CONTEXTUAL
+                expr->ref = AST_FLAG_CONTEXTUAL
                 do while l > 1
-                    ast_nodes(expr).ref2 = ast_nodes(expr).ref2 + 1
+                    expr->ref2 = expr->ref2 + 1
                     l = _instrrev(l - 1, ast_constants(expected_type), "|")
                 loop
-                ast_nodes(expr).ref2 = ast_nodes(expr).ref2 + 1
+                expr->ref2 = expr->ref2 + 1
                 tok_advance
                 suppress_comma = TRUE
                 goto arg_done
@@ -186,10 +186,10 @@ sub ps_funcarg(root, candidate$, suppress_comma)
     'Step 4a: If the processed arg skipped some optional components, add those optional
     'components as placeholders
     for i = 1 to type_sigt_flagval(flags)
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
     next i
     'Step 4b: Add ast node if any
-    if expr then ast_attach root, expr
+    if expr then root->attach(expr)
     
     'Step 5: Like step 4 for for the candidate
     for i = 1 to type_sigt_flagval(flags)

@@ -32,13 +32,13 @@ function ps_udt
     debuginfo "Start UDT definition"
     $end if
     dim udt_sym as symtab_entry_t
-    udt_sym.typ = SYM_TYPE
-    udt_sym.v1 = 0
-    udt_sym.v2 = SYM_TYPE_UDT
+    udt_sym-stype = SYM_TYPE
+    udt_sym-fixed_size = 0
+    udt_sym-tflags = SYM_TYPE_UDT
 
     ps_consume TOK_TYPE
     if tok_token <> TOK_UNKNOWN then ps_error "UDT name already in use"
-    udt_sym.identifier = ucase$(tok_content$)
+    udt_sym-identifier = ucase$(tok_content$)
     tok_advance
     if ps_consumed(TOK_NEWLINE) then ps_line_prelude
     do
@@ -46,7 +46,7 @@ function ps_udt
         typ = ps_opt_sigil
         do
             elem = ps_udt_element(udt_sym, typ)
-            udt_sym.v1 = udt_sym.v1 + type_fixed_size(symtab(elem).v1)
+            udt_sym-fixed_size = udt_sym-fixed_size + type_fixed_size(elem->type)
         loop while ps_consumed(TOK_COMMA)
         'If we ever need to keep a list of all the elements in a UDT,
         'this is where we'd build it.
@@ -68,7 +68,7 @@ function ps_udt_element(udt_sym as symtab_entry_t, pre_typ)
     debuginfo "Start UDT element"
     $end if
     dim elem_sym as symtab_entry_t
-    elem_sym.typ = SYM_UDT_ELEMENT
+    elem_sym-stype = SYM_UDT_ELEMENT
     
     'Because UDT element names appear in such a restricted environment,
     'they can live in their own namespace without conflicting with
@@ -88,7 +88,7 @@ function ps_udt_element(udt_sym as symtab_entry_t, pre_typ)
             ps_error "Invalid UDT element name"
         end select
     next i
-    elem_sym.identifier = udt_sym.identifier + "." + elem_name$
+    elem_sym-identifier = udt_sym-identifier + "." + elem_name$
     tok_advance
 
     'Set type from sigil, AS clause or default type
@@ -97,10 +97,10 @@ function ps_udt_element(udt_sym as symtab_entry_t, pre_typ)
         ps_error "Declared type does not match"
     end if
     if sigil = 0 then sigil = pre_typ
-    if sigil = 0 then elem_sym.v1 = ps_default_type else elem_sym.v1 = sigil
+    if sigil = 0 then elem_sym-type = ps_default_type else elem_sym-type = sigil
 
     'Get offset of element in UDT
-    elem_sym.v2 = udt_sym.v1
+    elem_sym-udt_element_offset = udt_sym-fixed_size
     symtab_add_entry elem_sym
     
     ps_udt_element = symtab_last_entry
@@ -116,13 +116,14 @@ function ps_udt_element_access(lvalue)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start udt element access"
     $end if
-    head_typ_name$ = symtab(type_of_lvalue(lvalue)).identifier
+    t = type_of_lvalue(lvalue)
+    head_typ_name$ = t->identifier
     elem = symtab_get_id(head_typ_name$ + "." + ucase$(tok_content$))
-    if elem = 0 or symtab(elem).typ <> SYM_UDT_ELEMENT then ps_error "Bad UDT element access"
+    if elem = 0 or elem->stype <> SYM_UDT_ELEMENT then ps_error "Bad UDT element access"
     tok_advance
     node = ast_add_node(AST_UDT_ACCESS)
-    ast_attach node, lvalue
-    ast_nodes(node).ref = elem
+    node->attach(lvalue)
+    node->ref = elem
     ps_udt_element_access = node
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed udt element access"

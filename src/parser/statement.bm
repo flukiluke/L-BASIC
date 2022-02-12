@@ -90,7 +90,7 @@ function ps_stmt
         case TOK_END
             'We can't check tok_next_token because it does not always contain correct look-ahead information
             next_content$ = ucase$(tok_next_content$)
-            nesting = ast_nodes(ps_final_nested).typ
+            nesting = ps_final_nested->atype
             if next_content$ <> "IF" and _
                 next_content$ <> "SELECT" and _
                 next_content$ <> "SUB" and _
@@ -103,25 +103,25 @@ function ps_stmt
                 stmt = -1
             end if
         case TOK_ELSE, TOK_ELSEIF
-            if ast_nodes(ps_final_nested).typ <> AST_IF then ps_error tok_human_readable$(tok_token) + " without IF"
+            if ps_final_nested->atype <> AST_IF then ps_error tok_human_readable$(tok_token) + " without IF"
             stmt = -1
         case TOK_LOOP
-            if ast_nodes(ps_final_nested).typ <> AST_DO_PRE and ast_nodes(ps_final_nested).typ <> AST_DO_POST then ps_error "LOOP without DO"
+            if ps_final_nested->atype <> AST_DO_PRE and ps_final_nested->atype <> AST_DO_POST then ps_error "LOOP without DO"
             stmt = -1
         case TOK_WEND
-            if ast_nodes(ps_final_nested).typ <> AST_WHILE then ps_error "WEND without WHILE"
+            if ps_final_nested->atype <> AST_WHILE then ps_error "WEND without WHILE"
             stmt = -1
         case TOK_NEXT
-            if ast_nodes(ps_final_nested).typ <> AST_FOR then ps_error "NEXT without FOR"
+            if ps_final_nested->atype <> AST_FOR then ps_error "NEXT without FOR"
             stmt = -1
         case TOK_CASE
-            if ast_nodes(ps_final_nested).typ <> AST_SELECT then ps_error "CASE without SELECT"
+            if ps_final_nested->atype <> AST_SELECT then ps_error "CASE without SELECT"
             stmt = -1
         case TOK_IEOF
             if ps_final_nested <> 0 then ps_error "Unexpected end of file"
             stmt = -1
         case else
-            select case symtab(tok_token).typ
+            select case tok_token->stype
             case SYM_VARIABLE
                 stmt = ps_assignment
             case SYM_FUNCTION
@@ -151,7 +151,7 @@ function ps_stmtreg
     if root = 0 then
         'Nope, it's just a statement
         root = ast_add_node(AST_CALL)
-        ast_nodes(root).ref = tok_token
+        root->ref = tok_token
         tok_advance
         'TYPE_NONE to indicate we have no return value
         ps_funcargs root, type_sigt_create$(TYPE_NONE), TRUE

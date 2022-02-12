@@ -30,6 +30,16 @@ dim shared ast_last_constant as long
 dim shared ast_last_commit_id
 dim shared ast_last_constant_commit_id
 
+'Accessor macros
+$macro: @@->parent | ast_nodes(@1).parent
+$macro: @@->atype | ast_nodes(@1).typ
+$macro: @@->ref | ast_nodes(@1).ref
+$macro: @@->ref2 | ast_nodes(@1).ref2
+$macro: @@->linenum | ast_nodes(@1).linenum
+$macro: @@->cast(@@) | ast_add_cast(@1, @2)
+$macro: @@->attach(@@) | ast_attach @1, @2
+$macro: @@->attach_none | ast_attach @1, ast_add_node(AST_NONE)
+
 const AST_FALSE = 1
 const AST_TRUE = 2
 const AST_ONE = 3

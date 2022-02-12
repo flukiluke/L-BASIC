@@ -15,15 +15,15 @@ function ps_for
     var = ps_lvalue_mutable
     var_type = type_of_lvalue(var)
     if not type_is_number(var_type) then ps_error "FOR iterator variable must be numeric"
-    ast_attach root, var
+    root->attach(var)
     ps_consume TOK_EQUALS
 
     start_val = ps_expr
     if not type_is_number(type_of_expr(start_val)) then ps_error "FOR start value must be numeric"
     if type_of_expr(start_val) <> var_type then
         cast = ast_add_node(AST_CAST)
-        ast_nodes(cast).ref = var_type
-        ast_attach cast, start_val
+        cast->ref = var_type
+        cast->attach(start_val)
         start_val = cast
     end if
     ps_consume TOK_TO
@@ -32,8 +32,8 @@ function ps_for
     if not type_is_number(type_of_expr(end_val)) then ps_error "FOR end value must be numeric"
     if type_of_expr(end_val) <> var_type then
         cast = ast_add_node(AST_CAST)
-        ast_nodes(cast).ref = var_type
-        ast_attach cast, end_val
+        cast->ref = var_type
+        cast->attach(end_val)
         end_val = cast
     end if
 
@@ -43,20 +43,20 @@ function ps_for
         if not type_is_number(type_of_expr(step_val)) then ps_error "FOR STEP value must be numeric"
     else
         step_val = ast_add_node(AST_CONSTANT)
-        ast_nodes(step_val).ref = AST_ONE
+        step_val->ref = AST_ONE
     end if
     if type_of_expr(step_val) <> var_type then
         cast = ast_add_node(AST_CAST)
-        ast_nodes(cast).ref = var_type
-        ast_attach cast, step_val
+        cast->ref = var_type
+        cast->attach(step_val)
         step_val = cast
     end if
     ps_consume TOK_NEWLINE
 
-    ast_attach root, start_val
-    ast_attach root, end_val
-    ast_attach root, step_val
-    ast_attach root, ps_block
+    root->attach(start_val)
+    root->attach(end_val)
+    root->attach(step_val)
+    root->attach(ps_block)
 
     ps_consume TOK_NEXT
     'TODO: Check this lvalue matches the one at the top of the loop

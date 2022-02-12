@@ -12,10 +12,10 @@ function ps_while
     ps_add_nested_structure root
     ps_consume TOK_WHILE
 
-    ast_attach root, ps_expr
+    root->attach(ps_expr)
     ps_consume TOK_NEWLINE
 
-    ast_attach root, ps_block
+    root->attach(ps_block)
     ps_consume TOK_WEND
 
     ps_remove_nested_structure
@@ -50,21 +50,21 @@ function ps_do_pre
         ps_consume TOK_UNTIL
         'Need to invert guard condition
         guard = ast_add_node(AST_CALL)
-        ast_nodes(guard).ref = TOK_EQUALS
+        guard->ref = TOK_EQUALS
         sig$ = type_sigt_add_arg(type_sigt_add_arg(type_sigt_create$(TYPE_ANY), TYPE_INTEGER, 0), TYPE_INTEGER, 0)
-        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, sig$)
-        ast_attach guard, ps_expr
+        guard->ref2 = type_find_sig_match(TOK_EQUALS, sig$)
+        guard->attach(ps_expr)
         f = ast_add_node(AST_CONSTANT)
-        ast_nodes(f).ref = AST_FALSE
-        ast_attach guard, f
+        f->ref = AST_FALSE
+        guard->attach(f)
     else
         ps_consume TOK_WHILE
         guard = ps_expr
     end if
-    ast_attach root, guard
+    root->attach(guard)
     ps_consume TOK_NEWLINE
 
-    ast_attach root, ps_block
+    root->attach(ps_block)
     ps_consume TOK_LOOP
 
     ps_remove_nested_structure
@@ -90,23 +90,23 @@ function ps_do_post
         ps_consume TOK_UNTIL
         'Need to invert guard condition
         guard = ast_add_node(AST_CALL)
-        ast_nodes(guard).ref = TOK_EQUALS
+        guard->ref = TOK_EQUALS
         sig$ = type_sigt_add_arg(type_sigt_add_arg(type_sigt_create$(TYPE_ANY), TYPE_INTEGER, 0), TYPE_INTEGER, 0)
-        ast_nodes(guard).ref2 = type_find_sig_match(TOK_EQUALS, sig$)
-        ast_attach guard, ps_expr
+        guard->ref2 = type_find_sig_match(TOK_EQUALS, sig$)
+        guard->attach(ps_expr)
         f = ast_add_node(AST_CONSTANT)
-        ast_nodes(f).ref = AST_FALSE
-        ast_attach guard, f
+        f->ref = AST_FALSE
+        guard->attach(f)
     elseif tok_token = TOK_WHILE then
         ps_consume TOK_WHILE
         guard = ps_expr
     else
         'Infinite loop
         guard = ast_add_node(AST_CONSTANT)
-        ast_nodes(guard).ref = AST_TRUE
+        guard->ref = AST_TRUE
     end if
-    ast_attach root, guard
-    ast_attach root, block
+    root->attach(guard)
+    root->attach(block)
 
     ps_remove_nested_structure
     ps_do_post = root

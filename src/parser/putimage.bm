@@ -12,59 +12,59 @@ function ps__putimage
     $end if
 
     root = ast_add_node(AST_CALL)
-    ast_nodes(root).ref = TOK__PUTIMAGE
-    ast_nodes(root).ref2 = symtab(TOK__PUTIMAGE).v1
+    root->ref = TOK__PUTIMAGE
+    root->ref2 = TOK__PUTIMAGE->sig
     ps_consume TOK__PUTIMAGE
     flag_node = ast_add_node(AST_FLAGS)
-    ast_nodes(flag_node).ref = AST_FLAG_MANUAL
-    ast_attach root, flag_node
+    flag_node->ref = AST_FLAG_MANUAL
+    root->attach(flag_node)
 
     if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_SRC1
     if ps_consumed(TOK_OPAREN) then
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_COMMA
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_CPAREN
     else
-        ast_attach root, ast_add_node(AST_NONE)
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
+        root->attach_none
     end if
     if ps_consumed(TOK_DASH) then
         if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_SRC2
         ps_consume TOK_OPAREN
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_COMMA
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_CPAREN
     else
-        ast_attach root, ast_add_node(AST_NONE)
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
+        root->attach_none
     end if
     if not ps_consumed(TOK_COMMA) then goto putimage_parse_done
-    if tok_token <> TOK_COMMA then ast_attach root, ps_expr else ast_attach root, ast_add_node(AST_NONE)
+    if tok_token <> TOK_COMMA then root->attach(ps_expr) else root->attach_none
     if not ps_consumed(TOK_COMMA) then goto putimage_parse_done
-    if tok_token <> TOK_COMMA then ast_attach root, ps_expr else ast_attach root, ast_add_node(AST_NONE)
+    if tok_token <> TOK_COMMA then root->attach(ps_expr) else root->attach_none
     if not ps_consumed(TOK_COMMA) then goto putimage_parse_done
     if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_DEST1
     if ps_consumed(TOK_OPAREN) then
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_COMMA
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_CPAREN
     else
-        ast_attach root, ast_add_node(AST_NONE)
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
+        root->attach_none
     end if
     if ps_consumed(TOK_DASH) then
         if ps_consumed(TOK_STEP) then flags = flags OR PUTIMAGE_STEP_DEST2
         ps_consume TOK_OPAREN
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_COMMA
-        ast_attach root, ps_expr
+        root->attach(ps_expr)
         ps_consume TOK_CPAREN
     else
-        ast_attach root, ast_add_node(AST_NONE)
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
+        root->attach_none
     end if
     if ps_consumed(TOK_COMMA) then
         ps_consume TOK__SMOOTH
@@ -72,10 +72,10 @@ function ps__putimage
     end if
 
     putimage_parse_done:
-    ast_nodes(flag_node).ref2 = flags
+    flag_node->ref2 = flags
     'Fill in any missing arguments on the end
     for i = ast_num_children(root) + 1 to 11
-        ast_attach root, ast_add_node(AST_NONE)
+        root->attach_none
     next i
     ps__putimage = root
 

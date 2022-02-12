@@ -70,7 +70,7 @@ case TOK_LINE
         v3.n = v3.n + v1.n
         v4.n = v4.n + v2.n
     end if
-    if ast_is_none(mode_child) then mode = 0 else mode = ast_nodes(mode_child).ref2
+    if ast_is_none(mode_child) then mode = 0 else mode = mode_child->ref2
     if ast_is_none(style_child) then v6.n = 65535 else imm_eval style_child, v6
     select case mode
     case 0
@@ -128,7 +128,8 @@ case TOK_PSET
     end if
 
 case TOK__PUTIMAGE
-    flags = ast_nodes(ast_get_child(node, 1)).ref2
+    c1 = ast_get_child(node, 1)
+    flags = c1->ref2
     v5.n = _source
     v6.n = _dest
     imm_eval ast_get_child(node, 6), v5

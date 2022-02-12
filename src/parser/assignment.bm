@@ -18,8 +18,8 @@ function ps_assignment
     lvalue_type = type_of_lvalue(lval)
     rvalue_type = type_of_expr(expr)
     if not type_can_cast(rvalue_type, lvalue_type) then ps_error "Type of variable in assignment does not match value being assigned"
-    expr = ast_add_cast(expr, lvalue_type)
-    ast_attach root, expr
+    expr = expr->cast(lvalue_type)
+    root->attach(expr)
 
     ps_assignment = root
     $if DEBUG_PARSE_TRACE then

@@ -22,14 +22,14 @@ our %macros;
 
 sub trim {
     my $s = shift;
-    $s =~ s/^[ \t]+|[ \t]+$//g;
+    $s =~ s/^[ \t]+|[ \t\r]+$//g;
     return $s;
 }
 
 sub new_macro {
     my ($pattern, $result) = @_;
     # Escape special characters
-    $pattern =~ s/([\\}{\]()\^$.|*+?])/\\$1/g;
+    $pattern =~ s/([\\}{\]()\^\$.|*+?])/\\$1/g;
     # Setup matching groups
     $pattern =~ s/@@/([a-zA-Z0-9_]+)/g;
     $result =~ s/@(\d)/\$$1/g;
