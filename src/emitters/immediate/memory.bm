@@ -48,27 +48,19 @@ function imm_get_addr_loc(node)
     case AST_ARRAY_ACCESS
         array = ast_get_child(node, 1)
         array_type = type_of_lvalue(array)
-        info_base_addr = imm_get_addr(array)
-        if info_base_addr = 0 then imm_error "Access to uninitialised array"
+        desc = imm_get_addr(array)
+        if desc = 0 then imm_error "Access to uninitialised array"
         element_type = array_type->array_type
-        dimensions = imm_get_at_addr_n(imm_add_offset(info_base_addr, 1))
+        dimensions = imm_arr_get_dims(desc)
         'Make sure we have precisely enough indicies for the number of dimensions
         if dimensions <> ast_num_children(node) - 1 then
             imm_error "Incorrect number of indicies for array access"
         end if
-        'Array descriptor:
-        ' - pointer to data
-        ' - number of dimensions
-        ' - lbound of leftmost dimension
-        ' - ubound of leftmost dimension
-        ' - etc.
-        ' - lbound of rightmost dimension
-        ' - ubound of rightmost dimension
         block_size = 1
         for i = 1 to dimensions
             dim index as imm_value_t
-            lower_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2))
-            upper_bound = imm_get_at_addr_n(imm_add_offset(info_base_addr, i * 2 + 1))
+            lower_bound = imm_arr_get_lbound(desc, i)
+            upper_bound = imm_arr_get_ubound(desc, i)
             imm_eval ast_get_child(node, i + 1), index
             if index.n < lower_bound or index.n > upper_bound then
                 imm_error "Array access out of bounds"
@@ -77,7 +69,7 @@ function imm_get_addr_loc(node)
             block_size = upper_bound - lower_bound + 1
         next i
         offset = offset * type_fixed_size(element_type)
-        imm_get_addr_loc = imm_add_offset(imm_get_at_addr_n(info_base_addr), offset)
+        imm_get_addr_loc = imm_add_offset(imm_arr_get_data_addr(desc), offset)
     case else
         imm_error "Attempt to take address of something not an lvalue"
     end select

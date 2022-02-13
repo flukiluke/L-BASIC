@@ -6,7 +6,7 @@ case TOK_DIM
     'This is the DIM function
     child = ast_get_child(node, 1)
     imm_eval child, v1
-    result.n = imm_get_at_addr_n(imm_add_offset(v1.n, 1))
+    result.n = imm_arr_get_dims(v1.n)
 
 case TOK_ERASE
     child = ast_get_child(node, 1)
@@ -63,10 +63,10 @@ case TOK_LBOUND
     imm_eval ast_get_child(node, 1), v1
     dimension = ast_get_child(node, 2)
     if ast_is_none(dimension) then v2.n = 1 else imm_eval dimension, v2
-    if v2.n < 1 or v2.n > imm_get_at_addr_n(imm_add_offset(v1.n, 1)) then
+    if v2.n < 1 or v2.n > imm_arr_get_dims(v1.n) then
         error 9
     end if
-    result.n = imm_get_at_addr_n(imm_add_offset(v1.n, v2.n * 2))
+    result.n = imm_arr_get_lbound(v1.n, v2.n)
 
 case TOK_SWAP
     l = ast_get_child(node, 1)
@@ -88,7 +88,7 @@ case TOK_UBOUND
     imm_eval ast_get_child(node, 1), v1
     dimension = ast_get_child(node, 2)
     if ast_is_none(dimension) then v2.n = 1 else imm_eval dimension, v2
-    if v2.n < 1 or v2.n > imm_get_at_addr_n(imm_add_offset(v1.n, 1)) then
+    if v2.n < 1 or v2.n > imm_arr_get_dims(v1.n) then
         error 9
     end if
-    result.n = imm_get_at_addr_n(imm_add_offset(v1.n, v2.n * 2 + 1))
+    result.n = imm_arr_get_ubound(v1.n, v2.n)
