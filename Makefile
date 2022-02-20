@@ -32,10 +32,10 @@ $(TS_FILES): $(SRC_DIR)/parser/ts.rules $(TOOLS_DIR)/tsgen.tool
 $(TOKEN_FILES): $(SRC_DIR)/parser/tokens.list $(TOOLS_DIR)/tokgen.tool
 	$(TOOLS_DIR)/tokgen.tool $(SRC_DIR)/parser/tokens.list $(TOKEN_FILES)
 
-$(MERGED_SOURCE): $(SRC_DIR)/lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.pl
+$(MERGED_SOURCE): $(SRC_DIR)/lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find $(SRC_DIR) -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.py
 	$(eval amalg := $(shell mktemp))
 	$(TOOLS_DIR)/incmerge.tool $(SRC_DIR)/lbasic.bas $(amalg)
-	$(TOOLS_DIR)/prep.pl < $(amalg) > $(MERGED_SOURCE)
+	$(TOOLS_DIR)/prep.py $(amalg) $(MERGED_SOURCE)
 	rm $(amalg)
 
 # Main binary
