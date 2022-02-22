@@ -95,7 +95,6 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         var = symtab_last_entry
     else
         var = existing_array
-        destruct = FALSE
     end if
 
     'Used for constructor and destructor
@@ -116,20 +115,26 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         ast_children(node) = mkl$(var_node) + dims$
     end if
 
+    'Attempt to claim ownership. If the array has just been created this will work,
+    'otherwise it's a no-op on already claimed arrays.
+    node = ast_add_node(AST_ARRAY_CLAIM)
+    node->attach(var_node)
+    block->attach(node)
+
     'Generate an array destructor if:
     ' - we are in a procedure (no need to destruct at program exit), and
-    ' - the array is not shared or static, and
-    ' - the variable is not an existing array (would imply it is owned by another scope).
+    ' - the array is not shared or static
     ' Note that we _do_ generate a destructor for non-concrete arrays, because those
-    ' variables may be assigned (and thus take ownership) of a concrete array.
+    ' variables may be assigned (and thus take ownership of) a concrete array.
     if destruct then
         'Have a check to see if there's already a destructor.
-        'This could occur if there are multiple DIMs in the same function.
-        for i = 1 to len(ps_queued_nodes$) - 3 step 4
-            other = cvl(mid$(ps_queued_nodes$, i, 4))
-            other_var = ast_get_child(other, 1)
-            if other->stype = AST_ARRAY_DELETE and _
-                other_var->ref = var then goto array_dstr_dup
+        'This could occur if there are multiple DIMs in the same function, or the
+        'array is a parameter.
+        for i = 1 to len(ps_queued_cleanup_nodes$) - 3 step 4
+            other = cvl(mid$(ps_queued_cleanup_nodes$, i, 4))
+            other_var_node = ast_get_child(other, 1)
+            if other->atype = AST_ARRAY_DELETE and _
+                other_var_node->ref = var then goto array_dstr_dup
         next i
         node = ast_add_node(AST_ARRAY_DELETE)
         node->attach(var_node)

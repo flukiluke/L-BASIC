@@ -97,7 +97,11 @@ function ps_get_scope$(token)
 end function
 
 sub ps_queue_cleanup(node)
-    ps_queued_nodes$ = ps_queued_nodes$ + mkl$(node)
+    ps_queued_cleanup_nodes$ = ps_queued_cleanup_nodes$ + mkl$(node)
+end sub
+
+sub ps_queue_entry(node)
+    ps_queued_entry_nodes$ = ps_queued_entry_nodes$ + mkl$(node)
 end sub
 
 sub ps_error(msg$)

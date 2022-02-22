@@ -38,6 +38,7 @@ $macro: @@->ref2 | ast_nodes(@1).ref2
 $macro: @@->linenum | ast_nodes(@1).linenum
 $macro: @@->cast(@@) | ast_add_cast(@1, @2)
 $macro: @@->attach(@@) | ast_attach @1, @2
+$macro: @@->pre_attach(@@) | ast_pre_attach @1, @2
 $macro: @@->attach_none | ast_attach @1, ast_add_node(AST_NONE)
 
 const AST_FALSE = 1
@@ -127,10 +128,13 @@ const AST_ARRAY_DELETE = 27
 'Like _CREATE, with the exception that the array is not touched if memory is already
 'allocated. Added to support STATIC arrays.
 const AST_ARRAY_ESTABLISH = 28
+'Try to claim ownership of an array. If unowned, the owner becomes the current scope.
+'If already owned, does nothing.
+const AST_ARRAY_CLAIM = 29
 
 'Sets the return value of the current function. first child is expr to return, ref
 'is the return type.
-const AST_SET_RETURN = 29
+const AST_SET_RETURN = 30
 
 'Flag is a value defined in cmdflags.bi.
 const AST_FLAG_MANUAL = 1

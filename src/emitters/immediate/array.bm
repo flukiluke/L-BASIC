@@ -23,18 +23,51 @@ sub imm_arr_set_lbound(desc, d, b): imm_set_at_addr_n imm_add_offset(desc, d * 2
 sub imm_arr_set_ubound(desc, d, b): imm_set_at_addr_n imm_add_offset(desc, d * 2 + 2), b: end sub
 function imm_arr_calc_desc_size(dims): imm_arr_calc_desc_size = dims * 2 + 3: end function
 
+'Allocate array memory if it is not allocated. This contrasts with imm_do_array_resize
+'in that it does not touch the data if the array is already allocated.
 sub imm_do_array_establish(node)
     array = ast_get_child(node, 1)
     desc = imm_get_addr(array)
     if imm_arr_get_data_addr(desc) <> 0 then exit sub
     imm_array_init node
 end sub
-    
+
+'Claim ownership of an array for the current scope if unowned
+sub imm_do_array_claim(node)
+    array = ast_get_child(node, 1)
+    desc = imm_get_addr(array)
+    $if DEBUG_OWNERS then
+    debuginfo _trim$(str$(imm_stack_base)) + " tries to claim array at " + str$(desc)
+    $end if
+    'Don't try claim arrays that haven't been instantiated
+    if desc = 0 then exit sub
+    owner = imm_arr_get_owner(desc)
+    $if DEBUG_OWNERS then
+    if owner = 0 then
+        imm_arr_set_owner desc, imm_stack_base
+        debuginfo "Claim succeeded"
+    elseif owner = imm_stack_base then
+        debuginfo "Already owned by claimant"
+    else
+        debuginfo "Already owned by " + str$(owner)
+    end if
+    $else
+    if owner = 0 then imm_arr_set_owner desc, imm_stack_base
+    $end if
+end sub
+
+'Takes an AST node and frees the array's memory allocation if the caller is the owner.
+'Also frees the descriptor if it is a heap object and zeros out the pointer to descriptor
+'if needed.
 sub imm_do_array_delete(node)
     array = ast_get_child(node, 1)
     desc = imm_get_addr(array)
     'don't free anything if descriptor does not exist
     if desc = 0 then exit sub
+    'sanity check, should never occur
+    if imm_arr_get_owner(desc) = 0 then imm_error "Deleting unowned array"
+    'also don't do anything if the array is owned by someone else
+    if imm_arr_get_owner(desc) <> imm_stack_base then exit sub
     imm_heap_free imm_arr_get_data_addr(desc)
     if desc < 0 then
         'descriptor is on the heap, free that too
@@ -43,51 +76,9 @@ sub imm_do_array_delete(node)
         imm_set_at_addr_n imm_get_addr_loc(array), 0
     end if
 end sub
-
-sub imm_array_delete(desc)
-    if desc = 0 then exit sub
-    data_addr = imm_arr_get_data_addr(desc)
-    if data_addr then imm_heap_free data_addr
-    if desc < 0 then imm_heap_free desc
-end sub
-
-sub imm_array_init(node)
-    dim temp as imm_value_t
-    'New array
-    array = ast_get_child(node, 1)
-    desc = imm_get_addr(array)
-    array_type = type_of_lvalue(array)
-    element_type = array_type->array_type
-    dimensions = (ast_num_children(node) - 1) / 2
-    cur_dimensions = imm_arr_get_dims(desc)
-    if cur_dimensions <> 0 and cur_dimensions <> dimensions then
-        imm_error "Cannot change number of array dimensions"
-    end if
-    block_size = 1
-    imm_arr_set_dims desc, dimensions
-    for i = 1 to dimensions
-        'evaluate upper and lower bounds for this dimension
-        imm_eval ast_get_child(node, i * 2), temp
-        lower_bound = temp.n
-        imm_eval ast_get_child(node, i * 2 + 1), temp
-        upper_bound = temp.n
-        'write values to descriptor
-        imm_arr_set_lbound desc, i, lower_bound
-        imm_arr_set_ubound desc, i, upper_bound
-        'accumulate total data block size as number of elements
-        data_size = data_size + (upper_bound - lower_bound + 1) * block_size
-        block_size = upper_bound - lower_bound + 1
-    next i
-    'convert to bytes
-    data_size = data_size * type_fixed_size(element_type)
-    'allocate and store pointer
-    data_addr = imm_heap_alloc(data_size)
-    imm_arr_set_data_addr desc, data_addr
-    temp.n = 0
-    temp.s = ""
-    imm_memset data_addr, data_size, temp
-end sub
     
+'Clear and/or resize an array, doing an initial allocation if needed. If preserve = TRUE,
+'any existing data is preserved.
 sub imm_do_array_resize(node, preserve)
     dim temp as imm_value_t
     array = ast_get_child(node, 1)
@@ -100,6 +91,7 @@ sub imm_do_array_resize(node, preserve)
         'explicitly set number of dimensions to 0 so that imm_array_init
         'does not complain
         imm_arr_set_dims desc, dimensions
+        imm_arr_set_owner desc, imm_stack_base
         data_addr = 0
     else
         data_addr = imm_arr_get_data_addr(desc)
@@ -158,6 +150,51 @@ sub imm_do_array_resize(node, preserve)
     end if
 end sub
 
+'Free array's memory allocation, including the descriptor if it is a heap object.
+sub imm_array_delete(desc)
+    if desc = 0 then exit sub
+    data_addr = imm_arr_get_data_addr(desc)
+    if data_addr then imm_heap_free data_addr
+    if desc < 0 then imm_heap_free desc
+end sub
+
+sub imm_array_init(node)
+    dim temp as imm_value_t
+    'New array
+    array = ast_get_child(node, 1)
+    desc = imm_get_addr(array)
+    array_type = type_of_lvalue(array)
+    element_type = array_type->array_type
+    dimensions = (ast_num_children(node) - 1) / 2
+    cur_dimensions = imm_arr_get_dims(desc)
+    if cur_dimensions <> 0 and cur_dimensions <> dimensions then
+        imm_error "Cannot change number of array dimensions"
+    end if
+    block_size = 1
+    imm_arr_set_dims desc, dimensions
+    for i = 1 to dimensions
+        'evaluate upper and lower bounds for this dimension
+        imm_eval ast_get_child(node, i * 2), temp
+        lower_bound = temp.n
+        imm_eval ast_get_child(node, i * 2 + 1), temp
+        upper_bound = temp.n
+        'write values to descriptor
+        imm_arr_set_lbound desc, i, lower_bound
+        imm_arr_set_ubound desc, i, upper_bound
+        'accumulate total data block size as number of elements
+        data_size = data_size + (upper_bound - lower_bound + 1) * block_size
+        block_size = upper_bound - lower_bound + 1
+    next i
+    'convert to bytes
+    data_size = data_size * type_fixed_size(element_type)
+    'allocate and store pointer
+    data_addr = imm_heap_alloc(data_size)
+    imm_arr_set_data_addr desc, data_addr
+    temp.n = 0
+    temp.s = ""
+    imm_memset data_addr, data_size, temp
+end sub
+    
 'If is_ref is true, dest_addr is the address of a pointer to the descriptor.
 'It may be a null pointer, indicating the descriptor needs to be created.
 'If is_ref is false, dest_addr is the descriptor address.

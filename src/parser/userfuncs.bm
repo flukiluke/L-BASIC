@@ -109,13 +109,18 @@ function ps_userfunc
 
     ps_consume TOK_NEWLINE
     block = ps_block
-    for i = 1 to len(ps_queued_nodes$) - 3 step 4
-        other = cvl(mid$(ps_queued_nodes$, i, 4))
+    for i = 1 to len(ps_queued_entry_nodes$) - 3 step 4
+        other = cvl(mid$(ps_queued_entry_nodes$, i, 4))
+        block->pre_attach(other)
+    next i
+    ps_queued_entry_nodes$ = ""
+    for i = 1 to len(ps_queued_cleanup_nodes$) - 3 step 4
+        other = cvl(mid$(ps_queued_cleanup_nodes$, i, 4))
         block->attach(other)
     next i
-    ps_queued_nodes$ = ""
+    ps_queued_cleanup_nodes$ = ""
 
-    root->attach(block)
+    root->pre_attach(block)
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
     proc_id->stack_size = ps_scope_frame_size
@@ -191,6 +196,14 @@ function ps_formal_args$(root)
             is_ref = (flags AND TYPE_BYVAL) = 0
             var->ref = ps_new_var_pp(var_name$, sigil, FALSE, is_ref)
             root->attach(var)
+            if is_array then
+                node = ast_add_node(AST_ARRAY_CLAIM)
+                node->attach(var)
+                ps_queue_entry node
+                node = ast_add_node(AST_ARRAY_DELETE)
+                node->attach(var)
+                ps_queue_cleanup node
+            end if
         end if
         result$ = type_sigt_add_arg(result$, sigil, flags)
     loop while ps_consumed(TOK_COMMA)

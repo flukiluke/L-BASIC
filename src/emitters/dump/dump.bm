@@ -281,6 +281,9 @@ sub ast_dump_pretty(root, indent_level)
             if i < ast_num_children(root) - 1 then print #logging_file_handle, ", ";
         next i
         print #logging_file_handle, ")";
+    case AST_ARRAY_CLAIM
+        print #logging_file_handle, "claim ";
+        ast_dump_pretty ast_get_child(root, 1), 0
     case AST_ARRAY_DELETE
         print #logging_file_handle, "delete ";
         ast_dump_pretty ast_get_child(root, 1), 0
