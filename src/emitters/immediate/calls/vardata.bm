@@ -1,6 +1,6 @@
 'Copyright Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'varinfo.bm - Various variable interrogation function
+'vardata.bm - Various variable management function
 
 case TOK_DIM
     'This is the DIM function
@@ -68,6 +68,24 @@ case TOK_LBOUND
     end if
     result.n = imm_arr_get_lbound(v1.n, v2.n)
 
+case TOK_PEEK
+    imm_eval ast_get_child(node, 1), v1
+    result.n = imm_get_at_addr_n(v1.n)
+
+case TOK__PEEKSTR
+    imm_eval ast_get_child(node, 1), v1
+    result.s = imm_get_at_addr_s(v1.n)
+
+case TOK_POKE
+    imm_eval ast_get_child(node, 1), v1
+    c2 = ast_get_child(node, 2)
+    imm_eval c2, v2
+    if type_of_expr(c2) = TYPE_STRING then
+        imm_set_at_addr_s v1.n, v2.s
+    else
+        imm_set_at_addr_n v1.n, v2.n
+    end if
+
 case TOK_SWAP
     l = ast_get_child(node, 1)
     r = ast_get_child(node, 2)
@@ -92,3 +110,6 @@ case TOK_UBOUND
         error 9
     end if
     result.n = imm_arr_get_ubound(v1.n, v2.n)
+
+case TOK_VARPTR
+    result.n = imm_get_addr(ast_get_child(node, 1))

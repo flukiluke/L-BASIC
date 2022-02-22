@@ -418,14 +418,19 @@ function option         long      @any
 function paint          none      "step?,'oparen,single,single,'cparen,long,long?
 # palette
 # pcopy
-# peek
+# Currently peek returns quad because that is the interpreter's native word size.
+# The variant is only needed because the interpreter distinguishes string and
+# numeric storage.
+function peek           quad      long
+function _peekstr       string    long
 # pen
 function _pi            double    single?
 function play           none      string
 # pmap
 function point          long      single,single
 function point          single    integer
-# poke
+function poke           none      long,quad
+function poke           none      long,string
 # pos
 # preset
 function print          none      list
@@ -524,7 +529,7 @@ function ucase          string    string
 generic using
 
 function val            quad      string
-# varptr
+function varptr         long      @any
 # varseg
 # view
 
