@@ -54,7 +54,7 @@ sub s(a())
 end sub
 sub t(b())
 end sub
-Assuming `s a` is called with a unowned, s will claim ownership. On t's exit, it cannot distinguish between it's ownership (which it doesn't have) and s's ownership.
+Assuming `s a` is called with a unowned, s will claim ownership. On t's exit, it cannot distinguish between its ownership (which it doesn't have) and s's ownership.
 
 What about recursion though?
 sub s(a(), z)

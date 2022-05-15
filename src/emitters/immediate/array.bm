@@ -35,6 +35,10 @@ end sub
 'Claim ownership of an array for the current scope if unowned
 sub imm_do_array_claim(node)
     array = ast_get_child(node, 1)
+    imm_array_claim(array)
+end sub
+
+sub imm_array_claim(array)
     desc = imm_get_addr(array)
     $if DEBUG_OWNERS then
     debuginfo _trim$(str$(imm_stack_base)) + " tries to claim array at " + str$(desc)
@@ -235,3 +239,4 @@ sub imm_array_copy(src_addr, dest_addr_in, is_ref)
         imm_arr_set_ubound dest_addr, i, imm_arr_get_ubound(src_addr, i)
     next i
 end sub
+    

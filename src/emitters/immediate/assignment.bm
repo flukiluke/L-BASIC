@@ -20,6 +20,7 @@ sub imm_do_assign(node)
         next i
     elseif typ->tflags = SYM_TYPE_ARRAY then
         imm_array_copy rvalue.n, imm_get_addr_loc(lvalue), imm_needs_deref(lvalue)
+        imm_array_claim lvalue
     else
         imm_set_at_addr dest_addr, rvalue
     end if
