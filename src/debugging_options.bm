@@ -9,11 +9,18 @@
 'you can undo this with:
 '   git update-index --no-skip-worktree src/debugging_options.bm
 
-$let DEBUG_TIMINGS = 0
-$let DEBUG_PARSE_TRACE = 0
-$let DEBUG_TOKEN_STREAM = 0
-$let DEBUG_CALL_RESOLUTION = 0
-$let DEBUG_PARSE_RESULT = 0
-$let DEBUG_MEM_TRACE = 0
-$let DEBUG_HEAP = 1
-$let DEBUG_OWNERS = 1
+$macro: debug_config_option @@, On | $let DEBUG_@1 = -1\nDebug_features$ = Debug_features$ + "[@1]"
+$macro: debug_config_option @@, Off | $let DEBUG_@1 = 0
+
+dim shared Debug_features$
+
+'The DUMP option is required for PARSE_RESULT
+debug_config_option DUMP, Off
+debug_config_option PARSE_RESULT, Off
+debug_config_option PARSE_TRACE, Off
+debug_config_option TOKEN_STREAM, Off
+debug_config_option CALL_RESOLUTION, Off
+debug_config_option MEM_TRACE, Off
+debug_config_option HEAP, Off
+debug_config_option OWNERS, Off
+

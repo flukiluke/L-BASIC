@@ -21,10 +21,6 @@ $end if
 
 $include: 'debugging_options.bm'
 
-$if DEBUG_TIMINGS then
-debug_timing_mark# = timer(0.001)
-$end if
-
 dim shared VERSION$
 VERSION$ = "0.1.2"
 
@@ -41,12 +37,12 @@ on error goto error_handler
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
-'0 => Unknown location
-'1 => Parsing code; parser line number is valid
-'2 => Immediate runtime (interactive)
-'3 => Dump code
-'4 => Trying to open a file
-'5 => Immediate runtime (non-interactive)
+const ERR_CTX_UNKNOWN = 0 'Unknown location
+const ERR_CTX_PARSING = 1 'Implies parser line number is valid
+const ERR_CTX_REPL = 2 'Immediate runtime (interactive)
+const ERR_CTX_DUMP = 3 'Dump code
+const ERR_CTX_FILE = 4 'Trying to open a file
+const ERR_CTX_RUN = 5 'Immediate runtime (non-interactive)
 dim shared Error_context
 'Because we can only throw a numeric error code, this holds a more
 'detailed explanation.
@@ -81,35 +77,50 @@ end if
 target_platform_settings = runtime_platform_settings
 
 'This is an array so we can handle included files.
-'The current "reading" file is input_files(input_files_last).
+'The current "reading" file is input_files(input_files_current).
+'Note that unlike other arrays, we never remove entries from this one. This allows
+'us to use the index as a reference to the file for generating diagnostics later on.
+'input_files(1) is used to represent user input.
 type input_file_t
     handle as long
     'Directory containing the file, further includes are relative to this
     dirname as string
     'To be used only for diagnostic messages
     filename as string
+    'Set TRUE if we have finished reading the file
+    finished as long
+    'The index of the file that triggered the inclusion of this one
+    included_by as long
 end type
-redim shared input_files(0) as input_file_t
-dim shared input_files_last
+redim shared input_files(1) as input_file_t
+input_files(1).filename = "[interactive]"
+dim shared input_files_current
 'The logging output is used for debugging output
 dim shared logging_file_handle
+
+const MODE_REPL = 1
+const MODE_RUN = 2
+const MODE_BUILD = 3
+const MODE_FORMAT = 4
+const MODE_EXEC = 5
+const MODE_DUMP = 6
 
 'Various global options read from the command line
 type options_t
     mainarg as string
     preload as string
     outputfile as string
-    run_mode as integer
-    interactive_mode as integer
     terminal_mode as integer
-    command_mode as integer
-    compile_mode as integer
+    oper_mode as integer
     debug as integer
 end type
 dim shared options as options_t
 
 'Allow immediate mode to access COMMAND$() without picking up interpreter options
 dim shared input_file_command_offset
+
+'Ensure that file accesses are relative to the users's working directory
+chdir _startdir$
 
 $include: 'cmdflags.bi'
 $include: 'type.bi'
@@ -128,31 +139,32 @@ end if
 logging_file_handle = freefile
 open_file "SCRN:", logging_file_handle, TRUE
 
-'Setup AST, constants and parser settings
+'Setup AST, constants and parser settings. These must be done before
+'preloading any files which is why they are here and not in
+'ingest_initial_file.
 ast_init
 ps_init
-
-$if DEBUG_TIMINGS then
-debuginfo "Boot time:" + str$(timer(0.001) - debug_timing_mark#)
-$end if
 
 'Preload files can override built-in commands; handle that now
 if options.preload <> "" then preload_file
 
 'Dispatch based on desired mode of operation
-Error_context = 1
-if options.interactive_mode then
-    'User will type in commands
-    interactive_mode FALSE
-elseif options.command_mode then
-    'Run some code given on the command line
-    command_mode
-elseif options.compile_mode then
-    'Produce a binary output. Currently this just dumps the AST and symbol table.
-    compile_mode
-else
-    run_mode
-end if
+select case options.oper_mode
+    case MODE_REPL
+        interactive_mode FALSE
+    case MODE_RUN
+        run_mode
+    case MODE_BUILD
+        build_mode
+    case MODE_FORMAT
+        format_mode
+    case MODE_EXEC
+        exec_mode
+    case MODE_DUMP
+    $if DEBUG_DUMP then
+        dump_mode
+    $end if
+end select
 
 if options.terminal_mode then system else end
 
@@ -168,10 +180,10 @@ error_handler:
         _dest _console
     end if
     select case Error_context
-    case 1 'Parsing code
+    case ERR_CTX_PARSING
         print "Parser: ";
         if err <> 101 then goto internal_error
-        if options.interactive_mode and options.preload = "" then
+        if options.oper_mode = MODE_REPL and options.preload = "" then
             print Error_message$
             Error_message$ = ""
             _dest old_dest
@@ -180,19 +192,19 @@ error_handler:
             if options.preload <> "" then print "In preload file: ";
             print "Line" + str$(ps_actual_linenum) + ": " + Error_message$
         end if
-    case 2, 5 'Immediate mode
+    case ERR_CTX_REPL, ERR_CTX_RUN
         'We have no good way of distinguishing between user program errors and internal errors
         'Of course, the internal code is perfect so it *must* be a user program error
         print "Runtime error: ";
         if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
         imm_show_eval_stack
-        if Error_context = 2 then resume interactive_recovery
-    case 3 'Dump mode
+        if Error_context = ERR_CTX_REPL then resume interactive_recovery
+    case ERR_CTX_DUMP
         print "Dump: ";
         if err <> 101 then goto internal_error
         print Error_message$
-    case 4 'File access check
+    case ERR_CTX_FILE 'File access check
         _dest old_dest
         resume next
     case else
@@ -228,9 +240,7 @@ end sub
 'This function and the next are called from tokeng.
 'They provide a uniform way of loading the next line.
 function general_next_line$
-    if options.preload <> "" then
-        line input #input_files(input_files_last).handle, s$
-    elseif options.interactive_mode then
+    if input_files_current = 1 then
         old_dest = _dest
         if not options.terminal_mode then
             _dest 0
@@ -240,51 +250,60 @@ function general_next_line$
         print "> ";
         line input s$
         _dest old_dest
-    elseif options.command_mode then
-        s$ = options.mainarg
-        options.mainarg = ""
     else
-        line input #input_files(input_files_last).handle, s$
+        line input #input_files(input_files_current).handle, s$
     end if
     general_next_line$ = s$
 end function
 
 function general_eof
-    if options.preload <> "" then
-        result = eof(input_files(input_files_last).handle)
-    elseif options.interactive_mode then
-        'Hopefully one day we'll be able to handle ^D/^Z here
-        result = FALSE
-    elseif options.command_mode then
-        result = options.mainarg = ""
+    if input_files_current = 0 then
+        'nothing is open
+        general_eof = TRUE
+    elseif input_files_current = 1 then
+        'reading from console
+        general_eof = FALSE
     else
-        result = eof(input_files(input_files_last).handle)
-        'An EOF in an include file just means close that and return to the
-        'outer file
-        if result and input_files_last > 0 then
-            close #input_files(input_files_last).handle
-            input_files_last = input_files_last - 1
-            'Call recursively in case the outer file has also ended
-            result = general_eof
-        end if
+        do
+            finished = eof(input_files(input_files_current).handle)
+            if finished then
+                close #input_files(input_files_current).handle
+                input_files_current = input_files(input_files_current).included_by
+            end if
+        loop while input_files(input_files_current).finished and input_files_current
+        general_eof = input_files_current = 0
     end if
-    general_eof = result
 end function
 
+sub add_input_file(filename$, as_include)
+    redim _preserve input_files(ubound(input_files) + 1) as input_file_t
+    u = ubound(input_files)
+    input_files(u).handle = freefile
+    input_files(u).filename = filename$
+    if as_include then
+        input_files(u).included_by = input_files_current
+    else
+        input_files(u).included_by = 0
+    end if
+    input_files(u).finished = FALSE
+    input_files(u).dirname = dirname$(filename$)
+    open_file filename$, input_files(u).handle, FALSE
+    input_files_current = u
+end sub
+
 sub preload_file
-    input_files(input_files_last).handle = freefile
-    open_file options.preload, input_files(input_files_last).handle, FALSE
+    add_input_file options.preload, FALSE
     tok_init
-    Error_context = 1
+    Error_context = ERR_CTX_PARSING
     ps_preload_file
-    close #input_files(input_files_last).handle
     options.preload = ""
+    Error_context = ERR_CTX_UNKNOWN
 end sub
 
 'Open a file and trigger a fatal error if we couldn't
 sub open_file(filename$, handle, is_output)
     old_ctx = Error_context
-    Error_context = 4
+    Error_context = ERR_CTX_FILE
     Error_occurred = FALSE
     if is_output then
         open filename$ for output as #handle
@@ -293,6 +312,21 @@ sub open_file(filename$, handle, is_output)
     end if
     if Error_occurred then fatalerror "Could not open file " + filename$
     Error_context = old_ctx
+end sub
+
+'This extracts a common prologue from the modes below
+sub ingest_initial_file
+    add_input_file options.mainarg, FALSE
+    tok_init
+    Error_content = ERR_CTX_PARSING
+    ps_prepass
+    add_input_file options.mainarg, FALSE
+    tok_reinit
+    ps_init
+    ast_rollback
+    AST_ENTRYPOINT = ps_block
+    ps_finish_labels AST_ENTRYPOINT
+    Error_context = ERR_CTX_UNKNOWN
 end sub
 
 sub interactive_mode(recovery)
@@ -304,6 +338,7 @@ sub interactive_mode(recovery)
         ast_rollback
         ast_clear_entrypoint
     else
+        input_files_current = 1 'interactive input
         imm_init
         AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
         ast_commit
@@ -311,7 +346,7 @@ sub interactive_mode(recovery)
         ps_init
     end if
     do
-        Error_context = 1
+        Error_context = ERR_CTX_PARSING
         node = ps_stmt
         select case node
         case -2
@@ -326,19 +361,19 @@ sub interactive_mode(recovery)
             'symbols created.
             symtab_commit
         case else
-            Error_context = 0
+            Error_context = ERR_CTX_UNKNOWN
             ast_attach AST_ENTRYPOINT, node
             $if DEBUG_PARSE_RESULT then
             if options.debug then
-                Error_context = 3
+                Error_context = ERR_CTX_DUMP
                 ast_dump_pretty AST_ENTRYPOINT, 0
-                Error_context = 0
+                Error_context = ERR_CTX_UNKNOWN
                 print #1,
             end if
             $end if
             'TODO remove this next line by adding the logic to imm_run or similar
             imm_reinit ps_scope_frame_size
-            Error_context = 2
+            Error_context = ERR_CTX_REPL
             imm_run AST_ENTRYPOINT
             'Keep any symbols that were defined
             symtab_commit
@@ -347,94 +382,65 @@ sub interactive_mode(recovery)
             'And clear the main program
             ast_clear_entrypoint
         end select
-        Error_context = 1
+        Error_context = ERR_CTX_PARSING
         ps_consume TOK_NEWLINE
     loop
 end sub
 
-sub command_mode
-    tok_init
-    root = ps_block
-    Error_context = 0
-    $if DEBUG_PARSE_RESULT then
-    if options.debug then
-        Error_context = 3
-        ast_dump_pretty root, 0
-        Error_context = 0
-        print #1,
-    end if
-    $end if
-    imm_init
-    Error_context = 2
-    imm_run root
-    Error_context = 0
-end sub
-    
-sub compile_mode
-    if options.mainarg = "" then fatalerror "No input file"
-    'Output file defaults to input file with .bas changed to .exe (or nothing on Unix)
-    if options.outputfile = "" then options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
-    input_files(input_files_last).filename = options.mainarg
-    options.mainarg = locate_path$(options.mainarg, _startdir$)
-    input_files(input_files_last).dirname = dirname$(options.mainarg)
-    input_files(input_files_last).handle = freefile
-    open_file options.mainarg, input_files(input_files_last).handle, FALSE
-    tok_init
-    ps_prepass
-    seek input_files(input_files_last).handle, 1
-    tok_reinit
-    ps_init
-    ast_rollback
-    AST_ENTRYPOINT = ps_block
-    ps_finish_labels AST_ENTRYPOINT
-    Error_context = 0
-    close #input_files(input_files_last).handle
-    close #logging_file_handle
-    logging_file_handle = freefile
-    open_file options.outputfile, logging_file_handle, TRUE
-    Error_context = 3
-    dump_program
-    Error_context = 0
-    close #1
-end sub
-
 sub run_mode
-    if options.mainarg = "" then fatalerror "No input file"
-    input_files(input_files_last).filename = options.mainarg
-    options.mainarg = locate_path$(options.mainarg, _startdir$)
-    input_files(input_files_last).dirname = dirname$(options.mainarg)
-    input_files(input_files_last).handle = freefile
-    open_file options.mainarg, input_files(input_files_last).handle, FALSE
-    tok_init
-    $if DEBUG_TIMINGS then
-    debug_timing_mark# = timer(0.001)
-    $end if
-    ps_prepass
-    seek input_files(input_files_last).handle, 1
-    tok_reinit
-    ps_init
-    ast_rollback
-    AST_ENTRYPOINT = ps_block
-    ps_finish_labels AST_ENTRYPOINT
-    $if DEBUG_TIMINGS then
-    debuginfo "Parse time:" + str$(timer(0.001) - debug_timing_mark#)
-    $end if
-    Error_context = 0
-    close #input_files(input_files_last).handle
+    ingest_initial_file
     imm_init
-    Error_context = 5
-    $if DEBUG_TIMINGS then
-    debug_timing_mark# = timer(0.001)
-    $end if
+    Error_context = ERR_CTX_RUN
     imm_run AST_ENTRYPOINT
-    $if DEBUG_TIMINGS then
-    debuginfo "Run time:" + str$(timer(0.001) - debug_timing_mark#)
-    $end if
-    Error_context = 0
+    Error_context = ERR_CTX_UNKNOWN
     $if DEBUG_HEAP then
     if options.debug then imm_heap_stats
     $end if
 end sub
+
+sub build_mode
+    if options.outputfile = "" then
+        options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
+    end if
+    ingest_initial_file
+    print "Parse finished but building currently unsupported."
+end sub
+
+sub format_mode
+    ingest_initial_file
+end sub
+
+sub exec_mode
+    tok_init
+    Error_content = ERR_CTX_PARSING
+    root = ps_block
+    Error_context = ERR_CTX_UNKNOWN
+    $if DEBUG_PARSE_RESULT then
+    if options.debug then
+        Error_context = ERR_CTX_DUMP
+        dump_ast root, 0
+        Error_context = ERR_CTX_UNKNOWN
+        print #1,
+    end if
+    $end if
+    imm_init
+    Error_context = ERR_CTX_RUN
+    imm_run root
+    Error_context = ERR_CTX_UNKNOWN
+end sub
+
+$if DEBUG_DUMP then
+sub dump_mode
+    ingest_initial_file
+    close #logging_file_handle
+    logging_file_handle = freefile
+    open_file options.outputfile, logging_file_handle, TRUE
+    Error_context = ERR_CTX_DUMP
+    dump_program
+    Error_context = ERR_CTX_UNKNOWN
+    close #1
+end sub
+$end if
 
 'Strip the .bas extension if present
 function remove_ext$(fullname$)
@@ -506,22 +512,36 @@ end sub
 
 sub show_version
     print "The L-BASIC compiler version " + VERSION$
+    if Debug_features$ <> "" then print "Debug features enabled: " + Debug_features$
 end sub
 
 sub show_help
-    print "The L-BASIC compiler"
-    print "Usage: " + command$(0) + " [OPTIONS] [FILE]"
-    print "Execute FILE if given, otherwise launch an interactive session."
+    show_version
+    print "Usage: " + command$(0) + " COMMAND [OPTIONS] [FILE]"
     print '                                                                                '80 columns
     print "Options:"
-    print "  -t, --terminal                   Run in terminal mode (no graphical window)"
-    print "  -c, --compile                    Compile FILE instead of executing"
-    print "  -o OUTPUT, --output OUTPUT       Place compilation output into OUTPUT"
-    print "  -e CMD, --execute CMD            Execute the statement CMD then exit"
+    print "  -o, --output                     Compilation or format output"
+    print "  -t, --terminal                   Do not open a graphical window"
     print "  --preload FILE                   Load FILE before parsing main program"
-    print "  -d, --debug                      For internal debugging (if available)"
+    if Debug_features$ <> "" then
+        print "  -d, --debug                      Output internal debugging info"
+    end if
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
+    print
+    print "Commands:"
+    print "  repl        Interactive read-evaluate-print loop"
+    print "  run         Run a program immediately, without compilation"
+    print "  build       Compile a program to a binary executable"
+    print "  format      Format and prettify a source code file"
+    print "  exec        Run a code fragment supplied on the command line"
+    $if DEBUG_DUMP then
+    print "  dump        Output a textual representation of the read program"
+    $end if
+    print
+    print "The interactive repl may also be entered by supplying no command."
+    print "A file may be run by supplying just the file name without the 'run' command."
+    print
 end sub
 
 'The error handling here fakes terminal_mode on the assumption that if you're
@@ -545,12 +565,8 @@ sub parse_cmd_line_args()
                 i = i + 1
             case "-d", "--debug"
                 options.debug = TRUE
-            case "-c", "--compile"
-                options.compile_mode = TRUE
             case "-t", "--terminal"
                 options.terminal_mode = TRUE
-            case "-e", "--execute"
-                options.command_mode = TRUE
             case "--preload"
                 if i = _commandcount then
                     options.terminal_mode = TRUE
@@ -558,27 +574,80 @@ sub parse_cmd_line_args()
                 end if
                 options.preload = locate_path$(command$(i + 1), _startdir$)
                 i = i + 1
+            case "repl", "run", "build", "format", "exec"
+                if cmd$ = "" then
+                    cmd$ = arg$
+                else
+                    options.mainarg = arg$
+                end if
             case else
+                $if DEBUG_DUMP then
+                if arg$ = "dump" then
+                    if cmd$ = "" then
+                        cmd$ = arg$
+                    else
+                        options.mainarg = arg$
+                    end if
+                    exit select
+                end if
+                $end if
                 if left$(arg$, 1) = "-" then
                     options.terminal_mode = TRUE
                     fatalerror "Unknown option " + arg$
                 end if
                 if options.mainarg = "" then
                     options.mainarg = arg$
-                    input_file_command_offset = i
-                    exit for
+                    if cmd$ = "" or cmd$ = "run" or cmd$ = "exec" then
+                        'If we are going to execute this now, we will interpret the rest
+                        'of the command line as arguments to the program itself.
+                        input_file_command_offset = i
+                        exit for
+                    end if
+                else
+                    options.terminal_mode = TRUE
+                    fatalerror "Unknown command " + arg$
                 end if
         end select
     next i
-    if options.mainarg = "" then options.interactive_mode = TRUE
-    if not options.interactive_mode and not options.compile_mode and _
-        not options.command_mode then options.run_mode = TRUE
+    select case cmd$
+        case ""
+            if options.mainarg = "" then
+                options.oper_mode = MODE_REPL
+            else
+                options.oper_mode = MODE_RUN
+            end if
+        case "repl"
+            if options.mainarg <> "" then e$ = "Unknown command " + options.mainarg
+            options.oper_mode = MODE_REPL
+        case "run"
+            if options.mainarg = "" then e$ = "File name required"
+            options.oper_mode = MODE_RUN
+        case "build"
+            if options.mainarg = "" then e$ = "File name required"
+            options.oper_mode = MODE_BUILD
+        case "format"
+            if options.outputfile = "" then e$ = "Output file required"
+            if options.mainarg = "" then e$ = "File name required"
+            options.oper_mode = MODE_FORMAT
+        case "dump"
+            if options.outputfile = "" then e$ = "Output file required"
+            if options.mainarg = "" then e$ = "File name required"
+            options.oper_mode = MODE_DUMP
+        case "exec"
+            options.oper_mode = MODE_EXEC
+    end select
+    if e$ <> "" then
+        options.terminal_mode = TRUE
+        fatalerror e$
+    end if
 end sub
 
 $include: 'type.bm'
 $include: 'ast.bm'
 $include: 'symtab.bm'
 $include: 'parser/parser.bm'
+$if DEBUG_DUMP then
 $include: 'emitters/dump/dump.bm'
+$end if
 $include: 'emitters/immediate/immediate.bm'
 

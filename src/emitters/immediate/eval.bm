@@ -133,6 +133,9 @@ end sub
 sub imm_show_eval_stack
     print #logging_file_handle, "Eval stack (most recent eval last):"
     for i = 1 to imm_eval_stack_last
-        ast_dump_summary imm_eval_stack(i), TRUE
+        'We really should be printing the original source code lines
+        $if DEBUG_DUMP then
+            dump_ast_summary imm_eval_stack(i), TRUE
+        $end if
     next i
 end sub

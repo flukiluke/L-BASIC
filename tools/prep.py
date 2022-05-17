@@ -4,13 +4,14 @@
 # prep.py - Preprocess and prepare
 # This is basically a macro expander. It also removes comments.
 
-# A macro is a text-based replacement that for more concise and self-describing code.
+# A macro is a text-based replacement that allows for more concise and self-describing code.
 # To define a macro, the $macro directive is used. The general syntax is
 # $macro: INPUTFORMAT | OUTPUTFORMAT
 # Whenever a match is found for INPUTFORMAT, it is replaced by OUTPUTFORMAT. The double-at
 # operator @@ may appear multiple times in the INPUTFORMAT. These are matched with a word
 # (a word is a string matching [A-Za-z0-9_]+) and can be referred to in the OUTPUTFORMAT
-# as @1, @2 etc. counted in order of appearance.
+# as @1, @2 etc. counted in order of appearance. A '\n' in OUTPUTFORMAT is translated to
+# a newline in the final result.
 # Content in string literals is not modified.
 
 import sys
@@ -27,7 +28,9 @@ def process_line(line):
     global macros
     def_match = re.match(RE_MACRO_DEF, line)
     if def_match:
-        define_macro(def_match.group(1).strip(), def_match.group(2).strip())
+        output_format = def_match.group(2).strip()
+        output_format = output_format.replace('\\n', '\n')
+        define_macro(def_match.group(1).strip(), output_format)
         return ''
     elif re.match(RE_IGNORE_LINE, line):
         # Leave double-commented and DATA lines entirely alone

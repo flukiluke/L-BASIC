@@ -5,9 +5,6 @@
 deflng a-z
 
 sub tok_init
-    $if DEBUG_TIMINGS then
-    debug_timing_mark# = timer(0.001)
-    $end if
     'Read in the state machine for the lexer
     restore tokeng_data
     for s = 1 to ubound(t_states~%, 2)
@@ -27,9 +24,6 @@ sub tok_init
     $include: 'ts_data.bm'
 
     tok_reinit
-    $if DEBUG_TIMINGS then
-    debuginfo "Parser init time:" + str$(timer(0.001) - debug_timing_mark#)
-    $end if
 end sub
 
 sub tok_reinit
@@ -63,7 +57,7 @@ sub tok_advance
         tok_token = tok_next_token
     end if
     tok_content$ = tok_next_content$
-    if not options.interactive_mode then
+    if options.oper_mode <> MODE_REPL then
         tok_read_next_token
     else
         if tok_token = TOK_NEWLINE and tok_content$ <> ":" then

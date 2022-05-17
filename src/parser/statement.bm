@@ -73,10 +73,10 @@ function ps_stmt
         case TOK_TYPE
             'For non-interactive modes a TYPE is processed in the prepass, so ignore
             'it here
-            if options.compile_mode or options.run_mode then
-                ps_udt_ignore
-            else
+            if options.oper_mode = MODE_REPL or options.oper_mode = MODE_EXEC then
                 stmt = ps_udt
+            else
+                ps_udt_ignore
             end if
         case TOK_WHILE
             stmt = ps_while
