@@ -101,9 +101,8 @@ dim shared logging_file_handle
 const MODE_REPL = 1
 const MODE_RUN = 2
 const MODE_BUILD = 3
-const MODE_FORMAT = 4
-const MODE_EXEC = 5
-const MODE_DUMP = 6
+const MODE_EXEC = 4
+const MODE_DUMP = 5
 
 'Various global options read from the command line
 type options_t
@@ -156,8 +155,6 @@ select case options.oper_mode
         run_mode
     case MODE_BUILD
         build_mode
-    case MODE_FORMAT
-        format_mode
     case MODE_EXEC
         exec_mode
     case MODE_DUMP
@@ -406,10 +403,6 @@ sub build_mode
     print "Parse finished but building currently unsupported."
 end sub
 
-sub format_mode
-    ingest_initial_file
-end sub
-
 sub exec_mode
     tok_init
     Error_content = ERR_CTX_PARSING
@@ -520,7 +513,7 @@ sub show_help
     print "Usage: " + command$(0) + " COMMAND [OPTIONS] [FILE]"
     print '                                                                                '80 columns
     print "Options:"
-    print "  -o, --output                     Compilation or format output"
+    print "  -o, --output                     Compilation output"
     print "  -t, --terminal                   Do not open a graphical window"
     print "  --preload FILE                   Load FILE before parsing main program"
     if Debug_features$ <> "" then
@@ -533,7 +526,6 @@ sub show_help
     print "  repl        Interactive read-evaluate-print loop"
     print "  run         Run a program immediately, without compilation"
     print "  build       Compile a program to a binary executable"
-    print "  format      Format and prettify a source code file"
     print "  exec        Run a code fragment supplied on the command line"
     $if DEBUG_DUMP then
     print "  dump        Output a textual representation of the read program"
@@ -574,7 +566,7 @@ sub parse_cmd_line_args()
                 end if
                 options.preload = locate_path$(command$(i + 1), _startdir$)
                 i = i + 1
-            case "repl", "run", "build", "format", "exec"
+            case "repl", "run", "build", "exec"
                 if cmd$ = "" then
                     cmd$ = arg$
                 else
@@ -625,10 +617,6 @@ sub parse_cmd_line_args()
         case "build"
             if options.mainarg = "" then e$ = "File name required"
             options.oper_mode = MODE_BUILD
-        case "format"
-            if options.outputfile = "" then e$ = "Output file required"
-            if options.mainarg = "" then e$ = "File name required"
-            options.oper_mode = MODE_FORMAT
         case "dump"
             if options.outputfile = "" then e$ = "Output file required"
             if options.mainarg = "" then e$ = "File name required"
