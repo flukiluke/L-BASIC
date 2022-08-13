@@ -4,15 +4,16 @@
 
 $include: 'tokeng.bi'
 
-'How big does the stack frame for the current scope need to be?
+'The symtab entry of the last local variable created, used to help build the
+'linked list.
 'This applies to the current scope - the parser for subs/functions will save and
 'restore this value so it is preserved for the main program.
-dim shared ps_scope_frame_size as long
+dim shared ps_scoped_last_var as long
 
-'When in a sub/function, we make the main program's frame size available too so that
-'STATIC variables can be made part of the main program's stack allocation. This
-'value is only valid when in a sub/function.
-dim shared ps_main_frame_size as long
+'When in a sub/function, we make the main program's last_var available too so that
+'STATIC variables can be made part of the main program's scope. This value is only
+'valid when in a sub/function.
+dim shared ps_main_last_var as long
 
 'actual as opposed to any explicit old-timey line numbers/labels in the program
 dim shared ps_actual_linenum as long

@@ -3,8 +3,8 @@
 'parser.bm - Recursive Descent Parser
 
 sub ps_init
-    ps_scope_frame_size = 0
-    ps_main_frame_size = 0
+    ps_scoped_last_var = 0
+    ps_main_last_var = 0
     ps_actual_linenum = 1
     ps_default_type = TYPE_SINGLE
     ps_allow_implicit_vars = TRUE

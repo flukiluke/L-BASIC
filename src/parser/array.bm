@@ -71,6 +71,8 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
     end if
 
     'Now we can create the actual array variable
+    'Can this be unified with ps_new_var_pp? It would be nice to have a single place
+    'variables are created.
     dim sym as symtab_entry_t
     if existing_array = 0 then
         if is_shared then
@@ -80,8 +82,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         end if
         sym-stype = SYM_VARIABLE
         sym-type = sigil
-        sym-stack_offset = ps_scope_frame_size
-        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym-type)
+        sym-prev_var = ps_scoped_last_var
         if is_static or is_shared then
             sym-vflags = SYM_VARIABLE_MAINFRAME
             destruct = FALSE
@@ -93,6 +94,7 @@ sub ps_dim_array(token, var_name$, sigil, block, is_shared, preserve, is_static)
         if dimensions = 0 then sym-vflags = sym-vflags OR SYM_VARIABLE_DEREF
         symtab_add_entry sym
         var = symtab_last_entry
+        ps_scoped_last_var = var
     else
         var = existing_array
     end if

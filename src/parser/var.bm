@@ -18,8 +18,8 @@ function ps_dim
         if ps_last_nested(AST_PROCEDURE) = 0 then ps_error "Not in function"
         'Switch back to the main program's frame so that statics are allocated
         'in there instead of locally.
-        inner_frame_size = ps_scope_frame_size
-        ps_scope_frame_size = ps_main_frame_size
+        inner_last_var = ps_scoped_last_var
+        ps_scoped_last_var = ps_main_last_var
     end if
 
     'Check for Dim As Long style syntax
@@ -48,8 +48,8 @@ function ps_dim
     ps_dim = block
 
     if is_static then
-        ps_main_frame_size = ps_scope_frame_size
-        ps_scope_frame_size = inner_frame_size
+        ps_main_last_var = ps_scoped_last_var
+        ps_scoped_last_var = inner_last_var
     end if
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed dim"
@@ -189,14 +189,10 @@ function ps_new_var_pp(var_name$, sigil, is_shared, is_ref)
     end if
     sym-stype = SYM_VARIABLE
     if sigil then sym-type = sigil else sym-type = ps_default_type
-    sym-stack_offset = ps_scope_frame_size
-    if is_ref then
-        ps_scope_frame_size = ps_scope_frame_size + 1
-    else
-        ps_scope_frame_size = ps_scope_frame_size + type_fixed_size(sym-type)
-    end if
+    sym-prev_var = ps_scoped_last_var
     if is_shared then sym-vflags = SYM_VARIABLE_MAINFRAME else sym-vflags = 0
     if is_ref then sym-vflags = sym-vflags OR SYM_VARIABLE_DEREF
     symtab_add_entry sym
+    ps_scoped_last_var = symtab_last_entry
     ps_new_var_pp = symtab_last_entry
 end function

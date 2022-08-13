@@ -134,13 +134,7 @@ function type_make_array(basetype, dimensions)
     else
         sym-identifier = array_type_name$
         sym-stype = SYM_TYPE
-        if dimensions = 0 then
-            '0 means any number of dimensions. Since we can't know how big the descriptor
-            'will be, it is treated as a simple pointer to descriptor and thus has size 1.
-            sym-fixed_size = 1
-        else
-            sym-fixed_size = imm_arr_calc_desc_size(dimensions)
-        end if
+        sym-fixed_size = 1 'Arrays are pointers to a data structure
         sym-tflags = SYM_TYPE_ARRAY
         sym-array_type = basetype
         sym-array_dims = dimensions

@@ -10,10 +10,14 @@ type symtab_entry_t
     v2 as long
     v3 as long
     v4 as long
+    'lp is a pointer to the llvm-returned instantiation of the object
+    lp as _offset
 end type
 
 $macro: @@->identifier | symtab(@1).identifier
 $macro: @@-identifier | @1.identifier
+$macro: @@->lp | symtab(@1).lp
+$macro: @@-lp | @1.lp
 $macro: @@->stype | symtab(@1).typ
 $macro: @@-stype | @1.typ
 $macro: @@->sig | symtab(@1).v1
@@ -24,16 +28,16 @@ $macro: @@->associativity | symtab(@1).v3
 $macro: @@-associativity | @1.v3
 $macro: @@->type | symtab(@1).v1
 $macro: @@-type | @1.v1
-$macro: @@->stack_offset | symtab(@1).v2
-$macro: @@-stack_offset | @1.v2
+$macro: @@->prev_var | symtab(@1).v2
+$macro: @@-prev_var | @1.v2
 $macro: @@->vflags | symtab(@1).v3
 $macro: @@-vflags | @1.v3
 $macro: @@->func_kind | symtab(@1).v2
 $macro: @@-func_kind | @1.v2
 $macro: @@->proc_node | symtab(@1).v3
 $macro: @@-proc_node | @1.v3
-$macro: @@->stack_size | symtab(@1).v4
-$macro: @@-stack_size | @1.v4
+$macro: @@->last_var | symtab(@1).v4
+$macro: @@-last_var | @1.v4
 $macro: @@->label_node | symtab(@1).v1
 $macro: @@-label_node | @1.v1
 $macro: @@->label_found | symtab(@1).v2
@@ -63,15 +67,14 @@ const SYM_INFIX = 2
 const SYM_PREFIX = 3
 'A variable.
 'v1 ->type | the data type
-'v2 ->stack_offset | stack offset in the scope. Simple variables and references each take 
-'up 1 slot, arrays and UDTs take up multiple.
+'v2 ->prev_var | the sym entry of the previous variable in the same scope, 0 if none. Forms a linked list. Does not apply to arguments.
 'v3 ->vflags | various SYM_VARIABLE_* flags
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 ->sig | reference to the type signature
 'v2 ->func_kind | One of SYM_FUNCTION_*, see below
 'v3 ->proc_node | If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
-'v4 ->stack_size | IF SYM_FUNCTION_USER, the stack frame size required to hold locals,
+'v4 ->last_var | Sym entry of the last variable in this scope, excluding arguments
 'including arguments
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.

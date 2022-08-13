@@ -1,0 +1,62 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'llvm_bindings.bi - Bindings for LLVM C API functions, wrappers
+
+function llvm_module_create_with_name%&(ModuleID$)
+    llvm_module_create_with_name%& = LLVMModuleCreateWithName(ModuleID$ + chr$(0))
+end function
+
+sub llvm_set_target(M%&, Triple$)
+    LLVMSetTarget M%&, Triple$ + chr$(0)
+end sub
+
+function llvm_function_type%&(ReturnType%&, ParamTypes%&(), ParamCount~&, IsVarArg&)
+    llvm_function_type%& = LLVMFunctionType(ReturnType%&, _offset(ParamTypes%&()), ParamCount~&, IsVarArg&)
+end function
+
+function llvm_add_function%&(M%&, Name$, FunctionTy%&)
+    llvm_add_function%& = LLVMAddFunction%&(M%&, Name$ + chr$(0), FunctionTy%&)
+end function
+
+function llvm_append_basic_block%&(Fn%&, Name$)
+    llvm_append_basic_block%& = LLVMAppendBasicBlock%&(Fn%&, Name$ + chr$(0))
+end function
+
+function llvm_build_add%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_add%& = LLVMBuildAdd%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_verify_module(M%&, Action&, OutMessage$)
+    llvm_verify_module = LLVMVerifyModule(M%&, Action&, msgp%&)
+    'Is there a better way?
+    OutMessage$ = ""
+    $checking:off
+    dim m as _mem
+    do
+        c& = _memget(m, msgp%&, _byte)
+        if c& = 0 then exit do
+        OutMessage$ = OutMessage$ + chr$(c&)
+    loop
+    $checking:on
+    LLVMDisposeMessage msgp%&
+end function
+
+function llvm_write_bitcode_to_file&(M%&, Path$)
+    llvm_write_bitcode_to_file& = LLVMWriteBitcodeToFile(M%&, Path$ + chr$(0))
+end function
+
+sub llvm_set_value_name(Value%&, Name$)
+    LLVMSetValueName2 Value%&, Name$, len(Name$)
+end sub
+
+function llvm_build_alloca%&(B%&, Ty%&, Name$)
+    llvm_build_alloca%& = LLVMBuildAlloca(B%&, Ty%&, Name$ + chr$(0))
+end function
+
+function llvm_build_call%&(B%&, Fn%&, Args%&(), NumArgs~&)
+    llvm_build_call = LLVMBuildCall(B%&, Fn%&, _offset(Args%&()), NumArgs~&, chr$(0))
+end function
+
+function llvm_const_int_of_string%&(Ty%&, Text$, Radix~%%)
+    llvm_const_int_of_string%& = LLVMConstIntOfStringAndSize%&(Ty%&, Text$ + chr$(0), len(Text$), Radix~%%)
+end function

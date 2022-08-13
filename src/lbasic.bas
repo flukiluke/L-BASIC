@@ -118,7 +118,7 @@ dim shared options as options_t
 'Allow immediate mode to access COMMAND$() without picking up interpreter options
 dim shared input_file_command_offset
 
-'Ensure that file accesses are relative to the users's working directory
+'Ensure that file accesses are relative to the user's working directory
 chdir _startdir$
 
 $include: 'cmdflags.bi'
@@ -126,7 +126,8 @@ $include: 'type.bi'
 $include: 'symtab.bi'
 $include: 'ast.bi'
 $include: 'parser/parser.bi'
-$include: 'emitters/immediate/immediate.bi'
+''$include: 'emitters/immediate/immediate.bi'
+$include: 'emitters/llvm/llvm.bi'
 
 parse_cmd_line_args
 if not options.terminal_mode then
@@ -195,7 +196,7 @@ error_handler:
         print "Runtime error: ";
         if err = 101 then print Error_message$; else print _errormessage$(err);
         print " ("; _trim$(str$(err)); "/"; _inclerrorfile$; ":"; _trim$(str$(_inclerrorline)); ")"
-        imm_show_eval_stack
+        'imm_show_eval_stack
         if Error_context = ERR_CTX_REPL then resume interactive_recovery
     case ERR_CTX_DUMP
         print "Dump: ";
@@ -336,7 +337,7 @@ sub interactive_mode(recovery)
         ast_clear_entrypoint
     else
         input_files_current = 1 'interactive input
-        imm_init
+        'imm_init
         AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
         ast_commit
         tok_init
@@ -369,9 +370,9 @@ sub interactive_mode(recovery)
             end if
             $end if
             'TODO remove this next line by adding the logic to imm_run or similar
-            imm_reinit ps_scope_frame_size
+            'imm_reinit ps_scope_frame_size
             Error_context = ERR_CTX_REPL
-            imm_run AST_ENTRYPOINT
+            'imm_run AST_ENTRYPOINT
             'Keep any symbols that were defined
             symtab_commit
             'But don't keep any nodes generated
@@ -386,12 +387,12 @@ end sub
 
 sub run_mode
     ingest_initial_file
-    imm_init
+    'imm_init
     Error_context = ERR_CTX_RUN
-    imm_run AST_ENTRYPOINT
+    'imm_run AST_ENTRYPOINT
     Error_context = ERR_CTX_UNKNOWN
     $if DEBUG_HEAP then
-    if options.debug then imm_heap_stats
+    'if options.debug then imm_heap_stats
     $end if
 end sub
 
@@ -400,7 +401,7 @@ sub build_mode
         options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
     end if
     ingest_initial_file
-    print "Parse finished but building currently unsupported."
+    ll_build
 end sub
 
 sub exec_mode
@@ -416,9 +417,9 @@ sub exec_mode
         print #1,
     end if
     $end if
-    imm_init
+    'imm_init
     Error_context = ERR_CTX_RUN
-    imm_run root
+    'imm_run root
     Error_context = ERR_CTX_UNKNOWN
 end sub
 
@@ -533,7 +534,6 @@ sub show_help
     print
     print "The interactive repl may also be entered by supplying no command."
     print "A file may be run by supplying just the file name without the 'run' command."
-    print
 end sub
 
 'The error handling here fakes terminal_mode on the assumption that if you're
@@ -637,5 +637,5 @@ $include: 'parser/parser.bm'
 $if DEBUG_DUMP then
 $include: 'emitters/dump/dump.bm'
 $end if
-$include: 'emitters/immediate/immediate.bm'
-
+''$include: 'emitters/immediate/immediate.bm'
+$include: 'emitters/llvm/llvm.bm'

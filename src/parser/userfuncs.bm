@@ -69,8 +69,8 @@ function ps_userfunc
     ps_add_nested_structure root
     ps_scope_identifier$ = sym-identifier
     'Save this value so we can restore it later (and so STATIC can access it)
-    ps_main_frame_size = ps_scope_frame_size
-    ps_scope_frame_size = 0
+    ps_main_last_var = ps_scoped_last_var
+    ps_scoped_last_var = 0
 
     if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
     if return_type = 0 then return_type = ps_default_type
@@ -123,9 +123,9 @@ function ps_userfunc
     root->pre_attach(block)
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
-    proc_id->stack_size = ps_scope_frame_size
-    ps_scope_frame_size = ps_main_frame_size
+    proc_id->last_var = ps_scoped_last_var
 
+    ps_scoped_last_var = ps_main_last_var
     ps_scope_identifier$ = ""
     ps_remove_nested_structure
 
@@ -195,6 +195,8 @@ function ps_formal_args$(root)
             'Argument is pass-by-reference, unless explicitly requesting BYVAL
             is_ref = (flags AND TYPE_BYVAL) = 0
             var->ref = ps_new_var_pp(var_name$, sigil, FALSE, is_ref)
+            'Stop arguments appearing in the list of variables in the scope
+            ps_scoped_last_var = 0
             root->attach(var)
             if is_array then
                 node = ast_add_node(AST_ARRAY_CLAIM)

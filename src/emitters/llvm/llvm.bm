@@ -1,0 +1,144 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'llvm.bm - Entry point for LLVM based compilation
+
+$include: 'llvm_bindings.bm'
+
+sub ll_build
+    dim module as _offset
+    module = llvm_module_create_with_name(options.mainarg)
+    for i = 1 to symtab_last_entry
+        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
+            ll_cg_procedure module, i->proc_node
+        end if
+    next i
+    'e = llvm_verify_module(main, LLVMAbortProcessAction, message$)
+    e = llvm_write_bitcode_to_file(module, options.outputfile)
+    llvm_dispose_module module
+end sub
+
+sub ll_cg_procedure(module as _offset, proc_node)
+    proc = proc_node->ref
+    dim as _offset prototype, builder, entryBB, ret
+    sig = proc->sig
+    numargs = type_sig_numargs(sig)
+    dim args(1 to numargs) as _offset
+    for i = 1 to numargs
+        args(i) = ll_type(type_sig_argtype(sig, i))
+    next i
+    prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
+    proc->lp = llvm_add_function(module, proc->identifier, prototype)
+    for i = 1 to numargs
+        var_node = ast_get_child(proc_node, i + 1)
+        var = var_node->ref
+        llvm_set_value_name llvm_get_param(proc->lp, i - 1), var->identifier
+    next i
+    builder = llvm_create_builder
+    entryBB = llvm_append_basic_block(proc->lp, "entry")
+    llvm_position_builder_at_end builder, entryBB
+
+    ll_cg_locals builder, proc
+    ll_cg_block builder, ast_get_child(proc_node, 1)
+
+    ret = llvm_build_ret_void(builder)
+    function_ok = llvm_verify_function(proc->lp, LLVMAbortProcessAction)
+    llvm_dispose_builder builder
+end sub
+
+sub ll_cg_locals(builder as _offset, proc)
+    var = proc->last_var
+    while var
+        var->lp = llvm_build_alloca(builder, ll_type(var->type), var->identifier)
+        var = var->prev_var
+    wend
+end sub
+
+sub ll_cg_block(builder as _offset, block)
+    for i = 1 to ast_num_children(block)
+        node = ast_get_child(block, i)
+        select case node->atype
+            case AST_ASSIGN
+                'll_cg_assign builder, node
+            case AST_IF
+                'll_cg_if builder, node
+            case AST_WHILE
+                'll_cg_while builder, node
+            case AST_DO_PRE
+                'll_cg_do_pre builder, node
+            case AST_DO_POST
+                'll_cg_do_post builder, node
+            case AST_FOR
+                'll_cg_for builder, node
+            case AST_SELECT
+                'll_cg_select builder, node
+            case AST_CALL
+                none%& = ll_cg_call(builder, node)
+            case AST_GOTO
+                'll_cg_goto builder, node
+            case AST_EXIT
+                'll_cg_exit builder, node
+            case AST_SET_RETURN
+                'll_cg_set_return builder, node
+        end select
+    next i
+end sub
+
+function ll_type%&(typ)
+    select case typ
+        case TYPE_NONE
+            ll_type = llvm_void_type
+        case TYPE_INTEGER
+            ll_type = llvm_int16_type
+        case TYPE_LONG
+            ll_type = llvm_int32_type
+        case TYPE_INTEGER64
+            ll_type = llvm_int64_type
+        case else
+            fatalerror "bad ll type: " + type_human_readable$(typ)
+    end select
+end function
+
+function ll_cg_call%&(builder as _offset, node)
+    dim param as _offset
+    numargs = ast_num_children(node)
+    target = node->ref
+    if target->lp = 0 then
+        print "Ignoring call to " + target->identifier + " because no target pointer"
+        exit sub
+    end if
+    sig = node->ref2
+    dim args(1 to numargs) as _offset
+    for i = 1 to numargs
+        args(i) = ll_cg_expr(builder, ast_get_child(node, i))
+    next i
+    ll_cg_call%& = llvm_build_call(builder, target->lp, args(), numargs)
+end function
+
+function ll_cg_expr%&(builder as _offset, node)
+    select case node->atype
+        case AST_CALL
+            ll_cg_expr%& = ll_cg_call(builder, node)
+        case AST_CONSTANT
+            ll_cg_expr%& = ll_cg_constant(node)
+        'case AST_CAST
+            'll_cg_expr%& = ll_cg_cast(builder, node)
+        'case AST_VAR
+            'll_cg_expr%& = ll_cg_var(builder, node)
+        case else
+            fatalerror "Bad expr type"
+    end select
+end function
+
+function ll_cg_constant%&(node)
+    constant = node->ref
+    select case ast_constant_types(constant)
+        case TYPE_INTEGER
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int16_type, ast_constants(constant), 10)
+        case TYPE_LONG
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int32_type, ast_constants(constant), 10)
+        case TYPE_INTEGER64
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int64_type, ast_constants(constant), 10)
+        case else
+            fatalerror "Bad constant type"
+    end select
+end function

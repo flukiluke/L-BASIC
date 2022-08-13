@@ -142,4 +142,3 @@ const AST_FLAG_MANUAL = 1
 const AST_FLAG_CONTEXTUAL = 2
 'Flag is a token.
 const AST_FLAG_TOKEN = 3
-'
