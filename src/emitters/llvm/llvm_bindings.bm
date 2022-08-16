@@ -64,3 +64,7 @@ end function
 function llvm_build_load%&(B%&, PointerVal%&, Name$)
     llvm_build_load%& = LLVMBuildLoad%&(B%&, PointerVal%&, Name$ + chr$(0))
 end function
+
+function llvm_build_cast%&(B%&, Op&, Value%&, DestTy%&, Name$)
+    llvm_build_cast%& = LLVMBuildCast%&(B%&, Op&, Value%&, DestTy%&, Name$ + chr$(0))
+end function

@@ -30,8 +30,23 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMConstIntOfStringAndSize%&(byval Ty%&, Text$, byval SLen~&, byval Radix~%%)
     function LLVMBuildLoad%&(byval B%&, byval PointerVal%&, Name$)
     function llvm_build_store%& alias LLVMBuildStore(byval B%&, byval Val%&, byval Ptr%&)
+    function LLVMBuildCast%&(byval B%&, byval Op&, byval Value%&, byval DestTy%&, Name$)
 end declare
 
 const LLVMAbortProcessAction = 0
 const LLVMPrintMessageAction = 1
 const LLVMReturnStatusAction = 2
+
+const LLVMTrunc = 30
+const LLVMZExt = 31
+const LLVMSExt = 32
+const LLVMFPToUI = 33
+const LLVMFPToSI = 34
+const LLVMUIToFP = 35
+const LLVMSIToFP = 36
+const LLVMFPTrunc = 37
+const LLVMFPExt = 38
+const LLVMPtrToInt = 39
+const LLVMIntToPtr = 40
+const LLVMBitCast = 41
+const LLVMAddrSpaceCast  = 60

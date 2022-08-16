@@ -17,8 +17,9 @@
 'generic NAME ; FLAGS
 'Adds a symtab entry with no extra information.
 '
-'type NAME ; FLAGS
-'Like generic, but generate the name as TYPE_ instead of TOK_ and SYM_TYPE instead of SYM_GENERIC.
+'type NAME SIZE ; FLAGS
+'Generate the name as TYPE_ instead of TOK_ and SYM_TYPE instead of SYM_GENERIC. The fixed
+'size of the type is set to SIZE bytes.
 'This always emits a SYM_TYPE_INTERNAL type.
 '
 'arraytype NAME ELEMENTTYPE DIMENSIONS ; FLAGS
@@ -130,15 +131,13 @@ do while not eof(1)
         print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "TYPE"
-        assertsize 2
+        assertsize 3
         toknum = toknum + 1
         cur_toknum = toknum
         print #2, "CONST TYPE_" + tokname$ + " =" + str$(toknum)
-        if previous$(0) <> "TYPE" then
-            print #3, "sym.typ = SYM_TYPE"
-            print #3, "sym.v1 = 1" 'Size of internal types is always 1
-            print #3, "sym.v2 = SYM_TYPE_INTERNAL"
-        end if
+        if previous$(0) <> "TYPE" and previous$(0) <> "ARRAYTYPE" then print #3, "sym.typ = SYM_TYPE"
+        if previous$(2) <> parts$(2) then print #3, "sym.v1 = "; parts$(2)
+        print #3, "sym.v2 = SYM_TYPE_INTERNAL"
         print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "ARRAYTYPE"

@@ -38,31 +38,31 @@ generic string_sfx      ; direct nosym
 
 # Types and pseudotypes
 # Signals "no value" in some sense
-type none       ; nosym
+type none               0 ; nosym
 # Flexible number of arbitrary arguments (looking at you, INPUT & PRINT)
-type list       ; nosym
+type list               0 ; nosym
 #Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
-type flags      ; nosym
+type flags              0 ; nosym
 # Generic type that can be cast to anything
-type any        ; nosym
+type any                0 ; nosym
 # Generic array type
 arraytype any_array any 0 ; nosym
 # 16 bits
-type integer
+type integer            2
 # 32 bits
-type long
+type long               4
 # 64 bits
-type integer64
+type integer64          8
 # binary32 floating-point
-type single
+type single             4
 # binary64 floating-point
-type double
+type double             8
 # binary128 floating-point
-type quad
+type quad               16
 # Everyone's favourite non-numeric type
-type string
+type string             8
 # See comment below on corresponding literal
-type contextual_argument
+type contextual_argument 0
 
 # Parentheses don't have any real meaning, they only direct the parsing
 generic oparen ; direct nosym

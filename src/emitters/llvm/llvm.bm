@@ -144,20 +144,35 @@ function ll_cg_constant%&(node)
 end function
 
 'Variables in an rvalue context
-function ll_cg_var%&(builder%&, node)
+function ll_cg_var%&(builder as _offset, node)
     var = node->ref
-    ll_cg_var%& = llvm_build_load(builder%&, var->lp, var->identifier)
+    ll_cg_var%& = llvm_build_load(builder, var->lp, var->identifier)
 end function
-'j
+
 'Variables in an lvalue context
-function ll_cg_var_lval%&(builder%&, node)
+function ll_cg_var_lval%&(builder as _offset, node)
     var = node->ref
     ll_cg_var_lval%& = var->lp
 end function
 
-sub ll_cg_assign(builder%&, node)
-    lvalue%& = ll_cg_var_lval%&(builder%&, ast_get_child(node, 1))
-    rvalue%& = ll_cg_expr%&(builder%&, ast_get_child(node, 2))
-    store%& = llvm_build_store(builder%&, rvalue%&, lvalue%&)
+sub ll_cg_assign(builder as _offset, node)
+    dim as _offset lvalue, rvalue, store
+    lvalue = ll_cg_var_lval(builder, ast_get_child(node, 1))
+    rvalue = ll_cg_expr(builder, ast_get_child(node, 2))
+    store = llvm_build_store(builder, rvalue, lvalue)
 end sub
 
+function ll_cg_cast%&(builder as _offset, node)
+    dim as _offset value
+    child = ast_get_child(node, 1)
+    value = ll_cg_expr(builder, child)
+    src_type = type_of_expr(child)
+    dest_type = node->ref
+    'Assume integral type for now
+    if type_fixed_size(dest_type) > type_fixed_size(src_type) then
+        op = LLVMSExt
+    else
+        op = LLVMTrunc
+    end if
+    ll_cg_cast%& = llvm_build_cast(builder, op, value, ll_type(dest_type), "cast")
+end function
