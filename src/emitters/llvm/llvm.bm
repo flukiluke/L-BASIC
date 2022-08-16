@@ -58,7 +58,7 @@ sub ll_cg_block(builder as _offset, block)
         node = ast_get_child(block, i)
         select case node->atype
             case AST_ASSIGN
-                'll_cg_assign builder, node
+                ll_cg_assign builder, node
             case AST_IF
                 'll_cg_if builder, node
             case AST_WHILE
@@ -120,8 +120,8 @@ function ll_cg_expr%&(builder as _offset, node)
             ll_cg_expr%& = ll_cg_call(builder, node)
         case AST_CONSTANT
             ll_cg_expr%& = ll_cg_constant(node)
-        'case AST_CAST
-            'll_cg_expr%& = ll_cg_cast(builder, node)
+        case AST_CAST
+            ll_cg_expr%& = ll_cg_cast(builder, node)
         case AST_VAR
             ll_cg_expr%& = ll_cg_var(builder, node)
         case else
@@ -148,3 +148,16 @@ function ll_cg_var%&(builder%&, node)
     var = node->ref
     ll_cg_var%& = llvm_build_load(builder%&, var->lp, var->identifier)
 end function
+'j
+'Variables in an lvalue context
+function ll_cg_var_lval%&(builder%&, node)
+    var = node->ref
+    ll_cg_var_lval%& = var->lp
+end function
+
+sub ll_cg_assign(builder%&, node)
+    lvalue%& = ll_cg_var_lval%&(builder%&, ast_get_child(node, 1))
+    rvalue%& = ll_cg_expr%&(builder%&, ast_get_child(node, 2))
+    store%& = llvm_build_store(builder%&, rvalue%&, lvalue%&)
+end sub
+
