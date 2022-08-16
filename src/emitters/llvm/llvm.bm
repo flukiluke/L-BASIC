@@ -12,7 +12,7 @@ sub ll_build
             ll_cg_procedure module, i->proc_node
         end if
     next i
-    'e = llvm_verify_module(main, LLVMAbortProcessAction, message$)
+    e = llvm_verify_module(module, LLVMAbortProcessAction, message$)
     e = llvm_write_bitcode_to_file(module, options.outputfile)
     llvm_dispose_module module
 end sub
@@ -122,8 +122,8 @@ function ll_cg_expr%&(builder as _offset, node)
             ll_cg_expr%& = ll_cg_constant(node)
         'case AST_CAST
             'll_cg_expr%& = ll_cg_cast(builder, node)
-        'case AST_VAR
-            'll_cg_expr%& = ll_cg_var(builder, node)
+        case AST_VAR
+            ll_cg_expr%& = ll_cg_var(builder, node)
         case else
             fatalerror "Bad expr type"
     end select
@@ -141,4 +141,10 @@ function ll_cg_constant%&(node)
         case else
             fatalerror "Bad constant type"
     end select
+end function
+
+'Variables in an rvalue context
+function ll_cg_var%&(builder%&, node)
+    var = node->ref
+    ll_cg_var%& = llvm_build_load(builder%&, var->lp, var->identifier)
 end function

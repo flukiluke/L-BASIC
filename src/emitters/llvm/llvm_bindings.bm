@@ -60,3 +60,7 @@ end function
 function llvm_const_int_of_string%&(Ty%&, Text$, Radix~%%)
     llvm_const_int_of_string%& = LLVMConstIntOfStringAndSize%&(Ty%&, Text$ + chr$(0), len(Text$), Radix~%%)
 end function
+
+function llvm_build_load%&(B%&, PointerVal%&, Name$)
+    llvm_build_load%& = LLVMBuildLoad%&(B%&, PointerVal%&, Name$ + chr$(0))
+end function

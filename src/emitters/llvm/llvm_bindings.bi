@@ -28,6 +28,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMBuildAlloca%&(byval B%&, byval Ty%&, Name$)
     function LLVMBuildCall%&(byval B%&, byval Fn%&, byval Args%&, byval NumArgs~&, Name$)
     function LLVMConstIntOfStringAndSize%&(byval Ty%&, Text$, byval SLen~&, byval Radix~%%)
+    function LLVMBuildLoad%&(byval B%&, byval PointerVal%&, Name$)
 end declare
 
 const LLVMAbortProcessAction = 0
