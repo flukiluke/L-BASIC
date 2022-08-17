@@ -22,10 +22,6 @@ function llvm_append_basic_block%&(Fn%&, Name$)
     llvm_append_basic_block%& = LLVMAppendBasicBlock%&(Fn%&, Name$ + chr$(0))
 end function
 
-function llvm_build_add%&(B%&, LHS%&, RHS%&, Name$)
-    llvm_build_add%& = LLVMBuildAdd%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
-end function
-
 function llvm_verify_module(M%&, Action&, OutMessage$)
     llvm_verify_module = LLVMVerifyModule(M%&, Action&, msgp%&)
     'Is there a better way?
@@ -67,4 +63,12 @@ end function
 
 function llvm_build_cast%&(B%&, Op&, Value%&, DestTy%&, Name$)
     llvm_build_cast%& = LLVMBuildCast%&(B%&, Op&, Value%&, DestTy%&, Name$ + chr$(0))
+end function
+
+function llvm_build_add%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_add%& = LLVMBuildAdd%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_sub%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_sub%& = LLVMBuildSub%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
 end function

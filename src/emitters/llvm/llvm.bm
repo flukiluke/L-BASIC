@@ -99,12 +99,19 @@ function ll_type%&(typ)
 end function
 
 function ll_cg_call%&(builder as _offset, node)
-    dim param as _offset
+    dim as _offset param, dedicated
     numargs = ast_num_children(node)
     target = node->ref
     if target->lp = 0 then
-        print "Ignoring call to " + target->identifier + " because no target pointer"
-        exit sub
+        if (target->stype = SYM_INFIX) or (target->stype = SYM_PREFIX) or ((target->stype = SYM_FUNCTION) and (target->func_kind = SYM_FUNCTION_INTRINSIC)) then
+            'This function has a builtin instruction
+            dedicated = ll_cg_call_builtin(builder, node)
+            if dedicated then
+                ll_cg_call%& = dedicated
+                exit function
+            end if
+        end if
+        fatalerror "Call to " + target->identifier + " has no target pointer"
     end if
     sig = node->ref2
     dim args(1 to numargs) as _offset
@@ -112,6 +119,23 @@ function ll_cg_call%&(builder as _offset, node)
         args(i) = ll_cg_expr(builder, ast_get_child(node, i))
     next i
     ll_cg_call%& = llvm_build_call(builder, target->lp, args(), numargs)
+end function
+
+function ll_cg_call_builtin%&(builder as _offset, node)
+    dim as _offset v1, v2, ret
+    select case node->ref
+        case TOK_PLUS
+            v1 = ll_cg_expr(builder, ast_get_child(node, 1))
+            v2 = ll_cg_expr(builder, ast_get_child(node, 2))
+            ret = llvm_build_add(builder, v1, v2, "add")
+        case TOK_DASH
+            v1 = ll_cg_expr(builder, ast_get_child(node, 1))
+            v2 = ll_cg_expr(builder, ast_get_child(node, 2))
+            ret = llvm_build_sub(builder, v1, v2, "sub")
+        case else
+            fatalerror "Not a builtin!"
+    end select
+    ll_cg_call_builtin%& = ret            
 end function
 
 function ll_cg_expr%&(builder as _offset, node)

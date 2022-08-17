@@ -15,7 +15,6 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMAppendBasicBlock%&(byval Fn%&, Name$)
     function llvm_create_builder%& alias LLVMCreateBuilder
     sub      llvm_position_builder_at_end alias LLVMPositionBuilderAtEnd(byval Builder%&, byval Block%&)
-    function LLVMBuildAdd%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
     function llvm_build_ret%& alias LLVMBuildRet(byval B%&, byval V%&)
     function llvm_build_ret_void%& alias LLVMBuildRetVoid(byval B%&)
     function llvm_get_param%& alias LLVMGetParam(byval Fn%&, byval index~&)
@@ -31,6 +30,8 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMBuildLoad%&(byval B%&, byval PointerVal%&, Name$)
     function llvm_build_store%& alias LLVMBuildStore(byval B%&, byval Val%&, byval Ptr%&)
     function LLVMBuildCast%&(byval B%&, byval Op&, byval Value%&, byval DestTy%&, Name$)
+    function LLVMBuildAdd%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildSub%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
 end declare
 
 const LLVMAbortProcessAction = 0
