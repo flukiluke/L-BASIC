@@ -83,16 +83,16 @@ sub ps_remove_nested_structure
 end sub
 
 function ps_scope$
-    'Note: global symbols (functions, SHARED vars) have no @ at all
-    ps_scope$ = "@" + ps_scope_identifier$ + "@"
+    'Note: global symbols (functions, SHARED vars) have no / at all
+    ps_scope$ = "/" + ps_scope_identifier$ + "/"
 end function
 
 function ps_get_scope$(token)
     varname$ = token->identifier
-    if left$(varname$, 1) <> "@" then
+    if left$(varname$, 1) <> "/" then
         ps_get_scope$ = ""
     else
-        ps_get_scope$ = mid$(varname$, 2, instr(2, varname$, "@") - 2)
+        ps_get_scope$ = mid$(varname$, 2, instr(2, varname$, "/") - 2)
     end if
 end function
 
