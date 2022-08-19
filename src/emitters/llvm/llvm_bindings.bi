@@ -34,6 +34,14 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMBuildCast%&(byval B%&, byval Op&, byval Value%&, byval DestTy%&, Name$)
     function LLVMBuildAdd%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
     function LLVMBuildSub%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildICmp%&(byval B%&, byval Op&, byval LHS%&, byval RHS%&, Name$)
+    function llvm_get_insert_block%& alias LLVMGetInsertBlock(byval B%&)
+    function llvm_get_basic_block_parent%& alias LLVMGetBasicBlockParent(byval BB%&)
+    function llvm_get_global_context%& alias LLVMGetGlobalContext
+    function LLVMCreateBasicBlockInContext%&(byval C%&, Name$)
+    function llvm_build_cond_br%& alias LLVMBuildCondBr(byval B%&, byval Cond%&, byval ThenBr%&, byval ElseBr%&)
+    function llvm_build_br%& alias LLVMBuildBr(byval B%&, byval Dest%&)
+    sub llvm_append_existing_basic_block alias LLVMAppendExistingBasicBlock(byval Fn%&, byval BB%&)
 end declare
 
 const LLVMAbortProcessAction = 0
@@ -53,3 +61,16 @@ const LLVMPtrToInt = 39
 const LLVMIntToPtr = 40
 const LLVMBitCast = 41
 const LLVMAddrSpaceCast  = 60
+
+
+'When upgrading LLVM, be sure to verify these enums are still correct
+const LLVMIntEQ = 32 'equal
+const LLVMIntNE = 33 'not equal
+const LLVMIntUGT = 34 'unsigned greater than
+const LLVMIntUGE = 35 'unsigned greater or equal
+const LLVMIntULT = 36 'unsigned less than
+const LLVMIntULE = 37 'unsigned less or equal
+const LLVMIntSGT = 38 'signed greater than
+const LLVMIntSGE = 39 'signed greater or equal
+const LLVMIntSLT = 40 'signed less than
+const LLVMIntSLE = 41 'signed less or equal

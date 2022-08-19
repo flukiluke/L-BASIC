@@ -91,7 +91,7 @@ sub ll_cg_block(builder as _offset, block)
             case AST_ASSIGN
                 ll_cg_assign builder, node
             case AST_IF
-                'll_cg_if builder, node
+                ll_cg_if builder, node
             case AST_WHILE
                 'll_cg_while builder, node
             case AST_DO_PRE
@@ -235,3 +235,27 @@ function ll_cg_cast%&(builder as _offset, node)
     end if
     ll_cg_cast%& = llvm_build_cast(builder, op, value, ll_type(dest_type), "cast")
 end function
+
+sub ll_cg_if(builder as _offset, node)
+    dim as _offset guard, cmp, func, thenBB, elseBB, mergeBB, dummy
+    cond_node = ast_get_child(node, 1)
+    cond_type = type_of_expr(cond_node)
+    guard = ll_cg_expr(builder, cond_node)
+    cmp = llvm_build_icmp(builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "ifcmp")
+    func = llvm_get_basic_block_parent(llvm_get_insert_block(builder))
+    thenBB = llvm_append_basic_block(func, "then")
+    elseBB = llvm_create_basic_block("else")
+    mergeBB = llvm_create_basic_block("endif")
+    dummy = llvm_build_cond_br(builder, cmp, thenBB, elseBB)
+    llvm_position_builder_at_end builder, thenBB
+    ll_cg_block builder, ast_get_child(node, 2)
+    dummy = llvm_build_br(builder, mergeBB)
+    llvm_append_existing_basic_block func, elseBB
+    llvm_position_builder_at_end builder, elseBB
+    if ast_num_children(node) = 3 then
+        ll_cg_block builder, ast_get_child(node, 3)
+    end if
+    dummy = llvm_build_br(builder, mergeBB)
+    llvm_append_existing_basic_block func, mergeBB
+    llvm_position_builder_at_end builder, mergeBB
+end sub
