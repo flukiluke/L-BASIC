@@ -9,6 +9,11 @@ sub ll_build
     module = llvm_module_create_with_name(options.mainarg)
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
+            ll_cg_procedure_entry module, i->proc_node
+        end if
+    next i
+    for i = 1 to symtab_last_entry
+        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
             ll_cg_procedure module, i->proc_node
         end if
     next i
@@ -17,38 +22,64 @@ sub ll_build
     llvm_dispose_module module
 end sub
 
-sub ll_cg_procedure(module as _offset, proc_node)
-    proc = proc_node->ref
-    dim as _offset prototype, builder, entryBB, ret
-    sig = proc->sig
-    numargs = type_sig_numargs(sig)
+sub ll_cg_procedure_entry(module as _offset, proc_node)
+    dim as _offset prototype, param
+    numargs = ast_num_children(proc_node) - 1
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
-        args(i) = ll_type(type_sig_argtype(sig, i))
+        arg = ast_get_child(proc_node, i + 1)
+        var = arg->ref
+        if var->vflags AND SYM_VARIABLE_DEREF then
+            args(i) = ll_pointer_type(var->type)
+        else
+            args(i) = ll_type(var->type)
+        end if
     next i
+    proc = proc_node->ref
+    sig = proc->sig
     prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
     proc->lp = llvm_add_function(module, proc->identifier, prototype)
     for i = 1 to numargs
-        var_node = ast_get_child(proc_node, i + 1)
-        var = var_node->ref
-        llvm_set_value_name llvm_get_param(proc->lp, i - 1), var->identifier
+        arg = ast_get_child(proc_node, i + 1)
+        var = arg->ref
+        param = llvm_get_param(proc->lp, i - 1)
+        llvm_set_value_name param, var->identifier
+        var->lp = param
     next i
+end sub
+
+sub ll_cg_procedure(module as _offset, proc_node)
+    proc = proc_node->ref
+    dim as _offset builder, entryBB, ret
     builder = llvm_create_builder
     entryBB = llvm_append_basic_block(proc->lp, "entry")
     llvm_position_builder_at_end builder, entryBB
-
-    ll_cg_locals builder, proc
+    ll_cg_locals builder, proc_node
     ll_cg_block builder, ast_get_child(proc_node, 1)
-
     ret = llvm_build_ret_void(builder)
     function_ok = llvm_verify_function(proc->lp, LLVMAbortProcessAction)
     llvm_dispose_builder builder
 end sub
 
-sub ll_cg_locals(builder as _offset, proc)
+sub ll_cg_locals(builder as _offset, proc_node)
+    'Copy any byval arguments to allocas so they may be treated identically
+    dim as _offset ptr, store
+    numargs = ast_num_children(proc_node) - 1
+    for i = 1 to numargs
+        arg = ast_get_child(proc_node, i + 1)
+        var = arg->ref
+        if (var->vflags AND SYM_VARIABLE_DEREF) = 0 then
+            ptr = llvm_build_alloca(builder, ll_type(var->type), var->identifier)
+            store = llvm_build_store(builder, var->lp, ptr)
+            var->lp = ptr
+        end if
+    next i
+    'Allocate and initialise all other local variables
+    proc = proc_node->ref
     var = proc->last_var
     while var
         var->lp = llvm_build_alloca(builder, ll_type(var->type), var->identifier)
+        store = llvm_build_store(builder, llvm_const_int(ll_type(var->type), 0, 0), var->lp)
         var = var->prev_var
     wend
 end sub
@@ -82,6 +113,10 @@ sub ll_cg_block(builder as _offset, block)
         end select
     next i
 end sub
+
+function ll_pointer_type%&(typ)
+    ll_pointer_type%& = llvm_pointer_type(ll_type(typ), 0)
+end function
 
 function ll_type%&(typ)
     select case typ

@@ -9,6 +9,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_int16_type%& alias LLVMInt16Type
     function llvm_int32_type%& alias LLVMInt32Type
     function llvm_int64_type%& alias LLVMInt64Type
+    function llvm_pointer_type%& alias LLVMPointerType(byval ElementType%&, byval AddressSpace~&)
     function llvm_void_type%& alias LLVMVoidType
     function LLVMFunctionType%&(byval ReturnType%&, byval ParamTypes%&, byval ParamCount~&, byval IsVarArg&)
     function LLVMAddFunction%&(byval M%&, Name$, byval FunctionTy%&)
@@ -26,6 +27,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     sub      llvm_dispose_builder alias LLVMDisposeBuilder(byval Builder%&)
     function LLVMBuildAlloca%&(byval B%&, byval Ty%&, Name$)
     function LLVMBuildCall%&(byval B%&, byval Fn%&, byval Args%&, byval NumArgs~&, Name$)
+    function llvm_const_int%& alias LLVMConstInt(byval IntTy%&, byval N~&&, byval SignExtend&)
     function LLVMConstIntOfStringAndSize%&(byval Ty%&, Text$, byval SLen~&, byval Radix~%%)
     function LLVMBuildLoad%&(byval B%&, byval PointerVal%&, Name$)
     function llvm_build_store%& alias LLVMBuildStore(byval B%&, byval Val%&, byval Ptr%&)
