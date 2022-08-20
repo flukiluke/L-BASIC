@@ -47,20 +47,22 @@ type flags              0 ; nosym
 type any                0 ; nosym
 # Generic array type
 arraytype any_array any 0 ; nosym
+# 1 bit
+type bool               1
 # 16 bits
-type integer            2
+type integer            16
 # 32 bits
-type long               4
+type long               32
 # 64 bits
-type integer64          8
+type integer64          64
 # binary32 floating-point
-type single             4
+type single             32
 # binary64 floating-point
-type double             8
+type double             64
 # binary128 floating-point
-type quad               16
+type quad               128
 # Everyone's favourite non-numeric type
-type string             8
+type string             64
 # See comment below on corresponding literal
 type contextual_argument 0
 
@@ -113,48 +115,48 @@ infix   and             6   left    integer64 integer64,integer64
 prefix  not             7           integer   integer 
 prefix  not             7           long      long
 prefix  not             7           integer64 integer64
-infix   =(equals)       8   left    integer   string,string       ; direct
-infix   =(equals)       8   left    integer   integer,integer     ; direct
-infix   =(equals)       8   left    integer   long,long           ; direct
-infix   =(equals)       8   left    integer   integer64,integer64 ; direct
-infix   =(equals)       8   left    integer   single,single       ; direct
-infix   =(equals)       8   left    integer   double,double       ; direct
-infix   =(equals)       8   left    integer   quad,quad           ; direct
-infix   <>(cmp_neq)     8   left    integer   string,string       ; direct
-infix   <>(cmp_neq)     8   left    integer   integer,integer     ; direct
-infix   <>(cmp_neq)     8   left    integer   long,long           ; direct
-infix   <>(cmp_neq)     8   left    integer   integer64,integer64 ; direct
-infix   <>(cmp_neq)     8   left    integer   single,single       ; direct
-infix   <>(cmp_neq)     8   left    integer   double,double       ; direct
-infix   <>(cmp_neq)     8   left    integer   quad,quad           ; direct
-infix   <(cmp_lt)       8   left    integer   string,string       ; direct
-infix   <(cmp_lt)       8   left    integer   integer,integer     ; direct
-infix   <(cmp_lt)       8   left    integer   long,long           ; direct
-infix   <(cmp_lt)       8   left    integer   integer64,integer64 ; direct
-infix   <(cmp_lt)       8   left    integer   single,single       ; direct
-infix   <(cmp_lt)       8   left    integer   double,double       ; direct
-infix   <(cmp_lt)       8   left    integer   quad,quad           ; direct
-infix   >(cmp_gt)       8   left    integer   string,string       ; direct
-infix   >(cmp_gt)       8   left    integer   integer,integer     ; direct
-infix   >(cmp_gt)       8   left    integer   long,long           ; direct
-infix   >(cmp_gt)       8   left    integer   integer64,integer64 ; direct
-infix   >(cmp_gt)       8   left    integer   single,single       ; direct
-infix   >(cmp_gt)       8   left    integer   double,double       ; direct
-infix   >(cmp_gt)       8   left    integer   quad,quad           ; direct
-infix   <=(cmp_lteq)    8   left    integer   string,string       ; direct
-infix   <=(cmp_lteq)    8   left    integer   integer,integer     ; direct
-infix   <=(cmp_lteq)    8   left    integer   long,long           ; direct
-infix   <=(cmp_lteq)    8   left    integer   integer64,integer64 ; direct
-infix   <=(cmp_lteq)    8   left    integer   single,single       ; direct
-infix   <=(cmp_lteq)    8   left    integer   double,double       ; direct
-infix   <=(cmp_lteq)    8   left    integer   quad,quad           ; direct
-infix   >=(cmp_gteq)    8   left    integer   string,string       ; direct
-infix   >=(cmp_gteq)    8   left    integer   integer,integer     ; direct
-infix   >=(cmp_gteq)    8   left    integer   long,long           ; direct
-infix   >=(cmp_gteq)    8   left    integer   integer64,integer64 ; direct
-infix   >=(cmp_gteq)    8   left    integer   single,single       ; direct
-infix   >=(cmp_gteq)    8   left    integer   double,double       ; direct
-infix   >=(cmp_gteq)    8   left    integer   quad,quad           ; direct
+infix   =(equals)       8   left    bool      string,string       ; direct
+infix   =(equals)       8   left    bool      integer,integer     ; direct
+infix   =(equals)       8   left    bool      long,long           ; direct
+infix   =(equals)       8   left    bool      integer64,integer64 ; direct
+infix   =(equals)       8   left    bool      single,single       ; direct
+infix   =(equals)       8   left    bool      double,double       ; direct
+infix   =(equals)       8   left    bool      quad,quad           ; direct
+infix   <>(cmp_neq)     8   left    bool      string,string       ; direct
+infix   <>(cmp_neq)     8   left    bool      integer,integer     ; direct
+infix   <>(cmp_neq)     8   left    bool      long,long           ; direct
+infix   <>(cmp_neq)     8   left    bool      integer64,integer64 ; direct
+infix   <>(cmp_neq)     8   left    bool      single,single       ; direct
+infix   <>(cmp_neq)     8   left    bool      double,double       ; direct
+infix   <>(cmp_neq)     8   left    bool      quad,quad           ; direct
+infix   <(cmp_lt)       8   left    bool      string,string       ; direct
+infix   <(cmp_lt)       8   left    bool      integer,integer     ; direct
+infix   <(cmp_lt)       8   left    bool      long,long           ; direct
+infix   <(cmp_lt)       8   left    bool      integer64,integer64 ; direct
+infix   <(cmp_lt)       8   left    bool      single,single       ; direct
+infix   <(cmp_lt)       8   left    bool      double,double       ; direct
+infix   <(cmp_lt)       8   left    bool      quad,quad           ; direct
+infix   >(cmp_gt)       8   left    bool      string,string       ; direct
+infix   >(cmp_gt)       8   left    bool      integer,integer     ; direct
+infix   >(cmp_gt)       8   left    bool      long,long           ; direct
+infix   >(cmp_gt)       8   left    bool      integer64,integer64 ; direct
+infix   >(cmp_gt)       8   left    bool      single,single       ; direct
+infix   >(cmp_gt)       8   left    bool      double,double       ; direct
+infix   >(cmp_gt)       8   left    bool      quad,quad           ; direct
+infix   <=(cmp_lteq)    8   left    bool      string,string       ; direct
+infix   <=(cmp_lteq)    8   left    bool      integer,integer     ; direct
+infix   <=(cmp_lteq)    8   left    bool      long,long           ; direct
+infix   <=(cmp_lteq)    8   left    bool      integer64,integer64 ; direct
+infix   <=(cmp_lteq)    8   left    bool      single,single       ; direct
+infix   <=(cmp_lteq)    8   left    bool      double,double       ; direct
+infix   <=(cmp_lteq)    8   left    bool      quad,quad           ; direct
+infix   >=(cmp_gteq)    8   left    bool      string,string       ; direct
+infix   >=(cmp_gteq)    8   left    bool      integer,integer     ; direct
+infix   >=(cmp_gteq)    8   left    bool      long,long           ; direct
+infix   >=(cmp_gteq)    8   left    bool      integer64,integer64 ; direct
+infix   >=(cmp_gteq)    8   left    bool      single,single       ; direct
+infix   >=(cmp_gteq)    8   left    bool      double,double       ; direct
+infix   >=(cmp_gteq)    8   left    bool      quad,quad           ; direct
 infix   +(plus)         9   left    string    string,string       ; direct
 infix   +(plus)         9   left    integer   integer,integer     ; direct
 infix   +(plus)         9   left    long      long,long           ; direct

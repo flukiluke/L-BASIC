@@ -6,6 +6,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMModuleCreateWithName%&(ModuleID$)
     sub      llvm_dispose_module alias LLVMDisposeModule(byval M%&)
     sub      LLVMSetTarget(byval M%&, Triple$)
+    function llvm_int1_type%& alias LLVMInt1Type
     function llvm_int16_type%& alias LLVMInt16Type
     function llvm_int32_type%& alias LLVMInt32Type
     function llvm_int64_type%& alias LLVMInt64Type

@@ -19,7 +19,7 @@
 '
 'type NAME SIZE ; FLAGS
 'Generate the name as TYPE_ instead of TOK_ and SYM_TYPE instead of SYM_GENERIC. The fixed
-'size of the type is set to SIZE bytes.
+'size of the type is set to SIZE bits.
 'This always emits a SYM_TYPE_INTERNAL type.
 '
 'arraytype NAME ELEMENTTYPE DIMENSIONS ; FLAGS

@@ -11,7 +11,7 @@ end function
 
 function type_is_number(typ)
     select case typ
-    case TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD
+    case TYPE_BOOL, TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD
         type_is_number = TRUE
     end select
 end function
@@ -108,8 +108,10 @@ function type_can_safely_cast(a, b)
         type_can_safely_cast = FALSE
     else
         select case a
-        case TYPE_INTEGER
+        case TYPE_BOOL
             type_can_safely_cast = TRUE
+        case TYPE_INTEGER
+            type_can_safely_cast = (b = TYPE_LONG) or (b = TYPE_INTEGER64) or (b = TYPE_SINGLE) or (b = TYPE_DOUBLE) or (b = TYPE_QUAD)
         case TYPE_LONG
             type_can_safely_cast = (b = TYPE_INTEGER64) or (b = TYPE_DOUBLE) or (b = TYPE_QUAD)
         case TYPE_INTEGER64
@@ -118,7 +120,7 @@ function type_can_safely_cast(a, b)
             type_can_safely_cast = (b = TYPE_DOUBLE) or (b = TYPE_QUAD)
         case TYPE_DOUBLE
             type_can_safely_cast = b = TYPE_QUAD
-        case TYPE_FLOAT
+        case TYPE_QUAD
             type_can_safely_cast = FALSE
         end select
     end if
@@ -471,6 +473,8 @@ function type_detect_numint_type(content$)
     '2^31-1 = 2147483647
     '2^63-1 = 18446744073709551615
     select case len(content$)
+    'Do not try detect TYPE_BOOL because we don't see the negative sign
+    'that would allow is to detect -1.
     case is < 5
         type_detect_numint_type = TYPE_INTEGER
     case 5

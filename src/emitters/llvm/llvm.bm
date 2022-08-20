@@ -122,6 +122,8 @@ function ll_type%&(typ)
     select case typ
         case TYPE_NONE
             ll_type = llvm_void_type
+        case TYPE_BOOL
+            ll_type = llvm_int1_type
         case TYPE_INTEGER
             ll_type = llvm_int16_type
         case TYPE_LONG
@@ -167,6 +169,10 @@ function ll_cg_call_builtin%&(builder as _offset, node)
             v1 = ll_cg_expr(builder, ast_get_child(node, 1))
             v2 = ll_cg_expr(builder, ast_get_child(node, 2))
             ret = llvm_build_sub(builder, v1, v2, "sub")
+        case TOK_EQUALS
+            v1 = ll_cg_expr(builder, ast_get_child(node, 1))
+            v2 = ll_cg_expr(builder, ast_get_child(node, 2))
+            ret = llvm_build_icmp(builder, LLVMIntEQ, v1, v2, "equals")
         case else
             fatalerror "Not a builtin!"
     end select
@@ -191,6 +197,8 @@ end function
 function ll_cg_constant%&(node)
     constant = node->ref
     select case ast_constant_types(constant)
+        case TYPE_BOOL
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int1_type, ast_constants(constant), 10)
         case TYPE_INTEGER
             ll_cg_constant%& = llvm_const_int_of_string(llvm_int16_type, ast_constants(constant), 10)
         case TYPE_LONG
