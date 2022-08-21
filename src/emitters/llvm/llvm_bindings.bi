@@ -10,6 +10,9 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_int16_type%& alias LLVMInt16Type
     function llvm_int32_type%& alias LLVMInt32Type
     function llvm_int64_type%& alias LLVMInt64Type
+    function llvm_float_type%& alias LLVMFloatType
+    function llvm_double_type%& alias LLVMDoubleType
+    function llvm_fp128_type%& alias LLVMFP128Type
     function llvm_pointer_type%& alias LLVMPointerType(byval ElementType%&, byval AddressSpace~&)
     function llvm_void_type%& alias LLVMVoidType
     function LLVMFunctionType%&(byval ReturnType%&, byval ParamTypes%&, byval ParamCount~&, byval IsVarArg&)
@@ -29,13 +32,17 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMBuildAlloca%&(byval B%&, byval Ty%&, Name$)
     function LLVMBuildCall%&(byval B%&, byval Fn%&, byval Args%&, byval NumArgs~&, Name$)
     function llvm_const_int%& alias LLVMConstInt(byval IntTy%&, byval N~&&, byval SignExtend&)
+    function llvm_const_real%& alias LLVMConstReal(byval RealTy%&, byval N#)
     function LLVMConstIntOfStringAndSize%&(byval Ty%&, Text$, byval SLen~&, byval Radix~%%)
     function LLVMBuildLoad%&(byval B%&, byval PointerVal%&, Name$)
     function llvm_build_store%& alias LLVMBuildStore(byval B%&, byval Val%&, byval Ptr%&)
     function LLVMBuildCast%&(byval B%&, byval Op&, byval Value%&, byval DestTy%&, Name$)
     function LLVMBuildAdd%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildFAdd%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
     function LLVMBuildSub%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildFSub%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
     function LLVMBuildICmp%&(byval B%&, byval Op&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildFCmp%&(byval B%&, byval Op&, byval LHS%&, byval RHS%&, Name$)
     function llvm_get_insert_block%& alias LLVMGetInsertBlock(byval B%&)
     function llvm_get_basic_block_parent%& alias LLVMGetBasicBlockParent(byval BB%&)
     function llvm_get_global_context%& alias LLVMGetGlobalContext
@@ -75,3 +82,20 @@ const LLVMIntSGT = 38 'signed greater than
 const LLVMIntSGE = 39 'signed greater or equal
 const LLVMIntSLT = 40 'signed less than
 const LLVMIntSLE = 41 'signed less or equal
+
+const LLVMRealPredicateFalse = 0 'Always false (always folded)
+const LLVMRealOEQ = 1 'True if ordered and equal
+const LLVMRealOGT = 2 'True if ordered and greater than
+const LLVMRealOGE = 3 'True if ordered and greater than or equal
+const LLVMRealOLT = 4 'True if ordered and less than
+const LLVMRealOLE = 5 'True if ordered and less than or equal
+const LLVMRealONE = 6 'True if ordered and operands are unequal
+const LLVMRealORD = 7 'True if ordered (no nans)
+const LLVMRealUNO = 8 'True if unordered: isnan(X) | isnan(Y)
+const LLVMRealUEQ = 9 'True if unordered or equal
+const LLVMRealUGT = 10 'True if unordered or greater than
+const LLVMRealUGE = 11 'True if unordered, greater than, or equal
+const LLVMRealULT = 12 'True if unordered or less than
+const LLVMRealULE = 13 'True if unordered, less than, or equal
+const LLVMRealUNE = 14 'True if unordered or not equal
+const LLVMRealPredicateTrue = 15 'Always true (always folded)

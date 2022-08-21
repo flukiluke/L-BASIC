@@ -69,12 +69,24 @@ function llvm_build_add%&(B%&, LHS%&, RHS%&, Name$)
     llvm_build_add%& = LLVMBuildAdd%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
 end function
 
+function llvm_build_fadd%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_fadd%& = LLVMBuildFAdd%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
 function llvm_build_sub%&(B%&, LHS%&, RHS%&, Name$)
     llvm_build_sub%& = LLVMBuildSub%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
 end function
 
+function llvm_build_fsub%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_fsub%& = LLVMBuildFSub%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
 function llvm_build_icmp%&(B%&, Op&, LHS%&, RHS%&, Name$)
     llvm_build_icmp%& = LLVMBuildICmp%&(B%&, Op&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_fcmp%&(B%&, Op&, LHS%&, RHS%&, Name$)
+    llvm_build_fcmp%& = LLVMBuildFCmp%&(B%&, Op&, LHS%&, RHS%&, Name$ + chr$(0))
 end function
 
 function llvm_create_basic_block%&(Name$)

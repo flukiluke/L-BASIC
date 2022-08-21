@@ -11,8 +11,22 @@ end function
 
 function type_is_number(typ)
     select case typ
-    case TYPE_BOOL, TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD
-        type_is_number = TRUE
+        case TYPE_BOOL, TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64, TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD
+            type_is_number = TRUE
+    end select
+end function
+
+function type_is_int(typ)
+    select case typ
+        case TYPE_BOOL, TYPE_INTEGER, TYPE_LONG, TYPE_INTEGER64
+            type_is_int = TRUE
+    end select
+end function
+
+function type_is_fp(typ)
+    select case typ
+        case TYPE_SINGLE, TYPE_DOUBLE, TYPE_QUAD
+            type_is_fp = TRUE
     end select
 end function
 

@@ -130,6 +130,12 @@ function ll_type%&(typ)
             ll_type = llvm_int32_type
         case TYPE_INTEGER64
             ll_type = llvm_int64_type
+        case TYPE_SINGLE
+            ll_type = llvm_float_type
+        case TYPE_DOUBLE
+            ll_type = llvm_double_type
+        case TYPE_QUAD
+            ll_type = llvm_fp128_type
         case else
             fatalerror "bad ll type: " + type_human_readable$(typ)
     end select
@@ -162,20 +168,34 @@ function ll_cg_call_builtin%&(builder as _offset, node)
     dim as _offset v1, v2, ret
     select case node->ref
         case TOK_PLUS
-            v1 = ll_cg_expr(builder, ast_get_child(node, 1))
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(builder, c1)
             v2 = ll_cg_expr(builder, ast_get_child(node, 2))
-            ret = llvm_build_add(builder, v1, v2, "add")
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_add(builder, v1, v2, "add")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fadd(builder, v1, v2, "fadd")
+            end if
         case TOK_DASH
-            v1 = ll_cg_expr(builder, ast_get_child(node, 1))
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(builder, c1)
             v2 = ll_cg_expr(builder, ast_get_child(node, 2))
-            ret = llvm_build_sub(builder, v1, v2, "sub")
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_sub(builder, v1, v2, "sub")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fsub(builder, v1, v2, "fsub")
+            end if
         case TOK_EQUALS
-            v1 = ll_cg_expr(builder, ast_get_child(node, 1))
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(builder, c1)
             v2 = ll_cg_expr(builder, ast_get_child(node, 2))
-            ret = llvm_build_icmp(builder, LLVMIntEQ, v1, v2, "equals")
-        case else
-            fatalerror "Not a builtin!"
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_icmp(builder, LLVMIntEq, v1, v2, "inteq")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fcmp(builder, LLVMRealOEQ, v1, v2, "fpeq")
+            end if
     end select
+    if ret = 0 then fatalerror "Not a builtin!"
     ll_cg_call_builtin%& = ret            
 end function
 
@@ -235,11 +255,24 @@ function ll_cg_cast%&(builder as _offset, node)
     value = ll_cg_expr(builder, child)
     src_type = type_of_expr(child)
     dest_type = node->ref
-    'Assume integral type for now
-    if type_fixed_size(dest_type) > type_fixed_size(src_type) then
-        op = LLVMSExt
+    if type_is_int(src_type) and type_is_int(dest_type) then
+        if type_fixed_size(dest_type) > type_fixed_size(src_type) then
+            op = LLVMSExt
+        else
+            op = LLVMTrunc
+        end if
+    elseif type_is_int(src_type) and type_is_fp(dest_type) then
+        op = LLVMSIToFP
+    elseif type_is_fp(src_type) and type_is_int(dest_type) then
+        op = LLVMFPToSI
+    elseif type_is_fp(src_type) and type_is_fp(dest_type) then
+        if type_fixed_size(dest_type) > type_fixed_size(src_type) then
+            op = LLVMFPExt
+        else
+            op = LLVMFPTrunc
+        end if
     else
-        op = LLVMTrunc
+        fatalerror "Bad cast"
     end if
     ll_cg_cast%& = llvm_build_cast(builder, op, value, ll_type(dest_type), "cast")
 end function
@@ -249,7 +282,11 @@ sub ll_cg_if(builder as _offset, node)
     cond_node = ast_get_child(node, 1)
     cond_type = type_of_expr(cond_node)
     guard = ll_cg_expr(builder, cond_node)
-    cmp = llvm_build_icmp(builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "ifcmp")
+    if type_is_int(cond_type) then
+        cmp = llvm_build_icmp(builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "ifcmp")
+    elseif type_is_fp(cond_type) then
+        cmp = llvm_build_fcmp(builder, LLVMRealOEQ, guard, llvm_const_real(ll_type(cond_type), 0), "ifcmp")
+    end if
     func = llvm_get_basic_block_parent(llvm_get_insert_block(builder))
     thenBB = llvm_append_basic_block(func, "then")
     elseBB = llvm_create_basic_block("else")
