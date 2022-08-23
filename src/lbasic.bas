@@ -322,8 +322,7 @@ sub ingest_initial_file
     tok_reinit
     ps_init
     ast_rollback
-    AST_ENTRYPOINT = ps_block
-    ps_finish_labels AST_ENTRYPOINT
+    AST_ENTRYPOINT = ps_main
     Error_context = ERR_CTX_UNKNOWN
 end sub
 

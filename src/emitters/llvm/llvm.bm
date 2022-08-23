@@ -54,7 +54,7 @@ end sub
 
 sub ll_cg_locals(builder as _offset, proc_node)
     'Copy any byval arguments to allocas so they may be treated identically
-    dim as _offset ptr, store
+    dim as _offset ptr, store, constant_zero
     numargs = ast_num_children(proc_node) - 1
     for i = 1 to numargs
         arg = ast_get_child(proc_node, i + 1)
@@ -70,7 +70,13 @@ sub ll_cg_locals(builder as _offset, proc_node)
     var = proc->last_var
     while var
         var->lp = llvm_build_alloca(builder, ll_type(var->type), var->identifier)
-        store = llvm_build_store(builder, llvm_const_int(ll_type(var->type), 0, 0), var->lp)
+        typ = var->type
+        if type_is_int(typ) then
+            constant_zero = llvm_const_int(ll_type(var->type), 0, 0)
+        else
+            constant_zero = llvm_const_real(ll_type(var->type), 0)
+        end if
+        store = llvm_build_store(builder, constant_zero, var->lp)
         var = var->prev_var
     wend
 end sub
@@ -222,7 +228,6 @@ function ll_cg_call_builtin%&(builder as _offset, node)
     end select
     ll_cg_call_builtin%& = ret            
 end function
-
 
 function ll_cg_expr%&(builder as _offset, node)
     select case node->atype

@@ -131,6 +131,33 @@ function ps_block
     $end if
 end function
 
+'Top-level parser entry point.
+function ps_main
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start main"
+    $end if
+    dim sym as symtab_entry_t
+    sym-identifier = "|MAIN"
+    sym-stype = SYM_FUNCTION
+    sym-sig = type_add_sig(0, type_sigt_create$(TYPE_NONE))
+    sym-func_kind = SYM_FUNCTION_USER
+    root = ast_add_node(AST_PROCEDURE)
+    'Do not add to nested structures list because main is the only procedure that
+    'can "contain" other procedure, and you can't exit out of it.
+    sym-proc_node = root
+    symtab_add_entry sym
+    proc_id = symtab_last_entry
+    root->ref = proc_id
+    block = ps_block
+    root->attach(block)
+    proc_id->last_var = ps_scoped_last_var
+    ps_finish_labels block
+    ps_main = block
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "End main"
+    $end if
+end function
+
 'Because some program elements can be referenced before they are defined, we need to
 'do a first pass through the program to identify these declarations. We contrast this
 '"prepass" with a main pass, usually an invocation of ps_block or similar.
