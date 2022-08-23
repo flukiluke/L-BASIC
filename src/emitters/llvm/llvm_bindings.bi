@@ -19,7 +19,9 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMAddFunction%&(byval M%&, Name$, byval FunctionTy%&)
     function LLVMAppendBasicBlock%&(byval Fn%&, Name$)
     function llvm_create_builder%& alias LLVMCreateBuilder
+    sub      llvm_position_builder_before alias LLVMPositionBuilderBefore(byval Builder%&, byval Instruction%&)
     sub      llvm_position_builder_at_end alias LLVMPositionBuilderAtEnd(byval Builder%&, byval Block%&)
+    function llvm_get_basic_block_terminator%& alias LLVMGetBasicBlockTerminator(byval BB%&)
     function llvm_build_ret%& alias LLVMBuildRet(byval B%&, byval V%&)
     function llvm_build_ret_void%& alias LLVMBuildRetVoid(byval B%&)
     function llvm_get_param%& alias LLVMGetParam(byval Fn%&, byval index~&)
@@ -46,10 +48,12 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_get_insert_block%& alias LLVMGetInsertBlock(byval B%&)
     function llvm_get_basic_block_parent%& alias LLVMGetBasicBlockParent(byval BB%&)
     function llvm_get_global_context%& alias LLVMGetGlobalContext
+    function llvm_get_entry_basic_block%& alias LLVMGetEntryBasicBlock(byval Fn%&)
     function LLVMCreateBasicBlockInContext%&(byval C%&, Name$)
     function llvm_build_cond_br%& alias LLVMBuildCondBr(byval B%&, byval Cond%&, byval ThenBr%&, byval ElseBr%&)
     function llvm_build_br%& alias LLVMBuildBr(byval B%&, byval Dest%&)
     sub llvm_append_existing_basic_block alias LLVMAppendExistingBasicBlock(byval Fn%&, byval BB%&)
+    sub llvm_set_linkage alias LLVMSetLinkage(byval Global%&, byval Linkage&)
 end declare
 
 const LLVMAbortProcessAction = 0
@@ -99,3 +103,22 @@ const LLVMRealULT = 12 'True if unordered or less than
 const LLVMRealULE = 13 'True if unordered, less than, or equal
 const LLVMRealUNE = 14 'True if unordered or not equal
 const LLVMRealPredicateTrue = 15 'Always true (always folded)
+
+const LLVMExternalLinkage = 0 'Externally visible function
+const LLVMAvailableExternallyLinkage = 1
+const LLVMLinkOnceAnyLinkage = 2 'Keep one copy of function when linking (inline)*/
+const LLVMLinkOnceODRLinkage = 3 'Same, but only replaced by something equivalent.
+const LLVMLinkOnceODRAutoHideLinkage = 4 'Obsolete
+const LLVMWeakAnyLinkage = 5 'Keep one copy of function when linking (weak)
+const LLVMWeakODRLinkage = 6 'Same, but only replaced by something equivalent.
+const LLVMAppendingLinkage = 7 'Special purpose, only applies to global arrays
+const LLVMInternalLinkage = 8 'Rename collisions when linking (static functions)
+const LLVMPrivateLinkage = 9 'Like Internal, but omit from symbol table
+const LLVMDLLImportLinkage = 10 'Obsolete
+const LLVMDLLExportLinkage = 11 'Obsolete
+const LLVMExternalWeakLinkage = 12 'ExternalWeak linkage description
+const LLVMGhostLinkage = 13 'Obsolete
+const LLVMCommonLinkage = 14 'Tentative definitions
+const LLVMLinkerPrivateLinkage = 15 'Like Private, but linker removes.
+const LLVMLinkerPrivateWeakLinkage = 16 'Like LinkerPrivate, but is weak.
+

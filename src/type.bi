@@ -24,10 +24,22 @@ dim shared type_last_signature as long
 'Note: constants for actual data types (TYPE_LONG etc.) are defined in tokens.list
 'for greater ease of handling UDTs.
 
-'Flags for type signature flags
+'Flags for type signature flags.
+'This argument can be omitted.
 const TYPE_OPTIONAL = 1
+'This argument is passed by reference *and* cannot be an expression, it must be a
+'reference to an lvalue. Used when the callee passes information back to the caller
+'through this argument.
 const TYPE_BYREF = 2
+'This argument is passed by value. The callee does not expect modifications to pass
+'back to the caller.
 const TYPE_BYVAL = 4
+'Note: BYVAL and BYREF are not entirely opposite. BYVAL is purely a description of the
+'calling convention, i.e. values are passed directly not as a reference. BYREF requires
+'the call to use a reference, but also enforces a requirement on the kind of value the
+'caller supplies. The default (neither BYREF not BYVAL) is in between: values are passed
+'by reference, but may be non-lvalues.
+
 'This argument can have a leading # to indicate a file handle
 const TYPE_FILEHANDLE = 8
 'This argument is a literal token and the type refers to that token id

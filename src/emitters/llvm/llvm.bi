@@ -3,3 +3,5 @@
 'llvm.bi - Declarations for LLVM compilation target
 
 $include: 'llvm_bindings.bi'
+
+dim shared CurrentModule as _offset

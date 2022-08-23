@@ -5,40 +5,27 @@
 $include: 'llvm_bindings.bm'
 
 sub ll_build
-    dim module as _offset
-    module = llvm_module_create_with_name(options.mainarg)
+    CurrentModule = llvm_module_create_with_name(options.mainarg)
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            ll_cg_procedure_entry module, i->proc_node
+            ll_cg_procedure_entry i->proc_node
         end if
     next i
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            ll_cg_procedure module, i->proc_node
+            ll_cg_procedure i->proc_node
         end if
     next i
-    e = llvm_verify_module(module, LLVMAbortProcessAction, message$)
-    e = llvm_write_bitcode_to_file(module, options.outputfile)
-    llvm_dispose_module module
+    e = llvm_verify_module(CurrentModule, LLVMAbortProcessAction, message$)
+    e = llvm_write_bitcode_to_file(CurrentModule, options.outputfile)
+    llvm_dispose_module CurrentModule
 end sub
 
-sub ll_cg_procedure_entry(module as _offset, proc_node)
-    dim as _offset prototype, param
-    numargs = ast_num_children(proc_node) - 1
-    dim args(1 to numargs) as _offset
-    for i = 1 to numargs
-        arg = ast_get_child(proc_node, i + 1)
-        var = arg->ref
-        if var->vflags AND SYM_VARIABLE_DEREF then
-            args(i) = ll_pointer_type(var->type)
-        else
-            args(i) = ll_type(var->type)
-        end if
-    next i
+sub ll_cg_procedure_entry(proc_node)
+    dim as _offset param
     proc = proc_node->ref
-    sig = proc->sig
-    prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
-    proc->lp = llvm_add_function(module, proc->identifier, prototype)
+    ll_declare_func proc
+    numargs = ast_num_children(proc_node) - 1
     for i = 1 to numargs
         arg = ast_get_child(proc_node, i + 1)
         var = arg->ref
@@ -48,13 +35,17 @@ sub ll_cg_procedure_entry(module as _offset, proc_node)
     next i
 end sub
 
-sub ll_cg_procedure(module as _offset, proc_node)
+sub ll_cg_procedure(proc_node)
     proc = proc_node->ref
-    dim as _offset builder, entryBB, ret
+    dim as _offset builder, entryBB, startBB, ret, dummy
     builder = llvm_create_builder
     entryBB = llvm_append_basic_block(proc->lp, "entry")
     llvm_position_builder_at_end builder, entryBB
     ll_cg_locals builder, proc_node
+    'Keep the entryBB for allocas so we can more easily add to it later for shadow copies
+    startBB = llvm_append_basic_block(proc->lp, "start")
+    dummy = llvm_build_br(builder, startBB)
+    llvm_position_builder_at_end builder, startBB
     ll_cg_block builder, ast_get_child(proc_node, 1)
     ret = llvm_build_ret_void(builder)
     function_ok = llvm_verify_function(proc->lp, LLVMAbortProcessAction)
@@ -146,23 +137,57 @@ function ll_cg_call%&(builder as _offset, node)
     numargs = ast_num_children(node)
     target = node->ref
     if target->lp = 0 then
-        if (target->stype = SYM_INFIX) or (target->stype = SYM_PREFIX) or ((target->stype = SYM_FUNCTION) and (target->func_kind = SYM_FUNCTION_INTRINSIC)) then
-            'This function has a builtin instruction
-            dedicated = ll_cg_call_builtin(builder, node)
-            if dedicated then
-                ll_cg_call%& = dedicated
-                exit function
-            end if
+        'Maybe a builtin instruction
+        dedicated = ll_cg_call_builtin(builder, node)
+        if dedicated then
+            ll_cg_call%& = dedicated
+            exit function
         end if
-        fatalerror "Call to " + target->identifier + " has no target pointer"
+        'Must be first use of an external function
+        ll_declare_func target
+        'Still nothing, throw an error (should never happen)
+        if target->lp = 0 then fatalerror "Call to " + target->identifier + " has no target pointer"
     end if
     sig = node->ref2
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
-        args(i) = ll_cg_expr(builder, ast_get_child(node, i))
+        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
+            args(i) = ll_cg_expr(builder, ast_get_child(node, i))
+        else
+            args(i) = ll_cg_shadow_expr(builder, ast_get_child(node, i))
+        end if
     next i
     ll_cg_call%& = llvm_build_call(builder, target->lp, args(), numargs)
 end function
+
+function ll_cg_shadow_expr%&(builder as _offset, expr)
+    dim as _offset currentBB, entryBB, alloca, value, dummy
+    typ = type_of_expr(expr)
+    currentBB = llvm_get_insert_block(builder)
+    entryBB = llvm_get_entry_basic_block(llvm_get_basic_block_parent(currentBB))
+    llvm_position_builder_before builder, llvm_get_basic_block_terminator(entryBB)
+    alloca = llvm_build_alloca(builder, ll_type(typ), "shadow")
+    llvm_position_builder_at_end builder, currentBB
+    value = ll_cg_expr(builder, expr)
+    dummy = llvm_build_store(builder, value, alloca)
+    ll_cg_shadow_expr%& = alloca
+end function
+
+sub ll_declare_func(func)
+    dim as _offset prototype
+    sig = func->sig
+    numargs = type_sig_numargs(sig)
+    dim args(1 to numargs) as _offset
+    for i = 1 to numargs
+        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
+            args(i) = ll_type(type_sig_argtype(sig, i))
+        else
+            args(i) = ll_pointer_type(type_sig_argtype(sig, i))
+        end if
+    next i
+    prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
+    func->lp = llvm_add_function(CurrentModule, func->identifier, prototype)
+end sub
 
 function ll_cg_call_builtin%&(builder as _offset, node)
     dim as _offset v1, v2, ret
@@ -195,9 +220,9 @@ function ll_cg_call_builtin%&(builder as _offset, node)
                 ret = llvm_build_fcmp(builder, LLVMRealOEQ, v1, v2, "fpeq")
             end if
     end select
-    if ret = 0 then fatalerror "Not a builtin!"
     ll_cg_call_builtin%& = ret            
 end function
+
 
 function ll_cg_expr%&(builder as _offset, node)
     select case node->atype
@@ -285,7 +310,7 @@ sub ll_cg_if(builder as _offset, node)
     if type_is_int(cond_type) then
         cmp = llvm_build_icmp(builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "ifcmp")
     elseif type_is_fp(cond_type) then
-        cmp = llvm_build_fcmp(builder, LLVMRealOEQ, guard, llvm_const_real(ll_type(cond_type), 0), "ifcmp")
+        cmp = llvm_build_fcmp(builder, LLVMRealONE, guard, llvm_const_real(ll_type(cond_type), 0), "ifcmp")
     end if
     func = llvm_get_basic_block_parent(llvm_get_insert_block(builder))
     thenBB = llvm_append_basic_block(func, "then")

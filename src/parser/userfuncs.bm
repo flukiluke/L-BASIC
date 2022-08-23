@@ -190,6 +190,7 @@ function ps_formal_args$(root)
         if is_array and ((flags AND TYPE_BYVAL) <> 0) then
             ps_error "Array must be passed by reference"
         end if
+        'No need to do the following logic if we are doing a prepass
         if root then
             var = ast_add_node(AST_VAR)
             'Argument is pass-by-reference, unless explicitly requesting BYVAL
