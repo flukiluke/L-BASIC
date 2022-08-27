@@ -6,28 +6,31 @@ sub dump_program
     print #logging_file_handle, "Table of identifiers:"
     dump_symtab
     print #logging_file_handle,
-    'print #logging_file_handle, "Function type signatures:"
-    'dump_functions
-    'print #logging_file_handle,
+    print #logging_file_handle, "Function type signatures:"
+    dump_functions
+    print #logging_file_handle,
     print #logging_file_handle, "Table of constants:"
     dump_constants
     print #logging_file_handle,
     print #logging_file_handle, "Program:"
-    dump_ast AST_ENTRYPOINT, 0
     dump_subprocedures
 end sub
 
 sub dump_functions
+    print #logging_file_handle,       " ID   proc_node   last_var   succ         Name        sig"
     for i = 1 to symtab_last_entry
         typ = i->stype
         if typ = SYM_FUNCTION or typ = SYM_INFIX or typ = SYM_PREFIX then
             sig_index = i->sig
             do
-                print #logging_file_handle, sig_index; " "; i->identifier; " "; type_human_sig$(type_signatures(sig_index).sig)
-                sig_index = type_signatures(sig_index).succ
+                print #logging_file_handle, using "###         ###        ###    ###    \            \   "; sig_index; sig_index->proc_node; _
+                        sig_index->last_var; sig_index->succ; i->identifier;
+                print #logging_file_handle, type_human_sig$(type_signatures(sig_index).sig)
+                sig_index = sig_index->succ
             loop while sig_index <> 0
         end if
     next i
+    print #logging_file_handle,       " ID   proc_node   last_var   succ         Name        sig"
 end sub
 
 sub dump_symtab
@@ -36,27 +39,32 @@ sub dump_symtab
         print #logging_file_handle, using "###    \            \ ###    ###    ###    ###    ###"; i; symtab(i).identifier; _
                         symtab(i).typ,symtab(i).v1; symtab(i).v2; symtab(i).v3; symtab(i).v4
     next i
+    print #logging_file_handle, " ID          Name     Typ     v1     v2     v3     v4"
 end sub
 
 sub dump_subprocedures
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            return_type = type_sig_return(i->sig)
-            if return_type = TYPE_NONE then is_sub = TRUE else is_sub = FALSE
-            print #logging_file_handle,
-            if is_sub then
-                print #logging_file_handle, "SUB "; i->identifier; " (";
-            else
-                print #logging_file_handle, "FUNCTION "; i->identifier; " AS "; type_human_readable$(return_type); " (";
-            end if
-            root = i->proc_node
-            for j = 2 to ast_num_children(root)
-                dump_ast ast_get_child(root, j), 0
-                if j < ast_num_children(root) then print #logging_file_handle, ", ";
-            next j
-            print #logging_file_handle, ")"
-            dump_ast ast_get_child(root, 1), 1
-            if is_sub then print #logging_file_handle, "END SUB" else print #logging_file_handle, "END FUNCTION"
+            sig = i->sig
+            while sig
+                return_type = type_sig_return(sig)
+                if return_type = TYPE_NONE then is_sub = TRUE else is_sub = FALSE
+                print #logging_file_handle,
+                if is_sub then
+                    print #logging_file_handle, "SUB "; i->identifier; " (";
+                else
+                    print #logging_file_handle, "FUNCTION "; i->identifier; " AS "; type_human_readable$(return_type); " (";
+                end if
+                root = sig->proc_node
+                for j = 2 to ast_num_children(root)
+                    dump_ast ast_get_child(root, j), 0
+                    if j < ast_num_children(root) then print #logging_file_handle, ", ";
+                next j
+                print #logging_file_handle, ")"
+                dump_ast ast_get_child(root, 1), 1
+                if is_sub then print #logging_file_handle, "END SUB" else print #logging_file_handle, "END FUNCTION"
+                sig = sig->succ
+            wend
         end if
     next i
 end sub

@@ -10,7 +10,8 @@ type symtab_entry_t
     v2 as long
     v3 as long
     v4 as long
-    'lp is a pointer to the llvm-returned instantiation of the object
+    'lp is a pointer to the llvm-returned instantiation of the object, with the exception
+    'that callables (operators & functions) are instantiated per type signature instead.
     lp as _offset
 end type
 
@@ -34,10 +35,6 @@ $macro: @@->vflags | symtab(@1).v3
 $macro: @@-vflags | @1.v3
 $macro: @@->func_kind | symtab(@1).v2
 $macro: @@-func_kind | @1.v2
-$macro: @@->proc_node | symtab(@1).v3
-$macro: @@-proc_node | @1.v3
-$macro: @@->last_var | symtab(@1).v4
-$macro: @@-last_var | @1.v4
 $macro: @@->label_node | symtab(@1).v1
 $macro: @@-label_node | @1.v1
 $macro: @@->label_found | symtab(@1).v2
@@ -73,9 +70,6 @@ const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 ->sig | reference to the type signature
 'v2 ->func_kind | One of SYM_FUNCTION_*, see below
-'v3 ->proc_node | If SYM_FUNCTION_USER, the AST_PROCEDURE holding the executable code
-'v4 ->last_var | Sym entry of the last variable in this scope, excluding arguments
-'including arguments
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
 'v1 ->label_node | AST node that is labelled.

@@ -104,6 +104,18 @@ sub ps_queue_entry(node)
     ps_queued_entry_nodes$ = ps_queued_entry_nodes$ + mkl$(node)
 end sub
 
+sub ps_check_function_instantiations
+    for i = 1 to symtab_last_entry
+        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
+            sig = i->sig
+            while sig
+                if sig->proc_node = 0 then ps_error i->identifier + " AS " + type_human_sig$(sig->sig_str) + " does not have implementation"
+                sig = sig->succ
+            wend
+        end if
+    next i
+end sub
+
 sub ps_error(msg$)
     Error_message$ = msg$
     error 101
@@ -137,21 +149,24 @@ function ps_main
     debuginfo "Start main"
     $end if
     dim sym as symtab_entry_t
-    sym-identifier = "|MAIN"
+    sym-identifier = "_MAIN"
     sym-stype = SYM_FUNCTION
-    sym-sig = type_add_sig(0, type_sigt_create$(TYPE_NONE))
+    sig = type_add_sig(0, type_sigt_create$(TYPE_NONE))
+    sym-sig = sig
     sym-func_kind = SYM_FUNCTION_USER
+    symtab_add_entry sym
+    proc_id = symtab_last_entry
     root = ast_add_node(AST_PROCEDURE)
     'Do not add to nested structures list because main is the only procedure that
     'can "contain" other procedure, and you can't exit out of it.
-    sym-proc_node = root
-    symtab_add_entry sym
-    proc_id = symtab_last_entry
+    sig->proc_node = root
     root->ref = proc_id
+    root->ref2 = sig
     block = ps_block
     root->attach(block)
-    proc_id->last_var = ps_scoped_last_var
+    sig->last_var = ps_scoped_last_var
     ps_finish_labels block
+    ps_check_function_instantiations
     ps_main = block
     $if DEBUG_PARSE_TRACE then
     debuginfo "End main"
@@ -175,7 +190,8 @@ sub ps_prepass
     do
         select case tok_token
         case TOK_SUB, TOK_FUNCTION
-            dummy = ps_declare_p
+            if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
+            dummy = ps_declare_p(is_sub, 0)
         case TOK_EXIT, TOK_END
             'These could be followed by SUB or FUNCTION which would cause confusion
             tok_advance

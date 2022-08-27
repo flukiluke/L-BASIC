@@ -8,12 +8,20 @@ sub ll_build
     ll_cg_state.module = llvm_module_create_with_name(options.mainarg)
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            ll_cg_procedure_entry i->proc_node
+            sig = i->sig
+            while sig
+                ll_cg_procedure_entry sig->proc_node
+                sig = sig->succ
+            wend
         end if
     next i
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            ll_cg_procedure i->proc_node
+            sig = i->sig
+            while sig
+                ll_cg_procedure sig->proc_node
+                sig = sig->succ
+            wend
         end if
     next i
     e = llvm_verify_module(ll_cg_state.module, LLVMAbortProcessAction, message$)
@@ -24,35 +32,37 @@ end sub
 sub ll_cg_procedure_entry(proc_node)
     dim as _offset param
     proc = proc_node->ref
-    ll_declare_func proc
+    sig = proc_node->ref2
+    ll_declare_func_sig proc, sig
     numargs = ast_num_children(proc_node) - 1
     'Set parameter names for readability
     for i = 1 to numargs
         arg = ast_get_child(proc_node, i + 1)
         var = arg->ref
-        param = llvm_get_param(proc->lp, i - 1)
+        param = llvm_get_param(sig->sig_lp, i - 1)
         llvm_set_value_name param, var->identifier
         var->lp = param
     next i
-    'Make all functions except |MAIN private for better optimisiation
-    if proc->identifier <> "|MAIN" then
-        llvm_set_linkage proc->lp, LLVMInternalLinkage
+    'Make all functions except _MAIN private for better optimisiation
+    if proc->identifier <> "_MAIN" then
+        llvm_set_linkage sig->sig_lp, LLVMInternalLinkage
     end if
 end sub
 
 sub ll_cg_procedure(proc_node)
-    proc = proc_node->ref
     dim as _offset entryBB, startBB, dummy
+    proc = proc_node->ref
+    sig = proc_node->ref2
     ll_cg_state.builder = llvm_create_builder
-    entryBB = llvm_append_basic_block(proc->lp, "entry")
+    entryBB = llvm_append_basic_block(sig->sig_lp, "entry")
     llvm_position_builder_at_end ll_cg_state.builder, entryBB
     ll_cg_locals proc_node
-    ret_type = type_sig_return(proc->sig)
+    ret_type = type_sig_return(sig)
     if ret_type <> TYPE_NONE then
         ll_cg_state.retvar = ll_cg_local_var(ret_type, "retval")
     end if
     'Keep the entryBB for allocas so we can more easily add to it later for shadow copies
-    startBB = llvm_append_basic_block(proc->lp, "start")
+    startBB = llvm_append_basic_block(sig->sig_lp, "start")
     dummy = llvm_build_br(ll_cg_state.builder, startBB)
     llvm_position_builder_at_end ll_cg_state.builder, startBB
     ll_cg_block ast_get_child(proc_node, 1)
@@ -62,7 +72,7 @@ sub ll_cg_procedure(proc_node)
         ll_cg_state.retvar = llvm_build_load(ll_cg_state.builder, ll_cg_state.retvar, "retval")
         dummy = llvm_build_ret(ll_cg_state.builder, ll_cg_state.retvar)
     end if
-    function_ok = llvm_verify_function(proc->lp, LLVMAbortProcessAction)
+    function_ok = llvm_verify_function(sig->sig_lp, LLVMAbortProcessAction)
     llvm_dispose_builder ll_cg_state.builder
 end sub
 
@@ -80,8 +90,8 @@ sub ll_cg_locals(proc_node)
         end if
     next i
     'Allocate and initialise all other local variables
-    proc = proc_node->ref
-    var = proc->last_var
+    sig = proc_node->ref2
+    var = sig->last_var
     while var
         var->lp = ll_cg_local_var(var->type, var->identifier)
         var = var->prev_var
@@ -161,7 +171,9 @@ function ll_cg_call%&(node)
     dim as _offset param, dedicated
     numargs = ast_num_children(node)
     target = node->ref
-    if target->lp = 0 then
+    sig = node->ref2
+
+    if sig->sig_lp = 0 then
         'Maybe a builtin instruction
         dedicated = ll_cg_call_builtin(node)
         if dedicated then
@@ -169,11 +181,11 @@ function ll_cg_call%&(node)
             exit function
         end if
         'Must be first use of an external function
-        ll_declare_func target
+        ll_declare_func_sig target, sig
         'Still nothing, throw an error (should never happen)
-        if target->lp = 0 then fatalerror "Call to " + target->identifier + " has no target pointer"
+        if sig->sig_lp = 0 then fatalerror "Call to " + target->identifier + " has no target pointer"
     end if
-    sig = node->ref2
+
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
         if type_sig_argflags(sig, i) AND TYPE_BYVAL then
@@ -182,7 +194,7 @@ function ll_cg_call%&(node)
             args(i) = ll_cg_shadow_expr(ast_get_child(node, i))
         end if
     next i
-    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, target->lp, args(), numargs)
+    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
 end function
 
 function ll_cg_shadow_expr%&(expr)
@@ -198,9 +210,8 @@ function ll_cg_shadow_expr%&(expr)
     ll_cg_shadow_expr%& = alloca
 end function
 
-sub ll_declare_func(func)
+sub ll_declare_func_sig(func, sig)
     dim as _offset prototype
-    sig = func->sig
     numargs = type_sig_numargs(sig)
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
@@ -211,7 +222,7 @@ sub ll_declare_func(func)
         end if
     next i
     prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
-    func->lp = llvm_add_function(ll_cg_state.module, func->identifier, prototype)
+    sig->sig_lp = llvm_add_function(ll_cg_state.module, func->identifier, prototype)
 end sub
 
 function ll_cg_call_builtin%&(node)

@@ -252,6 +252,9 @@ function type_add_sig(previous, sig$)
     end if
     type_signatures(type_last_signature).sig = sig$
     type_signatures(type_last_signature).succ = 0 'Avoids QB64 compiler bug
+    type_signatures(type_last_signature).lp = 0
+    type_signatures(type_last_signature).proc_node = 0
+    type_signatures(type_last_signature).last_var = 0
     if previous then type_signatures(previous).succ = type_last_signature
     type_add_sig = type_last_signature
 end function

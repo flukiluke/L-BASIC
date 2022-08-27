@@ -4,38 +4,55 @@
 
 'Expects: TOK_DECLARE
 'Results: NEWLINE
+'Returns: 0, always.
 function ps_declare
     ps_consume TOK_DECLARE
-    ps_declare = ps_declare_p
+    if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
+    dummy = ps_declare_p(is_sub, 0)
+    ps_declare = 0
 end function
 
-function ps_declare_p
+'Expects: SUB or FUNCTION
+'Results: NEWLINE
+'Returns: relevant type signature
+function ps_declare_p(is_sub, root)
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start declare_p"
     $end if
-    if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
-    if tok_token <> TOK_UNKNOWN then
+    if ps_final_nested then
+        ps_error "SUB and FUNCTION must appear at top level"
+    end if
+    if tok_token = TOK_UNKNOWN then
+        'Entirely new function
+        dim sym as symtab_entry_t
+        sym-identifier = ucase$(tok_content$)
+        sym-stype = SYM_FUNCTION
+        tok_advance
+        sym-sig = type_add_sig(0, ps_func_sigt$(is_sub, 0))
+        sym-func_kind = SYM_FUNCTION_USER
+        symtab_add_entry sym
+        ps_declare_p = sym-sig
+    elseif tok_token->stype = SYM_FUNCTION then
+        'Function already exists
+        func = tok_token
+        tok_advance
+        sigt$ = ps_func_sigt$(is_sub, root)
+        cur_sig = func->sig
+        'Set sig to the existing instance of the signature, if any
+        while cur_sig
+            if cur_sig->sig_str = sigt$ then
+                sig = cur_sig
+                exit while
+            end if
+            prev_sig = cur_sig
+            cur_sig = cur_sig->succ
+        wend
+        'Append to list if we didn't find it
+        if sig = 0 then sig = type_add_sig(prev_sig, sigt$)
+        ps_declare_p = sig
+    else
         ps_error "Name already in use"
     end if
-    dim sym as symtab_entry_t
-    sym-identifier = ucase$(tok_content$)
-    sym-stype = SYM_FUNCTION
-    tok_advance
-    if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
-    if return_type = 0 then return_type = ps_default_type
-    sym-sig = type_add_sig(0, type_sigt_create$(return_type)) 
-    if ps_consumed(TOK_OPAREN) then
-        if not ps_consumed(TOK_CPAREN) then
-            sig$ = ps_formal_args$(0)
-            type_sig_merge sym-sig, sig$
-            ps_consume TOK_CPAREN
-        end if
-    end if
-    sym-func_kind = SYM_FUNCTION_USER
-    sym-proc_node = 0 'We have no implementation for this function yet
-    symtab_add_entry sym
-    proc_id = symtab_last_entry
-    ps_declare_p = 0
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed declare_p"
     $end if
@@ -43,69 +60,34 @@ end function
 
 'Expects: TOK_FUNCTION or TOK_SUB
 'Results: NEWLINE
-'Return -2, which is handled particularly by ps_block, ps_stmt and interactive_mode
+'Returns -2, which is handled particularly by ps_block, ps_stmt and interactive_mode.
+'Assumes the function sym and type signature have already been created by the prepass
+'(i.e. ps_declare_p).
+'Does not support preload.
 function ps_userfunc
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start userfunc"
     $end if
-    if ps_final_nested then
-        ps_error "SUB and FUNCTION must appear at top level"
-    end if
     if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
-    
-    if tok_token <> TOK_UNKNOWN then
-        if tok_token->stype <> SYM_FUNCTION then ps_error "Existing name is not a function"
-        'if not preload mode and (intrinsic function or implemented user function)
-        if not ps_is_preload and (tok_token->func_kind <> SYM_FUNCTION_USER or tok_token->proc_node <> 0) then ps_error "Function already exists"
-        override_sym = tok_token
-    end if
-
-    dim sym as symtab_entry_t
-    sym-identifier = ucase$(tok_content$)
-    sym-stype = SYM_FUNCTION
-    tok_advance
+    func = tok_token
+    if func = TOK_UNKNOWN then ps_error "Prepass declaration missing" 'Should never happen
 
     root = ast_add_node(AST_PROCEDURE)
+    'Include the ast node number in the scope so we don't mix up multiple implementations
+    'of a function with the same name.
+    ps_scope_identifier$ = func->identifier + ltrim$(str$(root))
+    sig = ps_declare_p(is_sub, root)
     ps_add_nested_structure root
-    ps_scope_identifier$ = sym-identifier
     'Save this value so we can restore it later (and so STATIC can access it)
     ps_main_last_var = ps_scoped_last_var
     ps_scoped_last_var = 0
 
-    if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
-    if return_type = 0 then return_type = ps_default_type
+    'Check if there is already an implementation
+    if sig->proc_node then ps_error "Function definition would overwrite existing"
 
-    new_sig = type_add_sig(0, type_sigt_create$(return_type)) 
-    if ps_consumed(TOK_OPAREN) then
-        if not ps_consumed(TOK_CPAREN) then
-            sig$ = ps_formal_args$(root)
-            type_sig_merge new_sig, sig$
-            ps_consume TOK_CPAREN
-        end if
-    end if
-
-    if override_sym then
-        'Overriding existing function, or implementing a declaration
-        'TODO: Be more smart about the type signature for intrinsics
-        if override_sym->func_kind = SYM_FUNCTION_USER and _
-            type_signatures(override_sym->sig).sig <> type_signatures(new_sig).sig then
-            print type_human_sig$(type_signatures(override_sym->sig).sig)
-            print type_human_sig$(type_signatures(new_sig).sig)
-            ps_error "Type signature does not match existing"
-        end if
-        override_sym->func_kind = SYM_FUNCTION_USER
-        override_sym->proc_node = root
-        proc_id = override_sym
-    else
-        sym-sig = new_sig
-        sym-func_kind = SYM_FUNCTION_USER
-        sym-proc_node = root
-        symtab_add_entry sym
-        proc_id = symtab_last_entry
-    end if
-    root->ref = proc_id
-
-    'TODO: STATIC and other modifiers
+    sig->proc_node = root
+    root->ref = func
+    root->ref2 = sig
 
     ps_consume TOK_NEWLINE
     block = ps_block
@@ -121,9 +103,9 @@ function ps_userfunc
     ps_queued_cleanup_nodes$ = ""
 
     root->pre_attach(block)
+    sig->last_var = ps_scoped_last_var
     ps_consume TOK_END
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
-    proc_id->last_var = ps_scoped_last_var
 
     ps_scoped_last_var = ps_main_last_var
     ps_scope_identifier$ = ""
@@ -132,6 +114,29 @@ function ps_userfunc
     ps_userfunc = -2
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed userfunc"
+    $end if
+end function
+
+'Expects: token after name
+'Result: TOK_NEWLINE
+'Generate a type signature for a function. If root <> 0, also attach AST_VAR nodes
+'for formal arguments.
+function ps_func_sigt$(is_sub, root)
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start func sigt"
+    $end if
+    if is_sub then return_type = TYPE_NONE else return_type = ps_opt_sigil
+    if return_type = 0 then return_type = ps_default_type
+    sig$ = type_sigt_create$(return_type)
+    if ps_consumed(TOK_OPAREN) then
+        if not ps_consumed(TOK_CPAREN) then
+            sig$ = type_sigt_merge$(sig$, ps_formal_args$(root))
+            ps_consume TOK_CPAREN
+        end if
+    end if
+    ps_func_sigt$ = sig$
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed func sigt"
     $end if
 end function
 
@@ -195,9 +200,11 @@ function ps_formal_args$(root)
             var = ast_add_node(AST_VAR)
             'Argument is pass-by-reference, unless explicitly requesting BYVAL
             is_ref = (flags AND TYPE_BYVAL) = 0
-            var->ref = ps_new_var_pp(var_name$, sigil, FALSE, is_ref)
             'Stop arguments appearing in the list of variables in the scope
+            ps_main_last_var = ps_scoped_last_var
             ps_scoped_last_var = 0
+            var->ref = ps_new_var_pp(var_name$, sigil, FALSE, is_ref)
+            ps_scoped_last_var = ps_main_last_var
             root->attach(var)
             if is_array then
                 node = ast_add_node(AST_ARRAY_CLAIM)

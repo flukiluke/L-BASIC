@@ -54,8 +54,7 @@ dim shared AST_ENTRYPOINT
 
 'Every SUB and FUNCTION is rooted in an AST_PROCEDURE.
 'First child is AST_BLOCK. Remaining children are AST_VAR for formal parameters, left to
-'right. ref is the symtab entry for the function name.
-'Note: the main program is not an AST_PROCEDURE, it is just an AST_BLOCK.
+'right. ref is the symtab entry for the function name, ref2 is the type signature.
 const AST_PROCEDURE = 1
 'group of statements
 const AST_BLOCK = 2

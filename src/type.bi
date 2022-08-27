@@ -8,18 +8,33 @@
 'function multiple times with different signatures by chaining each declaration's
 'signature together.
 
-'type_signature_t.sig is an mkl$-encoded string. Its format is mkl$(return type) +
-'mkl$(argument 1 type) + mkl$(argument 1 flags) + mkl$(argument 2 type) +
-'mkl$(argument 2 flags) + ...
-'For each flag, one or more TYPE_* flags as defined below are set.
-'Don't access things directly, use the type_sig_* functions.
 type type_signature_t
+    'sig is an mkl$-encoded string. Its format is mkl$(return type) +
+    'mkl$(argument 1 type) + mkl$(argument 1 flags) + mkl$(argument 2 type) +
+    'mkl$(argument 2 flags) + ...
+    'For each flag, one or more TYPE_* flags as defined below are set.
     sig as string
+    'lp is a pointer to the LLVM instantiation of the function with
+    'that particular signature (each alternative gets a separate instantiation).
+    lp as _offset
+    'proc_node is the AST_PROCEDURE holding the executable code for this function.
+    'Different signatures for a function may point to different procedures because
+    'of type overloading. proc_node may be 0 if the function is implemented natively,
+    'i.e. is translated directly to a sequence of instructions.
+    proc_node as long
+    'last_var is the sym entry of the last variable in this scope, excluding arguments.
+    last_var as long
     succ as long 'Can't call this "next" :(
 end type
 
-redim shared type_signatures(10) as type_signature_t
+redim shared type_signatures(1000) as type_signature_t
 dim shared type_last_signature as long
+
+$macro: @@->sig_str | type_signatures(@1).sig
+$macro: @@->sig_lp | type_signatures(@1).lp
+$macro: @@->proc_node | type_signatures(@1).proc_node
+$macro: @@->last_var | type_signatures(@1).last_var
+$macro: @@->succ | type_signatures(@1).succ
 
 'Note: constants for actual data types (TYPE_LONG etc.) are defined in tokens.list
 'for greater ease of handling UDTs.

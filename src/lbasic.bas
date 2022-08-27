@@ -316,7 +316,7 @@ end sub
 sub ingest_initial_file
     add_input_file options.mainarg, FALSE
     tok_init
-    Error_content = ERR_CTX_PARSING
+    Error_context = ERR_CTX_PARSING
     ps_prepass
     add_input_file options.mainarg, FALSE
     tok_reinit
