@@ -167,6 +167,48 @@ function ll_type%&(typ)
     end select
 end function
 
+'Name mangling rules:
+'   - Covert to all lowercase
+'   - Remove any leading underscore
+'   - Prefix b$
+'   - Append $
+'   - Append letter for return type.
+'   - Append letter for each argument, if any. 
+function ll_mangled_proc_name$(plain_name$, sig)
+    n$ = lcase$(plain_name$)
+    if left$(n$, 1) = "_" then n$ = mid$(n$, 2)
+    n$ = n$ + "$" + ll_mangle_type$(type_sig_return(sig))
+    for i = 1 to type_sig_numargs(sig)
+        n$ = n$ + ll_mangle_type$(type_sig_argtype(sig, i))
+    next i
+    ll_mangled_proc_name$ = n$
+end function
+
+function ll_mangle_type$(typ)
+    select case typ
+        case TYPE_NONE
+            ll_mangle_type$ = "N"
+        case TYPE_BOOL
+            ll_mangle_type$ = "B"
+        case TYPE_INTEGER
+            ll_mangle_type$ = "I"
+        case TYPE_LONG
+            ll_mangle_type$ = "L"
+        case TYPE_INTEGER64
+            ll_mangle_type$ = "6"
+        case TYPE_SINGLE
+            ll_mangle_type$ = "S"
+        case TYPE_DOUBLE
+            ll_mangle_type$ = "D"
+        case TYPE_QUAD
+            ll_mangle_type$ = "Q"
+        case TYPE_STRING
+            ll_mangle_type$ = "T" 'For "text"
+        case else
+            fatalerror "Unknown type: " + type_human_readable$(typ)
+    end select
+end function
+
 function ll_cg_call%&(node)
     dim as _offset param, dedicated
     numargs = ast_num_children(node)
@@ -222,7 +264,8 @@ sub ll_declare_func_sig(func, sig)
         end if
     next i
     prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
-    sig->sig_lp = llvm_add_function(ll_cg_state.module, func->identifier, prototype)
+    mangled$ = ll_mangled_proc_name$(func->identifier, sig)
+    sig->sig_lp = llvm_add_function(ll_cg_state.module, mangled$, prototype)
 end sub
 
 function ll_cg_call_builtin%&(node)
