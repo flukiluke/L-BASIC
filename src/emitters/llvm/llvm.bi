@@ -5,6 +5,7 @@
 $include: 'llvm_bindings.bi'
 
 type llvm_cg_state_t
+    target_machine as _offset
     module as _offset 'Current LLVM module
     builder as _offset 'Current instruction builder
     retvar as _offset 'The variable whose value will be loaded & returned

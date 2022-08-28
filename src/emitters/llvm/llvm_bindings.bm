@@ -24,17 +24,25 @@ end function
 
 function llvm_verify_module(M%&, Action&, OutMessage$)
     llvm_verify_module = LLVMVerifyModule(M%&, Action&, msgp%&)
+    OutMessage$ = llvm_recv_string$(msgp%&)
+end function
+
+function llvm_recv_string$(msgp%&)
+    if msgp%& = 0 then exit function
     'Is there a better way?
-    OutMessage$ = ""
+    msg$ = ""
+    p%& = msgp%&
     $checking:off
     dim m as _mem
     do
-        c& = _memget(m, msgp%&, _byte)
+        c& = _memget(m, p%&, _byte)
         if c& = 0 then exit do
-        OutMessage$ = OutMessage$ + chr$(c&)
+        msg$ = msg$ + chr$(c&)
+        p%& = p%& + 1
     loop
     $checking:on
     LLVMDisposeMessage msgp%&
+    llvm_recv_string$ = msg$
 end function
 
 function llvm_write_bitcode_to_file&(M%&, Path$)
@@ -91,4 +99,28 @@ end function
 
 function llvm_create_basic_block%&(Name$)
     llvm_create_basic_block%& = LLVMCreateBasicBlockInContext%&(llvm_get_global_context%&, Name$ + chr$(0))
+end function
+
+function llvm_get_default_target_triple$
+    msgp%& = LLVMGetDefaultTargetTriple%&
+    llvm_get_default_target_triple$ = llvm_recv_string$(msgp%&)
+end function
+
+function llvm_get_target_from_triple%&(Triple$, ErrorMsg$)
+    e = LLVMGetTargetFromTriple&(Triple$ + chr$(0), Target%&, ErrorMessage%&)
+    if ErrorMessage%& then ErrorMsg$ = llvm_recv_string$(ErrorMessage%&)
+    if e = 0 then
+        llvm_get_target_from_triple%& = Target%&
+    else
+        llvm_get_target_from_triple%& = 0
+    end if
+end function
+
+function llvm_create_target_machine%&(T%&, Triple$, CPU$, Features$, Level&, Reloc&, CodeModel&)
+    llvm_create_target_machine%& = LLVMCreateTargetMachine%&(T%&, Triple$ + chr$(0), CPU$ + chr$(0), Features$ + chr$(0), Level&, Reloc&, CodeModel&)
+end function
+
+function llvm_target_machine_emit_to_file&(T%&, M%&, Filename$, codegen&, ErrorMsg$)
+    llvm_target_machine_emit_to_file& = LLVMTargetMachineEmitToFile(T%&, M%&, Filename$ + chr$(0), codegen&, msgp%&)
+    ErrorMsg$ = llvm_recv_string$(msgp%&)
 end function

@@ -52,8 +52,18 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMCreateBasicBlockInContext%&(byval C%&, Name$)
     function llvm_build_cond_br%& alias LLVMBuildCondBr(byval B%&, byval Cond%&, byval ThenBr%&, byval ElseBr%&)
     function llvm_build_br%& alias LLVMBuildBr(byval B%&, byval Dest%&)
-    sub llvm_append_existing_basic_block alias LLVMAppendExistingBasicBlock(byval Fn%&, byval BB%&)
-    sub llvm_set_linkage alias LLVMSetLinkage(byval Global%&, byval Linkage&)
+    sub      llvm_append_existing_basic_block alias LLVMAppendExistingBasicBlock(byval Fn%&, byval BB%&)
+    sub      llvm_set_linkage alias LLVMSetLinkage(byval Global%&, byval Linkage&)
+    function LLVMGetDefaultTargetTriple%&
+    function LLVMGetTargetFromTriple&(Triple$, Target%&, ErrorMessage%&)
+    sub      llvm_initialize_x86_target_info alias LLVMInitializeX86TargetInfo
+    sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
+    sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC
+    sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
+    function LLVMCreateTargetMachine%&(byval T%&, Triple$, CPU$, Features$, byval Level&, byval Reloc&, byval CodeModel&)
+    function llvm_create_target_data_layout%& alias LLVMCreateTargetDataLayout(byval T%&)
+    sub      llvm_module_set_data_layout alias LLVMSetModuleDataLayout(byval M%&, byval DL%&)
+    function LLVMTargetMachineEmitToFile&(byval T%&, byval M%&, Filename$, byval codegen&, ErrorMessage%&)
 end declare
 
 const LLVMAbortProcessAction = 0
@@ -122,3 +132,26 @@ const LLVMCommonLinkage = 14 'Tentative definitions
 const LLVMLinkerPrivateLinkage = 15 'Like Private, but linker removes.
 const LLVMLinkerPrivateWeakLinkage = 16 'Like LinkerPrivate, but is weak.
 
+const LLVMCodeGenLevelNone = 0
+const LLVMCodeGenLevelLess = 1
+const LLVMCodeGenLevelDefault = 2
+const LLVMCodeGenLevelAggressive = 3
+
+const LLVMRelocDefault = 0
+const LLVMRelocStatic = 1
+const LLVMRelocPIC = 2
+const LLVMRelocDynamicNoPic = 3
+const LLVMRelocROPI = 4
+const LLVMRelocRWPI = 5
+const LLVMRelocROPI_RWPI = 6
+
+const LLVMCodeModelDefault = 0
+const LLVMCodeModelJITDefault = 1
+const LLVMCodeModelTiny = 2
+const LLVMCodeModelSmall = 3
+const LLVMCodeModelKernel = 4
+const LLVMCodeModelMedium = 5
+const LLVMCodeModelLarge = 6
+
+const LLVMAssemblyFile = 0
+const LLVMObjectFile = 1
