@@ -1,0 +1,66 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'vars.bm - Code generation for variables
+
+sub ll_cg_locals(proc_node)
+    'Copy any byval arguments to allocas so they may be treated identically
+    dim as _offset ptr, store
+    numargs = ast_num_children(proc_node) - 1
+    for i = 1 to numargs
+        arg = ast_get_child(proc_node, i + 1)
+        var = arg->ref
+        if (var->vflags AND SYM_VARIABLE_DEREF) = 0 then
+            ptr = llvm_build_alloca(ll_cg_state.builder, ll_type(var->type), var->identifier)
+            store = llvm_build_store(ll_cg_state.builder, var->lp, ptr)
+            var->lp = ptr
+        end if
+    next i
+    'Allocate and initialise all other local variables
+    sig = proc_node->ref2
+    var = sig->last_var
+    while var
+        var->lp = ll_cg_local_var(var->type, var->identifier)
+        var = var->prev_var
+    wend
+end sub
+
+function ll_cg_local_var%&(typ, var_name$)
+    dim as _offset lp, dummy, constant_zero
+    lp = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), var_name$)
+    if type_is_int(typ) then
+        constant_zero = llvm_const_int(ll_type(typ), 0, 0)
+    else
+        constant_zero = llvm_const_real(ll_type(typ), 0)
+    end if
+    dummy = llvm_build_store(ll_cg_state.builder, constant_zero, lp)
+    ll_cg_local_var%& = lp
+end function
+
+'Variables in an rvalue context
+function ll_cg_var%&(node)
+    var = node->ref
+    ll_cg_var%& = llvm_build_load(ll_cg_state.builder, var->lp, var->identifier)
+end function
+
+'Variables in an lvalue context
+function ll_cg_var_lval%&(node)
+    var = node->ref
+    ll_cg_var_lval%& = var->lp
+end function
+
+function ll_cg_constant%&(node)
+    constant = node->ref
+    select case ast_constant_types(constant)
+        case TYPE_BOOL
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int1_type, ast_constants(constant), 10)
+        case TYPE_INTEGER
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int16_type, ast_constants(constant), 10)
+        case TYPE_LONG
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int32_type, ast_constants(constant), 10)
+        case TYPE_INTEGER64
+            ll_cg_constant%& = llvm_const_int_of_string(llvm_int64_type, ast_constants(constant), 10)
+        case else
+            fatalerror "Bad constant type"
+    end select
+end function
+

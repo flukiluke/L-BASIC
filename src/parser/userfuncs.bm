@@ -75,7 +75,8 @@ function ps_userfunc
     root = ast_add_node(AST_PROCEDURE)
     'Include the ast node number in the scope so we don't mix up multiple implementations
     'of a function with the same name.
-    ps_scope_identifier$ = func->identifier + ltrim$(str$(root))
+    ps_scope_name$ = func->identifier
+    ps_scope_id = root
     sig = ps_declare_p(is_sub, root)
     ps_add_nested_structure root
     'Save this value so we can restore it later (and so STATIC can access it)
@@ -108,7 +109,8 @@ function ps_userfunc
     if is_sub then ps_consume TOK_SUB else ps_consume TOK_FUNCTION
 
     ps_scoped_last_var = ps_main_last_var
-    ps_scope_identifier$ = ""
+    ps_scope_name$ = ""
+    ps_scope_id = 0
     ps_remove_nested_structure
 
     ps_userfunc = -2
@@ -232,7 +234,7 @@ function ps_func_return
     $end if
     'Are we in a procedure with a matching name?
     u$ = ucase$(tok_content$)
-    if u$ <> ps_scope_identifier$ then
+    if u$ <> ucase$(ps_scope_name$) then
         $if DEBUG_PARSE_TRACE then
         debuginfo "Completed func return"
         $end if

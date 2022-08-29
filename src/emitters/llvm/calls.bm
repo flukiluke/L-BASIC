@@ -1,0 +1,90 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'calls.bm - Code generation for calls to functions
+
+function ll_cg_call%&(node)
+    dim as _offset dedicated
+    numargs = ast_num_children(node)
+    target = node->ref
+    sig = node->ref2
+
+    if sig->sig_lp = 0 then
+        'Maybe a builtin instruction
+        dedicated = ll_cg_call_builtin(node)
+        if dedicated then
+            ll_cg_call%& = dedicated
+            exit function
+        end if
+        'Must be first use of an external function
+        ll_declare_func_sig target, sig
+        'Still nothing, throw an error (should never happen)
+        if sig->sig_lp = 0 then fatalerror "Call to " + target->identifier + " has no target pointer"
+    end if
+
+    dim args(1 to numargs) as _offset
+    for i = 1 to numargs
+        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
+            args(i) = ll_cg_expr(ast_get_child(node, i))
+        else
+            args(i) = ll_cg_shadow_expr(ast_get_child(node, i))
+        end if
+    next i
+    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
+end function
+
+function ll_cg_call_builtin%&(node)
+    dim as _offset v1, v2, ret
+    select case node->ref
+        case TOK_PLUS
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(c1)
+            v2 = ll_cg_expr(ast_get_child(node, 2))
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_add(ll_cg_state.builder, v1, v2, "add")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fadd(ll_cg_state.builder, v1, v2, "fadd")
+            end if
+        case TOK_DASH
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(c1)
+            v2 = ll_cg_expr(ast_get_child(node, 2))
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_sub(ll_cg_state.builder, v1, v2, "sub")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fsub(ll_cg_state.builder, v1, v2, "fsub")
+            end if
+        case TOK_EQUALS
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(c1)
+            v2 = ll_cg_expr(ast_get_child(node, 2))
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntEq, v1, v2, "inteq")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, v1, v2, "fpeq")
+            end if
+    end select
+    ll_cg_call_builtin%& = ret            
+end function
+
+sub ll_declare_func_sig(func, sig)
+    dim as _offset prototype
+    numargs = type_sig_numargs(sig)
+    dim args(1 to numargs) as _offset
+    for i = 1 to numargs
+        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
+            args(i) = ll_type(type_sig_argtype(sig, i))
+        else
+            args(i) = ll_pointer_type(type_sig_argtype(sig, i))
+        end if
+    next i
+    prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
+    mangled$ = ll_mangled_proc_name$(func->identifier, sig)
+    sig->sig_lp = llvm_add_function(ll_cg_state.module, mangled$, prototype)
+end sub
+
+sub ll_cg_set_return(node)
+    dim as _offset value, dummy
+    value = ll_cg_expr(ast_get_child(node, 1))
+    dummy = llvm_build_store(ll_cg_state.builder, value, ll_cg_state.retvar)
+end sub
+

@@ -2,10 +2,9 @@
 'SPDX-License-Identifier: Apache-2.0
 'llvm.bm - Entry point for LLVM based compilation
 
-$include: 'llvm_bindings.bm'
-
 sub ll_build
     ll_cg_state.module = llvm_module_create_with_name(options.mainarg)
+    ll_set_target
     for i = 1 to symtab_last_entry
         if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
             sig = i->sig
@@ -25,10 +24,31 @@ sub ll_build
         end if
     next i
     e = llvm_verify_module(ll_cg_state.module, LLVMAbortProcessAction, message$)
-    ll_set_target
+    if options.build_stages and BUILD_LINK then
+        fatalerror "Don't know how to link!"
+    elseif options.build_stages and BUILD_OBJ then
+        ll_emit_obj
+    elseif options.build_stages and BUILD_ASM then
+        ll_emit_asm
+    elseif options.build_stages and BUILD_IR then
+        ll_emit_ir
+    end if
+    llvm_dispose_module ll_cg_state.module
+end sub
+
+sub ll_emit_ir
+    e = llvm_write_bitcode_to_file(ll_cg_state.module, options.outputfile)
+    if e then fatalerror "Failed to write to " + options.outputfile
+end sub
+
+sub ll_emit_asm
+    e = llvm_target_machine_emit_to_file(ll_cg_state.target_machine, ll_cg_state.module, options.outputfile, LLVMAssemblyFile, message$)
+    if e then fatalerror message$
+end sub
+
+sub ll_emit_obj
     e = llvm_target_machine_emit_to_file(ll_cg_state.target_machine, ll_cg_state.module, options.outputfile, LLVMObjectFile, message$)
     if e then fatalerror message$
-    llvm_dispose_module ll_cg_state.module
 end sub
 
 sub ll_set_target
@@ -50,393 +70,12 @@ sub ll_set_target
     llvm_set_target ll_cg_state.module, triple$
 end sub
 
-sub ll_cg_procedure_entry(proc_node)
-    dim as _offset param
-    proc = proc_node->ref
-    sig = proc_node->ref2
-    ll_declare_func_sig proc, sig
-    numargs = ast_num_children(proc_node) - 1
-    'Set parameter names for readability
-    for i = 1 to numargs
-        arg = ast_get_child(proc_node, i + 1)
-        var = arg->ref
-        param = llvm_get_param(sig->sig_lp, i - 1)
-        llvm_set_value_name param, var->identifier
-        var->lp = param
-    next i
-    'Make all functions except _MAIN private for better optimisiation
-    if proc->identifier <> "_MAIN" then
-        llvm_set_linkage sig->sig_lp, LLVMInternalLinkage
-    end if
-end sub
-
-sub ll_cg_procedure(proc_node)
-    dim as _offset entryBB, startBB, dummy
-    proc = proc_node->ref
-    sig = proc_node->ref2
-    ll_cg_state.builder = llvm_create_builder
-    entryBB = llvm_append_basic_block(sig->sig_lp, "entry")
-    llvm_position_builder_at_end ll_cg_state.builder, entryBB
-    ll_cg_locals proc_node
-    ret_type = type_sig_return(sig)
-    if ret_type <> TYPE_NONE then
-        ll_cg_state.retvar = ll_cg_local_var(ret_type, "retval")
-    end if
-    'Keep the entryBB for allocas so we can more easily add to it later for shadow copies
-    startBB = llvm_append_basic_block(sig->sig_lp, "start")
-    dummy = llvm_build_br(ll_cg_state.builder, startBB)
-    llvm_position_builder_at_end ll_cg_state.builder, startBB
-    ll_cg_block ast_get_child(proc_node, 1)
-    if ret_type = TYPE_NONE then
-        dummy = llvm_build_ret_void(ll_cg_state.builder)
-    else
-        ll_cg_state.retvar = llvm_build_load(ll_cg_state.builder, ll_cg_state.retvar, "retval")
-        dummy = llvm_build_ret(ll_cg_state.builder, ll_cg_state.retvar)
-    end if
-    function_ok = llvm_verify_function(sig->sig_lp, LLVMAbortProcessAction)
-    llvm_dispose_builder ll_cg_state.builder
-end sub
-
-sub ll_cg_locals(proc_node)
-    'Copy any byval arguments to allocas so they may be treated identically
-    dim as _offset ptr, store
-    numargs = ast_num_children(proc_node) - 1
-    for i = 1 to numargs
-        arg = ast_get_child(proc_node, i + 1)
-        var = arg->ref
-        if (var->vflags AND SYM_VARIABLE_DEREF) = 0 then
-            ptr = llvm_build_alloca(ll_cg_state.builder, ll_type(var->type), var->identifier)
-            store = llvm_build_store(ll_cg_state.builder, var->lp, ptr)
-            var->lp = ptr
-        end if
-    next i
-    'Allocate and initialise all other local variables
-    sig = proc_node->ref2
-    var = sig->last_var
-    while var
-        var->lp = ll_cg_local_var(var->type, var->identifier)
-        var = var->prev_var
-    wend
-end sub
-
-function ll_cg_local_var%&(typ, var_name$)
-    dim as _offset lp, dummy, constant_zero
-    lp = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), var_name$)
-    if type_is_int(typ) then
-        constant_zero = llvm_const_int(ll_type(typ), 0, 0)
-    else
-        constant_zero = llvm_const_real(ll_type(typ), 0)
-    end if
-    dummy = llvm_build_store(ll_cg_state.builder, constant_zero, lp)
-    ll_cg_local_var%& = lp
-end function
-
-sub ll_cg_block(block)
-    for i = 1 to ast_num_children(block)
-        node = ast_get_child(block, i)
-        select case node->atype
-            case AST_ASSIGN
-                ll_cg_assign node
-            case AST_IF
-                ll_cg_if node
-            case AST_WHILE
-                'll_cg_while node
-            case AST_DO_PRE
-                'll_cg_do_pre node
-            case AST_DO_POST
-                'll_cg_do_post node
-            case AST_FOR
-                'll_cg_for node
-            case AST_SELECT
-                'll_cg_select node
-            case AST_CALL
-                none%& = ll_cg_call(node)
-            case AST_GOTO
-                'll_cg_goto node
-            case AST_EXIT
-                'll_cg_exit node
-            case AST_SET_RETURN
-                ll_cg_set_return node
-        end select
-    next i
-end sub
-
-function ll_pointer_type%&(typ)
-    ll_pointer_type%& = llvm_pointer_type(ll_type(typ), 0)
-end function
-
-function ll_type%&(typ)
-    select case typ
-        case TYPE_NONE
-            ll_type = llvm_void_type
-        case TYPE_BOOL
-            ll_type = llvm_int1_type
-        case TYPE_INTEGER
-            ll_type = llvm_int16_type
-        case TYPE_LONG
-            ll_type = llvm_int32_type
-        case TYPE_INTEGER64
-            ll_type = llvm_int64_type
-        case TYPE_SINGLE
-            ll_type = llvm_float_type
-        case TYPE_DOUBLE
-            ll_type = llvm_double_type
-        case TYPE_QUAD
-            ll_type = llvm_fp128_type
-        case else
-            fatalerror "bad ll type: " + type_human_readable$(typ)
-    end select
-end function
-
-'Name mangling rules:
-'   - Covert to all lowercase
-'   - Remove any leading underscore
-'   - Prefix b$
-'   - Append $
-'   - Append letter for return type
-'   - Append letter for each argument, if any. Make it uppercase if passed by reference
-function ll_mangled_proc_name$(plain_name$, sig)
-    n$ = lcase$(plain_name$)
-    if left$(n$, 1) = "_" then n$ = mid$(n$, 2)
-    n$ = n$ + "$" + ll_mangle_type$(type_sig_return(sig))
-    for i = 1 to type_sig_numargs(sig)
-        char$ = ll_mangle_type$(type_sig_argtype(sig, i))
-        if (type_sig_argflags(sig, i) AND TYPE_BYVAL) = 0 then
-            char$ = ucase$(char$)
-        end if
-        n$ = n$ + char$
-    next i
-    ll_mangled_proc_name$ = n$
-end function
-
-function ll_mangle_type$(typ)
-    select case typ
-        case TYPE_NONE
-            ll_mangle_type$ = "n"
-        case TYPE_BOOL
-            ll_mangle_type$ = "b"
-        case TYPE_INTEGER
-            ll_mangle_type$ = "i"
-        case TYPE_LONG
-            ll_mangle_type$ = "l"
-        case TYPE_INTEGER64
-            ll_mangle_type$ = "k"
-        case TYPE_SINGLE
-            ll_mangle_type$ = "s"
-        case TYPE_DOUBLE
-            ll_mangle_type$ = "d"
-        case TYPE_QUAD
-            ll_mangle_type$ = "q"
-        case TYPE_STRING
-            ll_mangle_type$ = "t" 'For "text"
-        case else
-            fatalerror "Unknown type: " + type_human_readable$(typ)
-    end select
-end function
-
-function ll_cg_call%&(node)
-    dim as _offset dedicated
-    numargs = ast_num_children(node)
-    target = node->ref
-    sig = node->ref2
-
-    if sig->sig_lp = 0 then
-        'Maybe a builtin instruction
-        dedicated = ll_cg_call_builtin(node)
-        if dedicated then
-            ll_cg_call%& = dedicated
-            exit function
-        end if
-        'Must be first use of an external function
-        ll_declare_func_sig target, sig
-        'Still nothing, throw an error (should never happen)
-        if sig->sig_lp = 0 then fatalerror "Call to " + target->identifier + " has no target pointer"
-    end if
-
-    dim args(1 to numargs) as _offset
-    for i = 1 to numargs
-        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
-            args(i) = ll_cg_expr(ast_get_child(node, i))
-        else
-            args(i) = ll_cg_shadow_expr(ast_get_child(node, i))
-        end if
-    next i
-    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
-end function
-
-function ll_cg_shadow_expr%&(expr)
-    dim as _offset currentBB, entryBB, alloca, value, dummy
-    typ = type_of_expr(expr)
-    currentBB = llvm_get_insert_block(ll_cg_state.builder)
-    entryBB = llvm_get_entry_basic_block(llvm_get_basic_block_parent(currentBB))
-    llvm_position_builder_before ll_cg_state.builder, llvm_get_basic_block_terminator(entryBB)
-    alloca = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), "shadow")
-    llvm_position_builder_at_end ll_cg_state.builder, currentBB
-    value = ll_cg_expr(expr)
-    dummy = llvm_build_store(ll_cg_state.builder, value, alloca)
-    ll_cg_shadow_expr%& = alloca
-end function
-
-sub ll_declare_func_sig(func, sig)
-    dim as _offset prototype
-    numargs = type_sig_numargs(sig)
-    dim args(1 to numargs) as _offset
-    for i = 1 to numargs
-        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
-            args(i) = ll_type(type_sig_argtype(sig, i))
-        else
-            args(i) = ll_pointer_type(type_sig_argtype(sig, i))
-        end if
-    next i
-    prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
-    mangled$ = ll_mangled_proc_name$(func->identifier, sig)
-    sig->sig_lp = llvm_add_function(ll_cg_state.module, mangled$, prototype)
-end sub
-
-function ll_cg_call_builtin%&(node)
-    dim as _offset v1, v2, ret
-    select case node->ref
-        case TOK_PLUS
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_add(ll_cg_state.builder, v1, v2, "add")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fadd(ll_cg_state.builder, v1, v2, "fadd")
-            end if
-        case TOK_DASH
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_sub(ll_cg_state.builder, v1, v2, "sub")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fsub(ll_cg_state.builder, v1, v2, "fsub")
-            end if
-        case TOK_EQUALS
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntEq, v1, v2, "inteq")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, v1, v2, "fpeq")
-            end if
-    end select
-    ll_cg_call_builtin%& = ret            
-end function
-
-function ll_cg_expr%&(node)
-    select case node->atype
-        case AST_CALL
-            ll_cg_expr%& = ll_cg_call(node)
-        case AST_CONSTANT
-            ll_cg_expr%& = ll_cg_constant(node)
-        case AST_CAST
-            ll_cg_expr%& = ll_cg_cast(node)
-        case AST_VAR
-            ll_cg_expr%& = ll_cg_var(node)
-        case else
-            fatalerror "Bad expr type"
-    end select
-end function
-
-function ll_cg_constant%&(node)
-    constant = node->ref
-    select case ast_constant_types(constant)
-        case TYPE_BOOL
-            ll_cg_constant%& = llvm_const_int_of_string(llvm_int1_type, ast_constants(constant), 10)
-        case TYPE_INTEGER
-            ll_cg_constant%& = llvm_const_int_of_string(llvm_int16_type, ast_constants(constant), 10)
-        case TYPE_LONG
-            ll_cg_constant%& = llvm_const_int_of_string(llvm_int32_type, ast_constants(constant), 10)
-        case TYPE_INTEGER64
-            ll_cg_constant%& = llvm_const_int_of_string(llvm_int64_type, ast_constants(constant), 10)
-        case else
-            fatalerror "Bad constant type"
-    end select
-end function
-
-'Variables in an rvalue context
-function ll_cg_var%&(node)
-    var = node->ref
-    ll_cg_var%& = llvm_build_load(ll_cg_state.builder, var->lp, var->identifier)
-end function
-
-'Variables in an lvalue context
-function ll_cg_var_lval%&(node)
-    var = node->ref
-    ll_cg_var_lval%& = var->lp
-end function
-
-sub ll_cg_assign(node)
-    dim as _offset lvalue, rvalue, store
-    lvalue = ll_cg_var_lval(ast_get_child(node, 1))
-    rvalue = ll_cg_expr(ast_get_child(node, 2))
-    store = llvm_build_store(ll_cg_state.builder, rvalue, lvalue)
-end sub
-
-function ll_cg_cast%&(node)
-    dim as _offset value
-    child = ast_get_child(node, 1)
-    value = ll_cg_expr(child)
-    src_type = type_of_expr(child)
-    dest_type = node->ref
-    if type_is_int(src_type) and type_is_int(dest_type) then
-        if type_fixed_size(dest_type) > type_fixed_size(src_type) then
-            op = LLVMSExt
-        else
-            op = LLVMTrunc
-        end if
-    elseif type_is_int(src_type) and type_is_fp(dest_type) then
-        op = LLVMSIToFP
-    elseif type_is_fp(src_type) and type_is_int(dest_type) then
-        op = LLVMFPToSI
-    elseif type_is_fp(src_type) and type_is_fp(dest_type) then
-        if type_fixed_size(dest_type) > type_fixed_size(src_type) then
-            op = LLVMFPExt
-        else
-            op = LLVMFPTrunc
-        end if
-    else
-        fatalerror "Bad cast"
-    end if
-    ll_cg_cast%& = llvm_build_cast(ll_cg_state.builder, op, value, ll_type(dest_type), "cast")
-end function
-
-sub ll_cg_if(node)
-    dim as _offset guard, cmp, func, thenBB, elseBB, mergeBB, dummy
-    cond_node = ast_get_child(node, 1)
-    cond_type = type_of_expr(cond_node)
-    guard = ll_cg_expr(cond_node)
-    if type_is_int(cond_type) then
-        cmp = llvm_build_icmp(ll_cg_state.builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "ifcmp")
-    elseif type_is_fp(cond_type) then
-        cmp = llvm_build_fcmp(ll_cg_state.builder, LLVMRealONE, guard, llvm_const_real(ll_type(cond_type), 0), "ifcmp")
-    end if
-    func = llvm_get_basic_block_parent(llvm_get_insert_block(ll_cg_state.builder))
-    thenBB = llvm_append_basic_block(func, "then")
-    elseBB = llvm_create_basic_block("else")
-    mergeBB = llvm_create_basic_block("endif")
-    dummy = llvm_build_cond_br(ll_cg_state.builder, cmp, thenBB, elseBB)
-    llvm_position_builder_at_end ll_cg_state.builder, thenBB
-    ll_cg_block ast_get_child(node, 2)
-    dummy = llvm_build_br(ll_cg_state.builder, mergeBB)
-    llvm_append_existing_basic_block func, elseBB
-    llvm_position_builder_at_end ll_cg_state.builder, elseBB
-    if ast_num_children(node) = 3 then
-        ll_cg_block ast_get_child(node, 3)
-    end if
-    dummy = llvm_build_br(ll_cg_state.builder, mergeBB)
-    llvm_append_existing_basic_block func, mergeBB
-    llvm_position_builder_at_end ll_cg_state.builder, mergeBB
-end sub
-
-sub ll_cg_set_return(node)
-    dim as _offset value, dummy
-    value = ll_cg_expr(ast_get_child(node, 1))
-    dummy = llvm_build_store(ll_cg_state.builder, value, ll_cg_state.retvar)
-end sub
-
-
+$include: 'llvm_bindings.bm'
+$include: 'assign.bm'
+$include: 'calls.bm'
+$include: 'cast.bm'
+$include: 'if.bm'
+$include: 'proc.bm'
+$include: 'stmt_expr.bm'
+$include: 'types.bm'
+$include: 'vars.bm'

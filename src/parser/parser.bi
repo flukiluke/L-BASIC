@@ -37,7 +37,9 @@ dim shared ps_unresolved_jumps$
 dim shared ps_nested_structures$
 
 'Name of the containing function, used as part of a prefix for local objects.
-dim shared ps_scope_identifier$
+dim shared ps_scope_name$
+'Numeric value used to disambiguate different scopes with the same name
+dim shared ps_scope_id
 
 'Sometimes we need to run cleanup code just before exiting a scope. This is
 'a list of nodes to be added to the end of a scope's block.

@@ -1,0 +1,77 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'types.bm - Datatype and identifier management
+
+'Name mangling rules:
+'   - Covert to all lowercase
+'   - Remove any leading underscore
+'   - Prefix b$
+'   - Append $
+'   - Append letter for return type
+'   - Append letter for each argument, if any. Make it uppercase if passed by reference
+function ll_mangled_proc_name$(plain_name$, sig)
+    n$ = lcase$(plain_name$)
+    if left$(n$, 1) = "_" then n$ = mid$(n$, 2)
+    n$ = n$ + "$" + ll_mangle_type$(type_sig_return(sig))
+    for i = 1 to type_sig_numargs(sig)
+        char$ = ll_mangle_type$(type_sig_argtype(sig, i))
+        if (type_sig_argflags(sig, i) AND TYPE_BYVAL) = 0 then
+            char$ = ucase$(char$)
+        end if
+        n$ = n$ + char$
+    next i
+    ll_mangled_proc_name$ = n$
+end function
+
+function ll_mangle_type$(typ)
+    select case typ
+        case TYPE_NONE
+            ll_mangle_type$ = "n"
+        case TYPE_BOOL
+            ll_mangle_type$ = "b"
+        case TYPE_INTEGER
+            ll_mangle_type$ = "i"
+        case TYPE_LONG
+            ll_mangle_type$ = "l"
+        case TYPE_INTEGER64
+            ll_mangle_type$ = "k"
+        case TYPE_SINGLE
+            ll_mangle_type$ = "s"
+        case TYPE_DOUBLE
+            ll_mangle_type$ = "d"
+        case TYPE_QUAD
+            ll_mangle_type$ = "q"
+        case TYPE_STRING
+            ll_mangle_type$ = "t" 'For "text"
+        case else
+            fatalerror "Unknown type: " + type_human_readable$(typ)
+    end select
+end function
+
+function ll_pointer_type%&(typ)
+    ll_pointer_type%& = llvm_pointer_type(ll_type(typ), 0)
+end function
+
+function ll_type%&(typ)
+    select case typ
+        case TYPE_NONE
+            ll_type = llvm_void_type
+        case TYPE_BOOL
+            ll_type = llvm_int1_type
+        case TYPE_INTEGER
+            ll_type = llvm_int16_type
+        case TYPE_LONG
+            ll_type = llvm_int32_type
+        case TYPE_INTEGER64
+            ll_type = llvm_int64_type
+        case TYPE_SINGLE
+            ll_type = llvm_float_type
+        case TYPE_DOUBLE
+            ll_type = llvm_double_type
+        case TYPE_QUAD
+            ll_type = llvm_fp128_type
+        case else
+            fatalerror "bad ll type: " + type_human_readable$(typ)
+    end select
+end function
+

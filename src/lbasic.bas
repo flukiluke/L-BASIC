@@ -102,7 +102,13 @@ const MODE_REPL = 1
 const MODE_RUN = 2
 const MODE_BUILD = 3
 const MODE_EXEC = 4
-const MODE_DUMP = 5
+
+'Various build stages that may be disabled to control the final product
+const BUILD_PARSE = 1  'Internal data tables
+const BUILD_IR = 2     'LLVM IR
+const BUILD_ASM = 4    'Platform-specific assembly
+const BUILD_OBJ = 8    'Object file
+const BUILD_LINK = 16    'Final linked executable
 
 'Various global options read from the command line
 type options_t
@@ -111,6 +117,7 @@ type options_t
     outputfile as string
     terminal_mode as integer
     oper_mode as integer
+    build_stages as long
     debug as integer
 end type
 dim shared options as options_t
@@ -150,24 +157,14 @@ if options.preload <> "" then preload_file
 
 'Dispatch based on desired mode of operation
 select case options.oper_mode
-    case MODE_REPL
-        interactive_mode FALSE
-    case MODE_RUN
-        run_mode
     case MODE_BUILD
         build_mode
-    case MODE_EXEC
-        exec_mode
-    case MODE_DUMP
-    $if DEBUG_DUMP then
-        dump_mode
-    $end if
 end select
 
 if options.terminal_mode then system else end
 
 interactive_recovery:
-    interactive_mode TRUE
+    system
 
 error_handler:
     Error_occurred = TRUE
@@ -326,114 +323,31 @@ sub ingest_initial_file
     Error_context = ERR_CTX_UNKNOWN
 end sub
 
-sub interactive_mode(recovery)
-    if recovery then
-        ps_nested_structures$ = ""
-        ps_scope_identifier$ = ""
-        tok_recover TOK_NEWLINE
-        symtab_commit
-        ast_rollback
-        ast_clear_entrypoint
-    else
-        input_files_current = 1 'interactive input
-        'imm_init
-        AST_ENTRYPOINT = ast_add_node(AST_BLOCK)
-        ast_commit
-        tok_init
-        ps_init
-    end if
-    do
-        Error_context = ERR_CTX_PARSING
-        node = ps_stmt
-        select case node
-        case -2
-            'A SUB or FUNCTION was defined, we want to keep that.
-            symtab_commit
-            ast_commit
-        case -1
-            '-1 is an end block, this should never happen
-            ps_error "Block end at top-level"
-        case 0
-            'No ast nodes were generated (DIM etc.), but save any
-            'symbols created.
-            symtab_commit
-        case else
-            Error_context = ERR_CTX_UNKNOWN
-            ast_attach AST_ENTRYPOINT, node
-            $if DEBUG_PARSE_RESULT then
-            if options.debug then
-                Error_context = ERR_CTX_DUMP
-                ast_dump_pretty AST_ENTRYPOINT, 0
-                Error_context = ERR_CTX_UNKNOWN
-                print #1,
-            end if
-            $end if
-            'TODO remove this next line by adding the logic to imm_run or similar
-            'imm_reinit ps_scope_frame_size
-            Error_context = ERR_CTX_REPL
-            'imm_run AST_ENTRYPOINT
-            'Keep any symbols that were defined
-            symtab_commit
-            'But don't keep any nodes generated
-            ast_rollback
-            'And clear the main program
-            ast_clear_entrypoint
-        end select
-        Error_context = ERR_CTX_PARSING
-        ps_consume TOK_NEWLINE
-    loop
-end sub
-
-sub run_mode
-    ingest_initial_file
-    'imm_init
-    Error_context = ERR_CTX_RUN
-    'imm_run AST_ENTRYPOINT
-    Error_context = ERR_CTX_UNKNOWN
-    $if DEBUG_HEAP then
-    'if options.debug then imm_heap_stats
-    $end if
-end sub
-
 sub build_mode
     if options.outputfile = "" then
-        options.outputfile = remove_ext$(options.mainarg) + target_platform_settings.executable_extension
+        basename$ = remove_ext$(options.mainarg)
+        if options.build_stages and BUILD_LINK then
+            options.outputfile = basename$ + target_platform_settings.executable_extension
+        elseif options.build_stages and BUILD_OBJ then
+            options.outputfile = basename$ + ".o"
+        elseif options.build_stages and BUILD_ASM then
+            options.outputfile = basename$ + ".s"
+        elseif options.build_stages and BUILD_IR then
+            options.outputfile = basename$ + ".bc"
+        else
+            options.outputfile = basename$ + ".parse"
+        end if
     end if
     ingest_initial_file
-    ll_build
-end sub
-
-sub exec_mode
-    tok_init
-    Error_content = ERR_CTX_PARSING
-    root = ps_block
-    Error_context = ERR_CTX_UNKNOWN
-    $if DEBUG_PARSE_RESULT then
-    if options.debug then
+    if options.build_stages = BUILD_PARSE then
+        open_file options.outputfile, logging_file_handle, TRUE
         Error_context = ERR_CTX_DUMP
-        dump_ast root, 0
-        Error_context = ERR_CTX_UNKNOWN
-        print #1,
+        dump_program
+        close #1
+    else
+        ll_build
     end if
-    $end if
-    'imm_init
-    Error_context = ERR_CTX_RUN
-    'imm_run root
-    Error_context = ERR_CTX_UNKNOWN
 end sub
-
-$if DEBUG_DUMP then
-sub dump_mode
-    ingest_initial_file
-    close #logging_file_handle
-    logging_file_handle = freefile
-    open_file options.outputfile, logging_file_handle, TRUE
-    Error_context = ERR_CTX_DUMP
-    dump_program
-    Error_context = ERR_CTX_UNKNOWN
-    close #1
-end sub
-$end if
 
 'Strip the .bas extension if present
 function remove_ext$(fullname$)
@@ -510,7 +424,8 @@ end sub
 
 sub show_help
     show_version
-    print "Usage: " + command$(0) + " COMMAND [OPTIONS] [FILE]"
+    'print "Usage: " + command$(0) + " COMMAND [OPTIONS] [FILE]"
+    print "Usage: " + command$(0) + " [OPTIONS] [FILE]"
     print '                                                                                '80 columns
     print "Options:"
     print "  -o, --output                     Compilation output"
@@ -519,17 +434,21 @@ sub show_help
     if Debug_features$ <> "" then
         print "  -d, --debug                      Output internal debugging info"
     end if
+    print "  -e, --emit STAGE                 Emit result of STAGE, one of:"
+    print "                                     parse   Syntax check, AST and symbols"
+    print "                                     ir      LLVM IR"
+    print "                                     asm     Platform-specific assembly file"
+    print "                                     obj     Compiled object file"
     print "  -h, --help                       Print this help message"
     print "  --version                        Print version information"
+    exit sub
     print
     print "Commands:"
     print "  repl        Interactive read-evaluate-print loop"
     print "  run         Run a program immediately, without compilation"
     print "  build       Compile a program to a binary executable"
     print "  exec        Run a code fragment supplied on the command line"
-    $if DEBUG_DUMP then
     print "  dump        Output a textual representation of the read program"
-    $end if
     print
     print "The interactive repl may also be entered by supplying no command."
     print "A file may be run by supplying just the file name without the 'run' command."
@@ -538,6 +457,7 @@ end sub
 'The error handling here fakes terminal_mode on the assumption that if you're
 'using command line arguments you don't want a graphical window popping up.
 sub parse_cmd_line_args()
+    options.build_stages = BUILD_PARSE or BUILD_IR or BUILD_ASM or BUILD_OBJ or BUILD_LINK
     for i = 1 TO _commandcount
         arg$ = command$(i)
         select case arg$
@@ -565,67 +485,37 @@ sub parse_cmd_line_args()
                 end if
                 options.preload = locate_path$(command$(i + 1), _startdir$)
                 i = i + 1
-            case "repl", "run", "build", "exec"
-                if cmd$ = "" then
-                    cmd$ = arg$
-                else
-                    options.mainarg = arg$
+            case "-e", "--emit"
+                if i = _commandcount then
+                    options.terminal_mode = TRUE
+                    fatalerror arg$ + " requires argument"
                 end if
+                select case command$(i + 1)
+                    case "parse"
+                        options.build_stages = BUILD_PARSE
+                    case "ir"
+                        options.build_stages = BUILD_PARSE or BUILD_IR
+                    case "asm"
+                        options.build_stages = BUILD_PARSE or BUILD_IR or BUILD_ASM
+                    case "obj"
+                        options.build_stages = BUILD_PARSE or BUILD_IR or BUILD_ASM or BUILD_OBJ
+                    case else
+                        options.terminal_mode = TRUE
+                        fatalerror arg$ + " expects one of parse, ir, asm, obj"
+                end select
+                i = i + 1
             case else
-                $if DEBUG_DUMP then
-                if arg$ = "dump" then
-                    if cmd$ = "" then
-                        cmd$ = arg$
-                    else
-                        options.mainarg = arg$
-                    end if
-                    exit select
-                end if
-                $end if
                 if left$(arg$, 1) = "-" then
                     options.terminal_mode = TRUE
                     fatalerror "Unknown option " + arg$
                 end if
-                if options.mainarg = "" then
-                    options.mainarg = arg$
-                    if cmd$ = "" or cmd$ = "run" or cmd$ = "exec" then
-                        'If we are going to execute this now, we will interpret the rest
-                        'of the command line as arguments to the program itself.
-                        input_file_command_offset = i
-                        exit for
-                    end if
-                else
-                    options.terminal_mode = TRUE
-                    fatalerror "Unknown command " + arg$
-                end if
+                if options.mainarg = "" then options.mainarg = arg$
         end select
     next i
-    select case cmd$
-        case ""
-            if options.mainarg = "" then
-                options.oper_mode = MODE_REPL
-            else
-                options.oper_mode = MODE_RUN
-            end if
-        case "repl"
-            if options.mainarg <> "" then e$ = "Unknown command " + options.mainarg
-            options.oper_mode = MODE_REPL
-        case "run"
-            if options.mainarg = "" then e$ = "File name required"
-            options.oper_mode = MODE_RUN
-        case "build"
-            if options.mainarg = "" then e$ = "File name required"
-            options.oper_mode = MODE_BUILD
-        case "dump"
-            if options.outputfile = "" then e$ = "Output file required"
-            if options.mainarg = "" then e$ = "File name required"
-            options.oper_mode = MODE_DUMP
-        case "exec"
-            options.oper_mode = MODE_EXEC
-    end select
-    if e$ <> "" then
+    options.oper_mode = MODE_BUILD
+    if options.mainarg = "" then
         options.terminal_mode = TRUE
-        fatalerror e$
+        fatalerror "File name required"
     end if
 end sub
 
@@ -633,8 +523,6 @@ $include: 'type.bm'
 $include: 'ast.bm'
 $include: 'symtab.bm'
 $include: 'parser/parser.bm'
-$if DEBUG_DUMP then
 $include: 'emitters/dump/dump.bm'
-$end if
 ''$include: 'emitters/immediate/immediate.bm'
 $include: 'emitters/llvm/llvm.bm'

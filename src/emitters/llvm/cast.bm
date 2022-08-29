@@ -1,0 +1,31 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'cast.bm - Code generation for casts
+
+function ll_cg_cast%&(node)
+    dim as _offset value
+    child = ast_get_child(node, 1)
+    value = ll_cg_expr(child)
+    src_type = type_of_expr(child)
+    dest_type = node->ref
+    if type_is_int(src_type) and type_is_int(dest_type) then
+        if type_fixed_size(dest_type) > type_fixed_size(src_type) then
+            op = LLVMSExt
+        else
+            op = LLVMTrunc
+        end if
+    elseif type_is_int(src_type) and type_is_fp(dest_type) then
+        op = LLVMSIToFP
+    elseif type_is_fp(src_type) and type_is_int(dest_type) then
+        op = LLVMFPToSI
+    elseif type_is_fp(src_type) and type_is_fp(dest_type) then
+        if type_fixed_size(dest_type) > type_fixed_size(src_type) then
+            op = LLVMFPExt
+        else
+            op = LLVMFPTrunc
+        end if
+    else
+        fatalerror "Bad cast"
+    end if
+    ll_cg_cast%& = llvm_build_cast(ll_cg_state.builder, op, value, ll_type(dest_type), "cast")
+end function

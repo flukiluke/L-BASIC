@@ -1,0 +1,63 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'stmt_expr.bm - Code generation for statements and expressions
+
+function ll_cg_expr%&(node)
+    select case node->atype
+        case AST_CALL
+            ll_cg_expr%& = ll_cg_call(node)
+        case AST_CONSTANT
+            ll_cg_expr%& = ll_cg_constant(node)
+        case AST_CAST
+            ll_cg_expr%& = ll_cg_cast(node)
+        case AST_VAR
+            ll_cg_expr%& = ll_cg_var(node)
+        case else
+            fatalerror "Bad expr type"
+    end select
+end function
+
+function ll_cg_shadow_expr%&(expr)
+    dim as _offset currentBB, entryBB, alloca, value, dummy
+    typ = type_of_expr(expr)
+    currentBB = llvm_get_insert_block(ll_cg_state.builder)
+    entryBB = llvm_get_entry_basic_block(llvm_get_basic_block_parent(currentBB))
+    llvm_position_builder_before ll_cg_state.builder, llvm_get_basic_block_terminator(entryBB)
+    alloca = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), "shadow")
+    llvm_position_builder_at_end ll_cg_state.builder, currentBB
+    value = ll_cg_expr(expr)
+    dummy = llvm_build_store(ll_cg_state.builder, value, alloca)
+    ll_cg_shadow_expr%& = alloca
+end function
+
+sub ll_cg_block(block)
+    for i = 1 to ast_num_children(block)
+        node = ast_get_child(block, i)
+        select case node->atype
+            case AST_ASSIGN
+                ll_cg_assign node
+            case AST_IF
+                ll_cg_if node
+            case AST_WHILE
+                'll_cg_while node
+            case AST_DO_PRE
+                'll_cg_do_pre node
+            case AST_DO_POST
+                'll_cg_do_post node
+            case AST_FOR
+                'll_cg_for node
+            case AST_SELECT
+                'll_cg_select node
+            case AST_CALL
+                none%& = ll_cg_call(node)
+            case AST_GOTO
+                'll_cg_goto node
+            case AST_EXIT
+                'll_cg_exit node
+            case AST_SET_RETURN
+                ll_cg_set_return node
+        end select
+    next i
+end sub
+
+
