@@ -64,6 +64,7 @@
 $console:only
 _dest _console
 on error goto ehandler
+chdir _startdir$
 
 redim shared classnames$(0)
 redim shared classvalues$(0)

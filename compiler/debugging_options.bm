@@ -5,17 +5,15 @@
 'than they should be (debugging info is calculated even if debug mode is not enabled
 'at runtime).
 'You may find it useful to tell git to ignore local modifications to this file:
-'   git update-index --skip-worktree src/debugging_options.bm
+'   git update-index --skip-worktree compiler/debugging_options.bm
 'you can undo this with:
-'   git update-index --no-skip-worktree src/debugging_options.bm
+'   git update-index --no-skip-worktree compiler/debugging_options.bm
 
 $macro: debug_config_option @@, On | $let DEBUG_@1 = -1\nDebug_features$ = Debug_features$ + "[@1]"
 $macro: debug_config_option @@, Off | $let DEBUG_@1 = 0
 
 dim shared Debug_features$
 
-'The DUMP option is required for PARSE_RESULT
-debug_config_option DUMP, Off
 debug_config_option PARSE_RESULT, Off
 debug_config_option PARSE_TRACE, Off
 debug_config_option TOKEN_STREAM, Off

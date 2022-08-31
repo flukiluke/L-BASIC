@@ -1,10 +1,9 @@
 /*.bas
-/lbasic
-/lbasic-merged.bas
-src/parser/token_data.bi
-src/parser/token_registrations.bm
-src/parser/ts_data.bi
-src/parser/ts_data.bm
+/out
+compiler/parser/token_data.bi
+compiler/parser/token_registrations.bm
+compiler/parser/ts_data.bi
+compiler/parser/ts_data.bm
 /tools/*.tool
 *.swp
 *.testresult

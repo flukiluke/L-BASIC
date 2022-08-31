@@ -80,6 +80,7 @@ $console:only
 _dest _console
 on error goto ehandler
 deflng a-z
+chdir _startdir$
 
 if _commandcount <> 3 then
     print "Usage: "; command$(0); " "; "<input file> <const file> <registration file>"

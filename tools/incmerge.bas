@@ -7,6 +7,7 @@ $console:only
 _dest _console
 deflng a-z
 on error goto ehandler
+chdir _startdir$
 
 if _commandcount <> 2 then
     print "Usage: "; command$(0); " "; "<input file> <output file>"
