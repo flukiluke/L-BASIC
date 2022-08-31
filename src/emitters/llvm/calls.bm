@@ -18,7 +18,7 @@ function ll_cg_call%&(node)
         'Must be first use of an external function
         ll_declare_func_sig target, sig
         'Still nothing, throw an error (should never happen)
-        if sig->sig_lp = 0 then fatalerror "Call to " + target->identifier + " has no target pointer"
+        if sig->sig_lp = 0 then ll_error "Call to " + target->identifier + " has no target pointer"
     end if
 
     dim args(1 to numargs) as _offset

@@ -25,7 +25,7 @@ function ll_cg_cast%&(node)
             op = LLVMFPTrunc
         end if
     else
-        fatalerror "Bad cast"
+        ll_error "Bad cast"
     end if
     ll_cg_cast%& = llvm_build_cast(ll_cg_state.builder, op, value, ll_type(dest_type), "cast")
 end function

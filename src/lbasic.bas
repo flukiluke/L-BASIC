@@ -43,6 +43,8 @@ const ERR_CTX_REPL = 2 'Immediate runtime (interactive)
 const ERR_CTX_DUMP = 3 'Dump code
 const ERR_CTX_FILE = 4 'Trying to open a file
 const ERR_CTX_RUN = 5 'Immediate runtime (non-interactive)
+const ERR_CTX_LLVM = 6 'LLVM processing
+
 dim shared Error_context
 'Because we can only throw a numeric error code, this holds a more
 'detailed explanation.
@@ -202,6 +204,10 @@ error_handler:
     case ERR_CTX_FILE 'File access check
         _dest old_dest
         resume next
+    case ERR_CTX_LLVM
+        print "codegen: ";
+        if err <> 101 then goto internal_error
+        print Error_message$
     case else
         internal_error:
         if _inclerrorline then
@@ -345,6 +351,7 @@ sub build_mode
         dump_program
         close #1
     else
+        Error_context = ERR_CTX_LLVM
         ll_build
     end if
 end sub

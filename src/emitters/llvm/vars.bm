@@ -60,7 +60,7 @@ function ll_cg_constant%&(node)
         case TYPE_INTEGER64
             ll_cg_constant%& = llvm_const_int_of_string(llvm_int64_type, ast_constants(constant), 10)
         case else
-            fatalerror "Bad constant type"
+            ll_error "Bad constant type"
     end select
 end function
 

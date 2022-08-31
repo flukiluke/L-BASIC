@@ -44,7 +44,7 @@ function ll_mangle_type$(typ)
         case TYPE_STRING
             ll_mangle_type$ = "t" 'For "text"
         case else
-            fatalerror "Unknown type: " + type_human_readable$(typ)
+            ll_error "Unknown type: " + type_human_readable$(typ)
     end select
 end function
 
@@ -71,7 +71,7 @@ function ll_type%&(typ)
         case TYPE_QUAD
             ll_type = llvm_fp128_type
         case else
-            fatalerror "bad ll type: " + type_human_readable$(typ)
+            ll_error "bad ll type: " + type_human_readable$(typ)
     end select
 end function
 

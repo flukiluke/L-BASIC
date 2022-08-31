@@ -13,7 +13,7 @@ function ll_cg_expr%&(node)
         case AST_VAR
             ll_cg_expr%& = ll_cg_var(node)
         case else
-            fatalerror "Bad expr type"
+            ll_error "Bad expr type"
     end select
 end function
 

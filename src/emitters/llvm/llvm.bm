@@ -25,7 +25,7 @@ sub ll_build
     next i
     e = llvm_verify_module(ll_cg_state.module, LLVMAbortProcessAction, message$)
     if options.build_stages and BUILD_LINK then
-        fatalerror "Don't know how to link!"
+        ll_error "Don't know how to link!"
     elseif options.build_stages and BUILD_OBJ then
         ll_emit_obj
     elseif options.build_stages and BUILD_ASM then
@@ -38,17 +38,17 @@ end sub
 
 sub ll_emit_ir
     e = llvm_write_bitcode_to_file(ll_cg_state.module, options.outputfile)
-    if e then fatalerror "Failed to write to " + options.outputfile
+    if e then ll_error "Failed to write to " + options.outputfile
 end sub
 
 sub ll_emit_asm
     e = llvm_target_machine_emit_to_file(ll_cg_state.target_machine, ll_cg_state.module, options.outputfile, LLVMAssemblyFile, message$)
-    if e then fatalerror message$
+    if e then ll_error message$
 end sub
 
 sub ll_emit_obj
     e = llvm_target_machine_emit_to_file(ll_cg_state.target_machine, ll_cg_state.module, options.outputfile, LLVMObjectFile, message$)
-    if e then fatalerror message$
+    if e then ll_error message$
 end sub
 
 sub ll_set_target
@@ -60,7 +60,7 @@ sub ll_set_target
     triple$ = llvm_get_default_target_triple$
     'Get target, i.e. one of `llc --version`
     target = llvm_get_target_from_triple(triple$, errmsg$)
-    if target = 0 then fatalerror "No target: " + errmsg$
+    if target = 0 then ll_error "No target: " + errmsg$
     'Specific processor & additional features from `llc -march=... -mattr=help`
     cpu$ = "generic"
     features$ = ""
@@ -68,6 +68,11 @@ sub ll_set_target
     layout = llvm_create_target_data_layout(ll_cg_state.target_machine)
     llvm_module_set_data_layout ll_cg_state.module, layout
     llvm_set_target ll_cg_state.module, triple$
+end sub
+
+sub ll_error(msg$)
+    Error_message$ = msg$
+    error 101
 end sub
 
 $include: 'llvm_bindings.bm'
