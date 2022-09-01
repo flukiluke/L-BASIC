@@ -11,10 +11,22 @@
 : ${QBFLAGS:="-w -q"}
 : ${OUT_DIR:=out}
 
+# Subdirectories to build
+components="tools compiler runtime/startup"
+
+OUT_DIR=$(realpath "${OUT_DIR}")
+TOOLS_DIR=$(realpath tools)
+export QB64 QBFLAGS OUT_DIR TOOLS_DIR
+echo "QB64=${QB64}"
+echo "QBFLAGS=${QBFLAGS}"
+echo "OUT_DIR=${OUT_DIR}"
+echo "TOOLS_DIR=${TOOLS_DIR}"
+
 if [[ $1 = clean ]]; then
     rm -r "${OUT_DIR}"
-    make -C tools clean
-    make -C compiler clean
+    for component in $components; do
+        make -C "${component}" clean
+    done
     exit 0
 fi
 
@@ -23,12 +35,7 @@ if ! command -v "$QB64" > /dev/null; then
     exit 1
 fi
 
-OUT_DIR=$(realpath "${OUT_DIR}")
-mkdir -p "${OUT_DIR}"
-export QB64 QBFLAGS OUT_DIR
-
-make -C tools
-export TOOLS_DIR=$(realpath tools)
-
-make -C compiler
-
+mkdir -p "${OUT_DIR}/runtime"
+for component in $components; do
+    make -C "${component}"
+done
