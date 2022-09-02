@@ -10,15 +10,17 @@
 : ${QB64:=qb64}
 : ${QBFLAGS:="-w -q"}
 : ${OUT_DIR:=out}
+: ${CFLAGS:=-O2 -Wall -std=c17}
 
 # Subdirectories to build
-components="tools compiler runtime/startup"
+components="tools compiler runtime/startup runtime/foundation"
 
 OUT_DIR=$(realpath "${OUT_DIR}")
 TOOLS_DIR=$(realpath tools)
-export QB64 QBFLAGS OUT_DIR TOOLS_DIR
+export QB64 QBFLAGS OUT_DIR TOOLS_DIR CFLAGS
 echo "QB64=${QB64}"
 echo "QBFLAGS=${QBFLAGS}"
+echo "CFLAGS=${CFLAGS}"
 echo "OUT_DIR=${OUT_DIR}"
 echo "TOOLS_DIR=${TOOLS_DIR}"
 

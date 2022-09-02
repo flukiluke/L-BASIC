@@ -1,8 +1,8 @@
 # Copyright Luke Ceddia
 # SPDX-License-Identifier: Apache-2.0
-# Makefile for runtime startup code
+# Makefile for runtime support code
 
-OUTPUT_LIBRARY := $(OUT_DIR)/runtime/startup.a
+OUTPUT_LIBRARY := $(OUT_DIR)/runtime/foundation.a
 CFLAGS := $(CFLAGS) -I../include
 
 .PHONY: all
@@ -15,4 +15,3 @@ $(OUTPUT_LIBRARY): $(OBJ) $(wildcard *.h)
 .PHONY: clean
 clean:
 	rm *.o 2> /dev/null
-
