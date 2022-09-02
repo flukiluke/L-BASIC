@@ -58,20 +58,32 @@ type platform_t
     id as string
     posix_paths as long 'TRUE for linux/mac style paths, false for Windows style paths
     executable_extension as string
+    rtlib_dir as string
+    linker as string
+    link_opts as string
 end type
 dim shared as platform_t runtime_platform_settings, target_platform_settings
 if instr(_os$, "[WINDOWS]") then
     runtime_platform_settings.id = "Windows"
     runtime_platform_settings.posix_paths = FALSE
     runtime_platform_settings.executable_extension = ".exe"
+    runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
+    runtime_platform_settings.linker = "clang"
+    runtime_platform_settings.link_opts = ""
 elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.id = "MacOS"
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
+    runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
+    runtime_platform_settings.linker = "clang"
+    runtime_platform_settings.link_opts = ""
 elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.id = "Linux"
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
+    runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
+    runtime_platform_settings.linker = "clang"
+    runtime_platform_settings.link_opts = ""
 else
     fatalerror "Could not detect runtime platform"
 end if
@@ -402,6 +414,19 @@ function dirname$(path$)
     else
         dirname$ = left$(path$, s - 1)
     end if
+end function
+
+function shell_protect$(s$)
+    r$ = ""
+    for i = 1 to len(s$)
+        c$ = mid$(s$, i, 1)
+        if c$ = "'" then
+            r$ = r$ + "'\''"
+        else
+            r$ = r$ + c$
+        end if
+    next i
+    shell_protect$ = "'" + r$ + "'"
 end function
 
 'Split in$ into pieces, chopping at every occurrence of delimiter$. Multiple consecutive occurrences

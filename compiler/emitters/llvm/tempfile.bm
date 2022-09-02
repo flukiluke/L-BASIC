@@ -1,0 +1,24 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'tempfile.bm - Manage temporary files
+
+declare customtype library
+    function mkstemps&(template$, byval suffixlen&)
+    function c_write&& alias write(byval fd&, byval buf%&, byval count&&)
+    function c_close& alias close(byval fd&)
+end declare
+
+function ll_write_tempfile$(extension$, buf as _offset, buflen&&)
+    dir$ = environ$("TMPDIR")
+    if dir$ = "" then dir$ = "/tmp"
+    template$ = dir$ + "/XXXXXX" + extension$ + chr$(0)
+    fd = mkstemps&(template$, len(extension$))
+    if fd = -1 then error 58 '"File already exists"
+    ' mkstemps modifies the XXXXXX to be the actual value
+    filename$ = left$(template$, len(template$) - 1)
+    ret1&& = c_write&&(fd, buf, buflen&&)
+    if ret1&& < buflen&& then error 57
+    ret2 = c_close&(fd)
+    if ret2 = -1 then error 57
+    ll_write_tempfile$ = filename$
+end function

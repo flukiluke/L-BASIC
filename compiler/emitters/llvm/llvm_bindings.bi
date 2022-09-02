@@ -64,6 +64,10 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_create_target_data_layout%& alias LLVMCreateTargetDataLayout(byval T%&)
     sub      llvm_module_set_data_layout alias LLVMSetModuleDataLayout(byval M%&, byval DL%&)
     function LLVMTargetMachineEmitToFile&(byval T%&, byval M%&, Filename$, byval codegen&, ErrorMessage%&)
+    function LLVMTargetMachineEmitToMemoryBuffer&(byval T%&, byval M%&, byval codegen&, ErrorMessage%&, OutMemBuf%&)
+    function llvm_get_buffer_start%& alias LLVMGetBufferStart(byval MemBuf%&)
+    function llvm_get_buffer_size&& alias LLVMGetBufferSize(byval MemBuf%&)
+    sub llvm_dispose_memory_buffer alias LLVMDisposeMemoryBuffer(byval MemBuf%&)
 end declare
 
 const LLVMAbortProcessAction = 0

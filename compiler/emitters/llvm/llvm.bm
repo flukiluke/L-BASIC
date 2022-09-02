@@ -25,7 +25,7 @@ sub ll_build
     next i
     e = llvm_verify_module(ll_cg_state.module, LLVMAbortProcessAction, message$)
     if options.build_stages and BUILD_LINK then
-        ll_error "Don't know how to link!"
+        ll_do_link
     elseif options.build_stages and BUILD_OBJ then
         ll_emit_obj
     elseif options.build_stages and BUILD_ASM then
@@ -49,6 +49,33 @@ end sub
 sub ll_emit_obj
     e = llvm_target_machine_emit_to_file(ll_cg_state.target_machine, ll_cg_state.module, options.outputfile, LLVMObjectFile, message$)
     if e then ll_error message$
+end sub
+
+sub ll_do_link
+    'First, write our module to disk as an object file
+    dim as _offset obj_buf
+    e = llvm_target_machine_emit_to_memory_buf(ll_cg_state.target_machine, ll_cg_state.module, LLVMObjectFile, message$, obj_buf)
+    if e then ll_error message$
+    module_obj$ = ll_write_tempfile$(".o", llvm_get_buffer_start(obj_buf), llvm_get_buffer_size(obj_buf))
+
+    'Locate our startup and foundation libraries
+    startup_lib$ = runtime_platform_settings.rtlib_dir + "/startup.a"
+    foundation_lib$ = runtime_platform_settings.rtlib_dir + "/foundation.a"
+
+    'Locate our linker
+    linker$ = runtime_platform_settings.linker
+    link_opts$ = runtime_platform_settings.link_opts
+
+    'Do it!
+    cmd$ = shell_protect$(linker$) + " " + link_opts$ _
+                                   + " " + shell_protect$(module_obj$) _
+                                   + " " + shell_protect$(startup_lib$) _
+                                   + " " + shell_protect$(foundation_lib$) _
+                                   + " -o " + shell_protect$(options.outputfile)
+    shell cmd$
+
+    'Clean up
+    kill module_obj$
 end sub
 
 sub ll_set_target
@@ -82,5 +109,6 @@ $include: 'cast.bm'
 $include: 'if.bm'
 $include: 'proc.bm'
 $include: 'stmt_expr.bm'
+$include: 'tempfile.bm'
 $include: 'types.bm'
 $include: 'vars.bm'

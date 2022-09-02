@@ -124,3 +124,9 @@ function llvm_target_machine_emit_to_file&(T%&, M%&, Filename$, codegen&, ErrorM
     llvm_target_machine_emit_to_file& = LLVMTargetMachineEmitToFile(T%&, M%&, Filename$ + chr$(0), codegen&, msgp%&)
     ErrorMsg$ = llvm_recv_string$(msgp%&)
 end function
+
+'The real name of this function is longer than the 40 character limit!
+function llvm_target_machine_emit_to_memory_buf&(T%&, M%&, codegen&, ErrorMsg$, OutMemBuf%&)
+    llvm_target_machine_emit_to_memory_buf& = LLVMTargetMachineEmitToMemoryBuffer(T%&, M%&, codegen&, msgp%&, OutMemBuf%&)
+    ErrorMsg$ = llvm_recv_string$(msgp%&)
+end function
