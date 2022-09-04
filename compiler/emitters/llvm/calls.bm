@@ -78,7 +78,11 @@ sub ll_declare_func_sig(func, sig)
         end if
     next i
     prototype = llvm_function_type(ll_type(type_sig_return(sig)), args(), numargs, FALSE)
-    mangled$ = ll_mangled_proc_name$(func->identifier, sig)
+    if sig->link_name = "" then
+        mangled$ = ll_mangled_proc_name$(func->identifier, sig)
+    else
+        mangled$ = sig->link_name
+    end if
     sig->sig_lp = llvm_add_function(ll_cg_state.module, mangled$, prototype)
 end sub
 

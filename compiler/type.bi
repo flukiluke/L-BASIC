@@ -24,6 +24,11 @@ type type_signature_t
     proc_node as long
     'last_var is the sym entry of the last variable in this scope, excluding arguments.
     last_var as long
+    'If set, this name will be used as-is in generated code. If empty, the name will
+    'be subject to type mangling. Setting this should only be needed for calling
+    'functions not written in L-BASIC.
+    link_name as string
+    'Pointer to next sig
     succ as long 'Can't call this "next" :(
 end type
 
@@ -34,6 +39,7 @@ $macro: @@->sig_str | type_signatures(@1).sig
 $macro: @@->sig_lp | type_signatures(@1).lp
 $macro: @@->proc_node | type_signatures(@1).proc_node
 $macro: @@->last_var | type_signatures(@1).last_var
+$macro: @@->link_name | type_signatures(@1).link_name
 $macro: @@->succ | type_signatures(@1).succ
 
 'Note: constants for actual data types (TYPE_LONG etc.) are defined in tokens.list

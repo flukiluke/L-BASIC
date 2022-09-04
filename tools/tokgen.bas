@@ -32,18 +32,23 @@
 'literal NAME ; FLAGS
 'Represent a literal. Does not generate a symtab entry.
 '
-'prefix NAME PRECEDENCE RETURN ARGS ; FLAGS
+'prefix NAME PRECEDENCE RETURN ARGS LINKNAME ; FLAGS
 'A prefix operator.
 
-'infix NAME PRECEDENCE ASSOCIATIVITY RETURN ARGS ; FLAGS
+'infix NAME PRECEDENCE ASSOCIATIVITY RETURN ARGS LINKNAME ; FLAGS
 'An infix operator.
 '
-'function NAME RETURN ARGS ; FLAGS
+'function NAME RETURN ARGS LINKNAME ; FLAGS
 'A function (or sub) with regular call syntax.
 
 'NAME is the identifier for the token, and will be prefixed with TOK_. If the token contains special characters
 'a safe name may be given in parentheses, e.g "+(plus)". If the token is a special character (see below), it
 'should be represented as \xx where xx is the ASCII code. There must be no spaces anywhere in this field.
+'
+'LINKNAME is an optional field. If given, calls to this function or operator will use
+'LINKNAME directly, and the linker will expect it to exist as-is. If left blank, the name
+'will be mangled with type information. A blank may also indicate the operation is encoded
+'directly at the codegen stage.
 '
 'PRECEDENCE is an integer for parsing precedence. Larger values are higher precedence.
 
@@ -68,6 +73,8 @@
 'If the character is ", this argument will be supplied as an AST_FLAGS argument in the call list. The value
 'of the flag is the constant FLAG_[function name]_[token name] which must be defined in the cmdflags.bi file.
 'A ' character supresses the generation of the AST_FLAGS and does not need a FLAG_* constant to be defined. Neither " not ' args may be marked optional.
+'If there are no ARGS, the field may be left blank, or specified as "none" if a LINKNAME
+'is to be given.
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
@@ -162,7 +169,7 @@ do while not eof(1)
         print #3, "sym.identifier = "; quote$(toksym$)
         print #3, "symtab_add_entry sym"
     case "FUNCTION"
-        assertsize_range 3, 4
+        assertsize_range 3, 5
         if previous$(1) <> parts$(1) then
             toknum = toknum + 1
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
@@ -173,15 +180,23 @@ do while not eof(1)
             print #3, "sym.v2 = SYM_FUNCTION_INTRINSIC"
         end if
         process_return_type previous$(1), parts$(1), parts$(2)
-        if ubound(parts$) = 3 then
+        if ubound(parts$) = 2 then
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
+        elseif ubound(parts$) = 3 then
             process_arg_list parts$(3)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
+        elseif parts$(3) = "none" then
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(4) + chr$(34)
+        else
+            process_arg_list parts$(3)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(4) + chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
         end if
     case "PREFIX"
-        assertsize 5
+        assertsize_range 5, 6
         if previous$(1) <> parts$(1) then
             toknum = toknum + 1
             print #2, "CONST TOK_" + tokname$ + "=" + str$(toknum)
@@ -191,12 +206,17 @@ do while not eof(1)
         if previous$(2) <> parts$(2) then print #3, "sym.v2 = "; parts$(2)
         process_return_type previous$(1), parts$(1), parts$(3)
         process_arg_list parts$(4)
+        if ubound(parts$) = 4 then
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
+        else
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(5) + chr$(34)
+        end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"
         end if
     case "INFIX"
-        assertsize 6
+        assertsize_range 6, 7
         if previous$(1) <> parts$(1) then
             toknum = toknum + 1
             print #2, "CONST TOK_" + tokname$ + " =" + str$(toknum)
@@ -209,6 +229,11 @@ do while not eof(1)
         end if
         process_return_type previous$(1), parts$(1), parts$(4)
         process_arg_list parts$(5)
+        if ubound(parts$) = 5 then
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
+        else
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(6) + chr$(34)
+        end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
             print #3, "symtab_add_entry sym"

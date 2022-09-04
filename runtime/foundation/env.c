@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "lbasic.h"
 
-void system$nI(LB_INTEGER *return_code) {
+void SYSTEM(LB_INTEGER *return_code) {
     if (return_code) {
         exit(*return_code);
     }
@@ -14,7 +14,7 @@ void system$nI(LB_INTEGER *return_code) {
     }
 }
 
-void end$nI(LB_INTEGER *return_code) {
+void END(LB_INTEGER *return_code) {
     if (return_code) {
         exit(*return_code);
     }

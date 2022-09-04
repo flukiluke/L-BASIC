@@ -136,9 +136,6 @@ type options_t
 end type
 dim shared options as options_t
 
-'Allow immediate mode to access COMMAND$() without picking up interpreter options
-dim shared input_file_command_offset
-
 'Ensure that file accesses are relative to the user's working directory
 chdir _startdir$
 

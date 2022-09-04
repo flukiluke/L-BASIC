@@ -67,11 +67,12 @@ sub ll_do_link
     link_opts$ = runtime_platform_settings.link_opts
 
     'Do it!
-    cmd$ = shell_protect$(linker$) + " " + link_opts$ _
-                                   + " " + shell_protect$(module_obj$) _
-                                   + " " + shell_protect$(startup_lib$) _
-                                   + " " + shell_protect$(foundation_lib$) _
-                                   + " -o " + shell_protect$(options.outputfile)
+    cmd$ = shell_protect$(linker$) _
+            + " " + link_opts$ _
+            + " " + shell_protect$(module_obj$) _
+            + " " + shell_protect$(startup_lib$) _
+            + " " + shell_protect$(foundation_lib$) _
+            + " -o " + shell_protect$(options.outputfile)
     shell cmd$
 
     'Clean up
