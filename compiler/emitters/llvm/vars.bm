@@ -29,10 +29,14 @@ function ll_cg_local_var%&(typ, var_name$)
     lp = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), var_name$)
     if type_is_int(typ) then
         constant_zero = llvm_const_int(ll_type(typ), 0, 0)
-    else
+    elseif typ = TYPE_STRING then
+        'TODO
+    elseif type_is_fp(typ) then
         constant_zero = llvm_const_real(ll_type(typ), 0)
+    else
+        ll_error "Cannot create local var for type"
     end if
-    dummy = llvm_build_store(ll_cg_state.builder, constant_zero, lp)
+    'dummy = llvm_build_store(ll_cg_state.builder, constant_zero, lp)
     ll_cg_local_var%& = lp
 end function
 
@@ -59,6 +63,8 @@ function ll_cg_constant%&(node)
             ll_cg_constant%& = llvm_const_int_of_string(llvm_int32_type, ast_constants(constant), 10)
         case TYPE_INTEGER64
             ll_cg_constant%& = llvm_const_int_of_string(llvm_int64_type, ast_constants(constant), 10)
+        case TYPE_STRING
+            ll_cg_constant%& = ll_cg_str_constant(constant)
         case else
             ll_error "Bad constant type"
     end select

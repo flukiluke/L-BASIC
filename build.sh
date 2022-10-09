@@ -1,6 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: Apache-2.0
 # Main build script
+set -e
 
 # This script is responsible for building all components of L-BASIC.
 # The result is output to the out/ directory, which can then be
@@ -13,7 +14,7 @@
 : ${CFLAGS:=-O2 -Wall -std=c17}
 
 # Subdirectories to build
-components="tools compiler runtime/startup runtime/foundation"
+components="tools compiler runtime/extlib/sds runtime/foundation"
 
 OUT_DIR=$(realpath "${OUT_DIR}")
 TOOLS_DIR=$(realpath tools)

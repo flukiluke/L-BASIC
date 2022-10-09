@@ -7,6 +7,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     sub      llvm_dispose_module alias LLVMDisposeModule(byval M%&)
     sub      LLVMSetTarget(byval M%&, Triple$)
     function llvm_int1_type%& alias LLVMInt1Type
+    function llvm_int8_type%& alias LLVMInt8Type
     function llvm_int16_type%& alias LLVMInt16Type
     function llvm_int32_type%& alias LLVMInt32Type
     function llvm_int64_type%& alias LLVMInt64Type
@@ -36,6 +37,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_const_int%& alias LLVMConstInt(byval IntTy%&, byval N~&&, byval SignExtend&)
     function llvm_const_real%& alias LLVMConstReal(byval RealTy%&, byval N#)
     function LLVMConstIntOfStringAndSize%&(byval Ty%&, Text$, byval SLen~&, byval Radix~%%)
+    function LLVMConstInBoundsGEP%&(byval ConstantVal%&, byval ConstantIndices%&, byval NumIndices~&)
     function LLVMBuildLoad%&(byval B%&, byval PointerVal%&, Name$)
     function llvm_build_store%& alias LLVMBuildStore(byval B%&, byval Val%&, byval Ptr%&)
     function LLVMBuildCast%&(byval B%&, byval Op&, byval Value%&, byval DestTy%&, Name$)
@@ -67,7 +69,15 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMTargetMachineEmitToMemoryBuffer&(byval T%&, byval M%&, byval codegen&, ErrorMessage%&, OutMemBuf%&)
     function llvm_get_buffer_start%& alias LLVMGetBufferStart(byval MemBuf%&)
     function llvm_get_buffer_size&& alias LLVMGetBufferSize(byval MemBuf%&)
-    sub llvm_dispose_memory_buffer alias LLVMDisposeMemoryBuffer(byval MemBuf%&)
+    sub      llvm_dispose_memory_buffer alias LLVMDisposeMemoryBuffer(byval MemBuf%&)
+    function llvm_const_string%& alias LLVMConstString(s$, byval length~&, byval DontNullTerminate&)
+    sub      llvm_dump_type alias LLVMDumpType(byval Value%&)
+    function LLVMAddGlobal%&(byval M%&, byval Ty%&, Name$)
+    sub      llvm_set_initializer alias LLVMSetInitializer(byval GlobalVar%&, byval ConstantVal%&)
+    function llvm_type_of%& alias LLVMTypeOf(byval V%&)
+    sub      llvm_set_global_constant alias LLVMSetGlobalConstant(byval GlobalVar%&, byval IsConstant&)
+    sub      llvm_set_unnamed_address alias LLVMSetUnnamedAddress(byval Global%&, byval UnnamedAddr&)
+
 end declare
 
 const LLVMAbortProcessAction = 0
@@ -159,3 +169,7 @@ const LLVMCodeModelLarge = 6
 
 const LLVMAssemblyFile = 0
 const LLVMObjectFile = 1
+
+const LLVMNoUnnamedAddr = 0 'Address of the GV is significant.
+const LLVMLocalUnnamedAddr = 1 'Address of the GV is locally insignificant.
+const LLVMGlobalUnnamedAddr = 2 'Address of the GV is globally insignificant.

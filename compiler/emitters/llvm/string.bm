@@ -1,0 +1,18 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'string.bm - Code generation for string handling
+
+function ll_cg_str_constant%&(constant)
+    dim as _offset value, global, indices(1)
+    indices(0) = llvm_const_int(llvm_int32_type, 0, false)
+    value = llvm_const_string(ast_constants(constant), len(ast_constants(constant)), TRUE)
+    global = llvm_add_global(ll_cg_state.module, llvm_type_of(value), "")
+    llvm_set_initializer global, value
+    llvm_set_global_constant global, TRUE
+    llvm_set_linkage global, LLVMPrivateLinkage
+    llvm_set_unnamed_address global, LLVMGlobalUnnamedAddr
+    indices(0) = llvm_const_int(llvm_int32_type, 0, false)
+    indices(1) = llvm_const_int(llvm_int32_type, 0, false)
+    ll_cg_str_constant%& = llvm_const_in_bounds_gep(global, indices(), 2)
+end function
+

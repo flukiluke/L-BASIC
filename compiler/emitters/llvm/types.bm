@@ -70,6 +70,8 @@ function ll_type%&(typ)
             ll_type = llvm_double_type
         case TYPE_QUAD
             ll_type = llvm_fp128_type
+        case TYPE_STRING
+            ll_type = llvm_pointer_type(llvm_int8_type, 0)
         case else
             ll_error "bad ll type: " + type_human_readable$(typ)
     end select

@@ -130,3 +130,11 @@ function llvm_target_machine_emit_to_memory_buf&(T%&, M%&, codegen&, ErrorMsg$, 
     llvm_target_machine_emit_to_memory_buf& = LLVMTargetMachineEmitToMemoryBuffer(T%&, M%&, codegen&, msgp%&, OutMemBuf%&)
     ErrorMsg$ = llvm_recv_string$(msgp%&)
 end function
+
+function llvm_const_in_bounds_gep%&(ConstantVal%&, ConstantIndices%&(), NumIndices~&)
+    llvm_const_in_bounds_gep%& = LLVMConstInBoundsGEP(ConstantVal%&, _offset(ConstantIndices%&()), NumIndices~&)
+end function
+
+function llvm_add_global%&(M%&, Ty%&, n$)
+    llvm_add_global%& = LLVMAddGlobal(M%&, Ty%&, n$ + chr$(0))
+end function

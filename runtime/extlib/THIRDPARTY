@@ -1,0 +1,7 @@
+Name: Simple Dynamic Strings
+Purpose: String library
+Author: Salvatore Sanfilippo
+Source: https://github.com/antirez/sds
+Version: fb463145c9c245636feb28b5aac0fc897e16f67e
+Licence: 2-clause BSD [sds/LICENSE]
+Changes: Added build rules to Makefile

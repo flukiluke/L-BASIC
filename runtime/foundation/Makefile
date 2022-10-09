@@ -3,15 +3,17 @@
 # Makefile for runtime support code
 
 OUTPUT_LIBRARY := $(OUT_DIR)/runtime/foundation.a
-CFLAGS := $(CFLAGS) -I../include
+CFLAGS := $(CFLAGS) -I../extlib/sds
 
 .PHONY: all
 all: $(OUTPUT_LIBRARY)
 
 OBJ := $(addsuffix .o, $(basename $(wildcard *.c)))
-$(OUTPUT_LIBRARY): $(OBJ) $(wildcard *.h)
+
+$(OUTPUT_LIBRARY): $(OBJ) $(wildcard *.h) ../extlib/sds/sds.a
 	rm $@ 2> /dev/null || true
-	$(AR) rcs $@ $(OBJ) 
+	cp ../extlib/sds/sds.a $@
+	$(AR) rs $@ $(OBJ)
 
 .PHONY: clean
 clean:
