@@ -4,45 +4,54 @@
 
 'Expects: TOK_PRINT
 'Results: token after last expression, comma or semicolon
-'Format: PRINT [expressionlist][{,|;}]
+'Format: PRINT (expr|,|;)*
 function ps_print
     $if DEBUG_PARSE_TRACE then
     debuginfo "Start print"
     $end if
-    root = ast_add_node(AST_CALL)
-    root->ref = TOK_PRINT
-    root->ref2 = TOK_PRINT->sig
     ps_consume TOK_PRINT
+    root = ast_add_node(AST_BLOCK)
 
-    newline = TRUE
-    do
-        if ps_is_terminator(tok_token) then exit do
+    do until ps_is_terminator(tok_token)
+        same_line = FALSE
+        c = 0
         select case tok_token
-        case TOK_COMMA
-            node = ast_add_node(AST_FLAGS)
-            node->ref = AST_FLAG_MANUAL
-            node->ref2 = PRINT_NEXT_FIELD
-            root->attach(node)
-            ps_consume TOK_COMMA
-            newline = FALSE
-        case TOK_SEMICOLON
-            'No flags needed here
-            ps_consume TOK_SEMICOLON
-            newline = FALSE
-        case else
-            root->attach(ps_expr)
-            newline = TRUE
+            case TOK_COMMA
+                expr = ast_add_node(AST_CONSTANT)
+                expr->ref = AST_TAB_STRING
+                c = ps_print_call(expr)
+                ps_consume TOK_COMMA
+            case TOK_SEMICOLON
+                same_line = TRUE
+                ps_consume TOK_SEMICOLON
+            case else
+                c = ps_print_call(ps_expr)
         end select
+        if c then root->attach(c)
     loop
-    if newline then
-        node = ast_add_node(AST_FLAGS)
-        node->ref = AST_FLAG_MANUAL
-        node->ref2 = PRINT_NEWLINE
-        root->attach(node)
+
+    'Do not add a newline if the last thing was a semicolon
+    if not same_line then
+        expr = ast_add_node(AST_CONSTANT)
+        expr->ref = AST_NEWLINE_STRING
+        c = ps_print_call(expr)
+        root->attach(c)
     end if
-    
+
     ps_print = root
     $if DEBUG_PARSE_TRACE then
     debuginfo "Completed print"
     $end if
+end function
+
+function ps_print_call(expr)
+    c = ast_add_node(AST_CALL)
+    c->ref = TOK_PRINT
+    candidate$ = type_sigt_create$(TYPE_NONE)
+    candidate$ = type_sigt_add_arg$(candidate$, type_of_expr(expr), 0)
+    sig = type_find_sig_match(TOK_PRINT, candidate$)
+    if sig = 0 then ps_error "Don't know to print values of type " + type_human_readable$(type_of_expr(expr))
+    c->ref2 = sig
+    c->attach(expr)
+    ps_print_call = c
 end function

@@ -435,7 +435,13 @@ function poke           none      long,quad
 function poke           none      long,string
 # pos
 # preset
-function print          none      list
+function print          none      string
+function print          none      integer
+function print          none      long
+function print          none      integer64
+function print          none      single
+function print          none      double
+function print          none      quad
 function _printstring   none      'oparen,single,single,'cparen,string,long?
 function _printwidth    long      string,long?
 function pset           none      "step?,'oparen,single,single,'cparen,long?

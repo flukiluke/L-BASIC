@@ -44,6 +44,8 @@ $macro: @@->attach_none | ast_attach @1, ast_add_node(AST_NONE)
 const AST_FALSE = 1
 const AST_TRUE = 2
 const AST_ONE = 3
+const AST_NEWLINE_STRING = 4
+const AST_TAB_STRING = 5
 
 'This is an AST_BLOCK that is the main program.
 dim shared AST_ENTRYPOINT
