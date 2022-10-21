@@ -14,7 +14,7 @@ set -e
 : ${CFLAGS:=-O2 -Wall -std=c17}
 
 # Subdirectories to build
-components="tools compiler runtime/extlib/sds runtime/foundation"
+components="tools compiler runtime/foundation"
 
 OUT_DIR=$(realpath "${OUT_DIR}")
 TOOLS_DIR=$(realpath tools)
@@ -26,6 +26,7 @@ echo "OUT_DIR=${OUT_DIR}"
 echo "TOOLS_DIR=${TOOLS_DIR}"
 
 if [[ $1 = clean ]]; then
+    set +e
     rm -r "${OUT_DIR}"
     for component in $components; do
         make -C "${component}" clean

@@ -138,3 +138,7 @@ end function
 function llvm_add_global%&(M%&, Ty%&, n$)
     llvm_add_global%& = LLVMAddGlobal(M%&, Ty%&, n$ + chr$(0))
 end function
+
+function llvm_struct_type%&(ElementTypes%&(), ElementCount~&, Packed&)
+    llvm_struct_type%& = LLVMStructType(_offset(ElementTypes%&()), ElementCount~&, Packed&)
+end function

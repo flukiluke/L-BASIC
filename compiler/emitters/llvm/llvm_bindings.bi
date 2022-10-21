@@ -15,6 +15,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_double_type%& alias LLVMDoubleType
     function llvm_fp128_type%& alias LLVMFP128Type
     function llvm_pointer_type%& alias LLVMPointerType(byval ElementType%&, byval AddressSpace~&)
+    function llvm_array_type%& alias LLVMArrayType(byval ElementType%&, byval ElementCount~&)
     function llvm_void_type%& alias LLVMVoidType
     function LLVMFunctionType%&(byval ReturnType%&, byval ParamTypes%&, byval ParamCount~&, byval IsVarArg&)
     function LLVMAddFunction%&(byval M%&, Name$, byval FunctionTy%&)
@@ -65,6 +66,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function LLVMCreateTargetMachine%&(byval T%&, Triple$, CPU$, Features$, byval Level&, byval Reloc&, byval CodeModel&)
     function llvm_create_target_data_layout%& alias LLVMCreateTargetDataLayout(byval T%&)
     sub      llvm_module_set_data_layout alias LLVMSetModuleDataLayout(byval M%&, byval DL%&)
+    function llvm_get_module_data_layout%& alias LLVMGetModuleDataLayout(byval M%&)
     function LLVMTargetMachineEmitToFile&(byval T%&, byval M%&, Filename$, byval codegen&, ErrorMessage%&)
     function LLVMTargetMachineEmitToMemoryBuffer&(byval T%&, byval M%&, byval codegen&, ErrorMessage%&, OutMemBuf%&)
     function llvm_get_buffer_start%& alias LLVMGetBufferStart(byval MemBuf%&)
@@ -77,7 +79,8 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_type_of%& alias LLVMTypeOf(byval V%&)
     sub      llvm_set_global_constant alias LLVMSetGlobalConstant(byval GlobalVar%&, byval IsConstant&)
     sub      llvm_set_unnamed_address alias LLVMSetUnnamedAddress(byval Global%&, byval UnnamedAddr&)
-
+    function LLVMStructType%&(byval ElementTypes%&, byval ElementCount~&, byval Packed&)
+    function llvm_offset_of_element& alias LLVMOffsetOfElement(byval TD%&, byval StructTy%&, byval Element~&)
 end declare
 
 const LLVMAbortProcessAction = 0

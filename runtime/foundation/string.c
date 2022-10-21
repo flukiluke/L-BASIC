@@ -2,11 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 // String routines
 
-#include <stddef.h>
-#include "../extlib/sds/sds.h"
+#include <stdio.h>
 #include "lbasic.h"
 
-LB_STRING STR_NEW_FROM(char *data, size_t len) {
-    return sdsnewlen(data, len);
+/*
+static LB_STRING alloc_new(size_t alloc_size) {
+    size_t total_size = sizeof(LB_STRING) + alloc_size;
+    if (total_size < alloc_size) {
+        fatal_error(ERR_STR_ALLOC_TOO_BIG);
+    }
+    LB_STRING lbs = malloc(total_size);
+    if (!lbs) {
+        fatal_error(ERR_STR_ALLOC_FAILED);
+    }
+    lbs->flags = 0;
+    lbs->used = 0;
+    lbs->alloc = alloc_size;
+    return lbs;
 }
+*/
 
+void PRINT_STRING(LB_STRING *str) {
+    fwrite((*str)->data, 1, (*str)->used, stdout);
+}

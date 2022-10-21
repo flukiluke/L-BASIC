@@ -1,6 +1,8 @@
-extern void main$n(void);
+#include "lbasic.h"
+
+extern void MAIN(void);
 
 int main(int argc, char **argv) {
-    main$n();
+    MAIN();
     return 0;
 }

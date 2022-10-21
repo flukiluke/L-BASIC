@@ -56,6 +56,8 @@ sub ll_cg_block(block)
                 'll_cg_exit node
             case AST_SET_RETURN
                 ll_cg_set_return node
+            case AST_BLOCK
+                ll_cg_block node
         end select
     next i
 end sub

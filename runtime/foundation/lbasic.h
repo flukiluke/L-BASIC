@@ -5,6 +5,9 @@
 #ifndef LB_LBASIC_H
 #define LB_LBASIC_H
 
+#include "error.h"
 #include "types.h"
+#include "names.h"
+#include "string.h"
 
 #endif

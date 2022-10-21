@@ -5,7 +5,8 @@
 function ll_cg_str_constant%&(constant)
     dim as _offset value, global, indices(1)
     indices(0) = llvm_const_int(llvm_int32_type, 0, false)
-    value = llvm_const_string(ast_constants(constant), len(ast_constants(constant)), TRUE)
+    s$ = ll_cg_str_header$(ast_constants(constant)) + ast_constants(constant)
+    value = llvm_const_string(s$, len(s$), TRUE)
     global = llvm_add_global(ll_cg_state.module, llvm_type_of(value), "")
     llvm_set_initializer global, value
     llvm_set_global_constant global, TRUE
@@ -14,5 +15,35 @@ function ll_cg_str_constant%&(constant)
     indices(0) = llvm_const_int(llvm_int32_type, 0, false)
     indices(1) = llvm_const_int(llvm_int32_type, 0, false)
     ll_cg_str_constant%& = llvm_const_in_bounds_gep(global, indices(), 2)
+end function
+
+'Create the string type in llvm so we can calculate offsets of header fields.
+'This must match up with the foundation library's idea of the LB_STRING type.
+function ll_cg_str_type%&
+    static string_t as _offset
+    if string_t = 0 then
+        dim as _offset elements(3)
+        elements(0) = llvm_int8_type%& 'flags
+        elements(1) = llvm_int32_type%& 'used
+        elements(2) = llvm_int32_type%& 'alloc
+        elements(3) = llvm_array_type%&(llvm_int8_type%&, 0) 'data
+        string_t = llvm_struct_type%&(elements(), 4, FALSE)
+    end if
+    ll_cg_str_type%& = string_t
+end function
+
+function ll_cg_str_header$(s$)
+    dim as _offset string_t
+    string_t = ll_cg_str_type
+    flags_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 0)
+    used_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 1)
+    alloc_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 2)
+    'header size including padding is given by offset of start of data
+    header_size = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 3)
+    header$ = string$(header_size, chr$(0))
+    mid$(header$, flags_offset + 1, 1) = chr$(0)
+    mid$(header$, used_offset + 1, 4) = mkl$(len(s$))
+    mid$(header$, alloc_offset + 1, 4) = mkl$(len(s$))
+    ll_cg_str_header$ = header$
 end function
 

@@ -111,6 +111,7 @@ input_files(1).filename = "[interactive]"
 dim shared input_files_current
 'The logging output is used for debugging output
 dim shared logging_file_handle
+dim shared dump_file_handle
 
 const MODE_REPL = 1
 const MODE_RUN = 2
@@ -155,6 +156,7 @@ end if
 
 'Send out debugging info to the screen
 logging_file_handle = freefile
+dump_file_handle = logging_file_handle
 open_file "SCRN:", logging_file_handle, TRUE
 
 'Setup AST, constants and parser settings. These must be done before
@@ -355,7 +357,8 @@ sub build_mode
     end if
     ingest_initial_file
     if options.build_stages = BUILD_PARSE then
-        open_file options.outputfile, logging_file_handle, TRUE
+        dump_file_handle = freefile
+        open_file options.outputfile, dump_file_handle, TRUE
         Error_context = ERR_CTX_DUMP
         dump_program
         close #1
