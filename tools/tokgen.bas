@@ -78,7 +78,7 @@
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
-'  NOSYM: Prefix the token with a pipe "|" character in the symtab, preventing it from clashing with other tokens.
+'  INTERNAL: Prefix the token with a pipe "|" character in the symtab, preventing it from clashing with other tokens. Also causes the linkname, if given, to be mangled with a LB$$ prefix.
 
 'Blank lines are ignored. Comments may be given with # on their own line. Special characters are (); and must
 'not appear outside of their described syntactic function.
@@ -127,7 +127,12 @@ do while not eof(1)
     end if
 
     if parts$(0) = "META" then toksym$ = "$" + toksym$
-    if instr(parts$(-1), "NOSYM") then toksym$ = "|" + toksym$
+    if instr(parts$(-1), "INTERNAL") then
+        toksym$ = "|" + toksym$
+        linkname_prefix$ = "LB$$"
+    else
+        linkname_prefix$ = ""
+    end if
 
     select case parts$(0)
     case "GENERIC"
@@ -186,10 +191,10 @@ do while not eof(1)
             process_arg_list parts$(3)
             print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
         elseif parts$(3) = "none" then
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(4) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(4) + chr$(34)
         else
             process_arg_list parts$(3)
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(4) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(4) + chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
@@ -209,7 +214,7 @@ do while not eof(1)
         if ubound(parts$) = 4 then
             print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
         else
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(5) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(5) + chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
@@ -232,7 +237,7 @@ do while not eof(1)
         if ubound(parts$) = 5 then
             print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
         else
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + parts$(6) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(6) + chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)

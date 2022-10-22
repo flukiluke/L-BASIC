@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # tokens.list - Description of parser tokens
 
-generic unknown   ; nosym
+generic unknown   ; internal
 # ieof -> internal eof, so as to not clash with the EOF function
-generic ieof       ; nosym
+generic ieof       ; internal
 # End Of Input - used to signify the end of a user's input in interactive
 # mode (can't use newline because we're always looking one token ahead).
-generic eoi       ; nosym
-generic newline   ; direct nosym
-generic comma     ; direct nosym
-generic semicolon ; direct nosym
+generic eoi       ; internal
+generic newline   ; direct internal
+generic comma     ; direct internal
+generic semicolon ; direct internal
 generic .(dot)    ; direct
 generic rem
-generic linenum   ; nosym
+generic linenum   ; internal
 
 # Metacommands
 meta list
@@ -21,32 +21,32 @@ meta debug
 meta include
 meta option
 # Represent an unknown metacommand so we can ignore it
-meta unknown            ; nosym
+meta unknown            ; internal
 
 # The meta parameter is everything after the first : or space.
 # It is up to the implementation of each metacommand to break apart this content.
 literal metaparam       ; direct
 
 # Type symbols
-generic integer_sfx     ; direct nosym
-generic long_sfx        ; direct nosym
-generic integer64_sfx   ; direct nosym
-generic single_sfx      ; direct nosym
-generic double_sfx      ; direct nosym
-generic quad_sfx        ; direct nosym
-generic string_sfx      ; direct nosym
+generic integer_sfx     ; direct internal
+generic long_sfx        ; direct internal
+generic integer64_sfx   ; direct internal
+generic single_sfx      ; direct internal
+generic double_sfx      ; direct internal
+generic quad_sfx        ; direct internal
+generic string_sfx      ; direct internal
 
 # Types and pseudotypes
 # Signals "no value" in some sense
-type none               0 ; nosym
-# Flexible number of arbitrary arguments (looking at you, INPUT & PRINT)
-type list               0 ; nosym
+type none               0 ; internal
+# Flexible number of arbitrary arguments (looking at you, INPUT)
+type list               0 ; internal
 #Represents a 32 bit integer specifically expecting an AST_FLAGS (see cmdflags.bi for values)
-type flags              0 ; nosym
+type flags              0 ; internal
 # Generic type that can be cast to anything
-type any                0 ; nosym
+type any                0 ; internal
 # Generic array type
-arraytype any_array any 0 ; nosym
+arraytype any_array any 0 ; internal
 # 1 bit
 type bool               1
 # 16 bits
@@ -67,17 +67,17 @@ type string             64
 type contextual_argument 0
 
 # Parentheses don't have any real meaning, they only direct the parsing
-generic oparen ; direct nosym
-generic cparen ; direct nosym
+generic oparen ; direct internal
+generic cparen ; direct internal
 
 # [ and ] are used to denote the number of array dimensions when their sizes
 # are otherwise unknown
-generic obracket ; direct nosym
-generic cbracket ; direct nosym
+generic obracket ; direct internal
+generic cbracket ; direct internal
 
 # Not currently used for anything
-generic obrace ; direct nosym
-generic cbrace ; direct nosym
+generic obrace ; direct internal
+generic cbrace ; direct internal
 
 # Numbers
 # numint: 1234, numdec: 12.34, numexp: 12.3E4, numbase: &H1234
@@ -185,12 +185,12 @@ infix   *(star)         12  left    quad      quad,quad                   ; dire
 infix   /(slash)        12  left    single    single,single               ; direct
 infix   /(slash)        12  left    double    double,double               ; direct
 infix   /(slash)        12  left    quad      quad,quad                   ; direct
-prefix  negative        13          integer   integer                     ; nosym
-prefix  negative        13          long      long                        ; nosym
-prefix  negative        13          integer64 integer64                   ; nosym
-prefix  negative        13          single    single                      ; nosym
-prefix  negative        13          double    double                      ; nosym
-prefix  negative        13          quad      quad                        ; nosym
+prefix  negative        13          integer   integer                     ; internal
+prefix  negative        13          long      long                        ; internal
+prefix  negative        13          integer64 integer64                   ; internal
+prefix  negative        13          single    single                      ; internal
+prefix  negative        13          double    double                      ; internal
+prefix  negative        13          quad      quad                        ; internal
 infix   ^(power)        14  left    single    single,single               ; direct
 infix   ^(power)        14  left    double    double,double               ; direct
 infix   ^(power)        14  left    quad      quad,quad                   ; direct
@@ -237,6 +237,10 @@ generic _explicitarray
 generic byref
 generic byval
 generic call
+
+# String helpers
+function string_assign  string    string string_assign ; internal
+
 
 # functions with return type none are subs
 function abs            integer   integer
@@ -517,7 +521,7 @@ function _stricmp       integer   string,string
 # strig
 # string
 function swap           none      @any,@any
-function system         none      integer?  SYSTEM
+function system         none      integer?
 
 # tab
 function tan            single    single

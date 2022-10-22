@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // String routines
 
-#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include "lbasic.h"
 
-/*
 static LB_STRING alloc_new(size_t alloc_size) {
     size_t total_size = sizeof(LB_STRING) + alloc_size;
     if (total_size < alloc_size) {
@@ -20,8 +21,11 @@ static LB_STRING alloc_new(size_t alloc_size) {
     lbs->alloc = alloc_size;
     return lbs;
 }
-*/
 
-void PRINT_STRING(LB_STRING *str) {
-    fwrite((*str)->data, 1, (*str)->used, stdout);
+LB_STRING STRING_COPY(LB_STRING *src) {
+    LB_STRING dest = alloc_new((*src)->used);
+    dest->flags = (*src)->flags;
+    dest->used = (*src)->used;
+    memmove(dest->data, (*src)->data, (*src)->used);
+    return dest;
 }

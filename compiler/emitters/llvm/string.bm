@@ -46,4 +46,3 @@ function ll_cg_str_header$(s$)
     mid$(header$, alloc_offset + 1, 4) = mkl$(len(s$))
     ll_cg_str_header$ = header$
 end function
-
