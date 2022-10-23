@@ -157,6 +157,7 @@ function ps_main
     symtab_add_entry sym
     proc_id = symtab_last_entry
     root = ast_add_node(AST_PROCEDURE)
+    ast_add_procedure root
     'Do not add to nested structures list because main is the only procedure that
     'can "contain" other procedure, and you can't exit out of it.
     sig->proc_node = root

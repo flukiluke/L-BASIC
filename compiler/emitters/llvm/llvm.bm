@@ -5,23 +5,13 @@
 sub ll_build
     ll_cg_state.module = llvm_module_create_with_name(options.mainarg)
     ll_set_target
-    for i = 1 to symtab_last_entry
-        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            sig = i->sig
-            while sig
-                ll_cg_procedure_entry sig->proc_node
-                sig = sig->succ
-            wend
-        end if
+    for i = 1 to ast_last_procedure
+        root = ast_procedures(i)
+        ll_cg_procedure_entry root
     next i
-    for i = 1 to symtab_last_entry
-        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            sig = i->sig
-            while sig
-                ll_cg_procedure sig->proc_node
-                sig = sig->succ
-            wend
-        end if
+    for i = 1 to ast_last_procedure
+        root = ast_procedures(i)
+        ll_cg_procedure root
     next i
     e = llvm_verify_module(ll_cg_state.module, LLVMAbortProcessAction, message$)
     if options.build_stages and BUILD_LINK then

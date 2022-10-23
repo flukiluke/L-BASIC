@@ -43,29 +43,25 @@ sub dump_symtab
 end sub
 
 sub dump_subprocedures
-    for i = 1 to symtab_last_entry
-        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            sig = i->sig
-            while sig
-                return_type = type_sig_return(sig)
-                if return_type = TYPE_NONE then is_sub = TRUE else is_sub = FALSE
-                print #dump_file_handle,
-                if is_sub then
-                    print #dump_file_handle, "SUB "; i->identifier; " (";
-                else
-                    print #dump_file_handle, "FUNCTION "; i->identifier; " AS "; type_human_readable$(return_type); " (";
-                end if
-                root = sig->proc_node
-                for j = 2 to ast_num_children(root)
-                    dump_ast ast_get_child(root, j), 0
-                    if j < ast_num_children(root) then print #dump_file_handle, ", ";
-                next j
-                print #dump_file_handle, ")"
-                dump_ast ast_get_child(root, 1), 1
-                if is_sub then print #dump_file_handle, "END SUB" else print #logging_file_handle, "END FUNCTION"
-                sig = sig->succ
-            wend
+    for i = 1 to ast_last_procedure
+        root = ast_procedures(i)
+        sym = root->ref
+        sig = root->ref2
+        return_type = type_sig_return(sig)
+        if return_type = TYPE_NONE then is_sub = TRUE else is_sub = FALSE
+        print #dump_file_handle,
+        if is_sub then
+            print #dump_file_handle, "SUB "; sym->identifier; " (";
+        else
+            print #dump_file_handle, "FUNCTION "; sym->identifier; " AS "; type_human_readable$(return_type); " (";
         end if
+        for j = 2 to ast_num_children(root)
+            dump_ast ast_get_child(root, j), 0
+            if j < ast_num_children(root) then print #dump_file_handle, ", ";
+        next j
+        print #dump_file_handle, ")"
+        dump_ast ast_get_child(root, 1), 1
+        if is_sub then print #dump_file_handle, "END SUB" else print #logging_file_handle, "END FUNCTION"
     next i
 end sub
 

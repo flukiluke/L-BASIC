@@ -44,6 +44,15 @@ sub ast_clear_entrypoint
     ast_children(AST_ENTRYPOINT) = ""
 end sub
 
+sub ast_add_procedure(node)
+    if ast_last_procedure = ubound(ast_procedures) then
+        new_size = ubound(ast_procedures) * 2
+        redim _preserve ast_procedures(new_size) as long
+    end if
+    ast_last_procedure = ast_last_procedure + 1
+    ast_procedures(ast_last_procedure) = node
+end sub
+
 function ast_add_constant(token, content$, force_type)
     if ast_last_constant = ubound(ast_constants) then ast_expand_constants_array
     ast_last_constant = ast_last_constant + 1

@@ -73,6 +73,7 @@ function ps_userfunc
     if func = TOK_UNKNOWN then ps_error "Prepass declaration missing" 'Should never happen
 
     root = ast_add_node(AST_PROCEDURE)
+    ast_add_procedure root
     'Include the ast node number in the scope so we don't mix up multiple implementations
     'of a function with the same name.
     ps_scope_name$ = func->identifier

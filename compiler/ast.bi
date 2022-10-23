@@ -19,6 +19,10 @@ dim shared ast_children(0) as string
 'The id of the last node registered
 dim shared ast_last_node as long
 
+'User-created procedures, including the main program
+dim shared ast_procedures(1) as long
+dim shared ast_last_procedure as long
+
 'Every number and string appearing in the program gets an entry here
 dim shared ast_constants(0) as string
 dim shared ast_constant_types(0) as long
@@ -46,9 +50,6 @@ const AST_TRUE = 2
 const AST_ONE = 3
 const AST_NEWLINE_STRING = 4
 const AST_TAB_STRING = 5
-
-'This is an AST_BLOCK that is the main program.
-dim shared AST_ENTRYPOINT
 
 'The types of node.
 'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, SELECT_VALUE, any of the lvalue
