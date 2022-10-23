@@ -7,6 +7,8 @@
 
 #define MAIN main$n
 
+#define STRING_ASSIGN LB$$STRING_ASSIGN
+
 #define END end$nI
 
 #define PRINT_INTEGER print$nI

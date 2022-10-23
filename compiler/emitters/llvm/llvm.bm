@@ -60,6 +60,7 @@ sub ll_do_link
             + " " + link_opts$ _
             + " " + shell_protect$(module_obj$) _
             + " " + shell_protect$(foundation_lib$) _
+            + " -g -no-pie " _
             + " -o " + shell_protect$(options.outputfile)
     shell cmd$
 

@@ -7,12 +7,12 @@
 #include <string.h>
 #include "lbasic.h"
 
-static LB_STRING alloc_new(size_t alloc_size) {
+static LB_STRING *alloc_new(size_t alloc_size) {
     size_t total_size = sizeof(LB_STRING) + alloc_size;
     if (total_size < alloc_size) {
         fatal_error(ERR_STR_ALLOC_TOO_BIG);
     }
-    LB_STRING lbs = malloc(total_size);
+    LB_STRING *lbs = malloc(total_size);
     if (!lbs) {
         fatal_error(ERR_STR_ALLOC_FAILED);
     }
@@ -22,8 +22,8 @@ static LB_STRING alloc_new(size_t alloc_size) {
     return lbs;
 }
 
-LB_STRING STRING_COPY(LB_STRING *src) {
-    LB_STRING dest = alloc_new((*src)->used);
+LB_STRING *STRING_ASSIGN(LB_STRING **src) {
+    LB_STRING *dest = alloc_new((*src)->used);
     dest->flags = (*src)->flags;
     dest->used = (*src)->used;
     memmove(dest->data, (*src)->data, (*src)->used);

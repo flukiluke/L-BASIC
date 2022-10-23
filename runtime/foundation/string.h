@@ -14,6 +14,6 @@ struct lbstr_t {
     char data[];
 };
 
-typedef struct lbstr_t *LB_STRING;
+typedef struct lbstr_t LB_STRING;
 
 #endif

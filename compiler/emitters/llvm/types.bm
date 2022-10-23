@@ -48,15 +48,6 @@ function ll_mangle_type$(typ)
     end select
 end function
 
-'Some functions e.g. string manipulation functions are not callable
-'from BASIC code; instead the code generation generates calls as needed.
-'These functions are "internal" since you can't access them directly from
-'user code, and they get a different mangling format so they never conflict
-'with user symbols.
-function ll_internal_mangled$(plain_name$)
-    ll_internal_mangled$ = "lb$$" + plain_name$
-end function
-
 function ll_pointer_type%&(typ)
     ll_pointer_type%& = llvm_pointer_type(ll_type(typ), 0)
 end function

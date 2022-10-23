@@ -11,7 +11,7 @@ set -e
 : ${QB64:=qb64}
 : ${QBFLAGS:="-w -q"}
 : ${OUT_DIR:=out}
-: ${CFLAGS:=-O2 -Wall -std=c17}
+: ${CFLAGS:=-O2 -Wall -std=c17 -g -no-pie}
 
 # Subdirectories to build
 components="tools compiler runtime/foundation"
