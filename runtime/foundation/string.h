@@ -7,10 +7,12 @@
 
 #include <stdint.h>
 
+typedef uint32_t LB_STRING_SIZE_T;
+
 struct lbstr_t {
     uint8_t flags;
-    uint32_t used;
-    uint32_t alloc;
+    LB_STRING_SIZE_T len;
+    LB_STRING_SIZE_T alloc;
     char data[];
 };
 

@@ -9,7 +9,10 @@ all: $(OUTPUT_LIBRARY)
 
 OBJ := $(addsuffix .o, $(basename $(wildcard *.c)))
 
-$(OUTPUT_LIBRARY): $(OBJ) $(wildcard *.h)
+%.o: %.c $(wildcard *.h)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OUTPUT_LIBRARY): $(OBJ)
 	$(AR) rcs $@ $(OBJ)
 
 .PHONY: clean

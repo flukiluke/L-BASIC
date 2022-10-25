@@ -26,7 +26,7 @@ void PRINT_DOUBLE(LB_DOUBLE *num) {
     printf("%f", *num);
 }
 
-void PRINT_STRING(LB_STRING *str) {
-    fwrite((*str)->data, 1, (*str)->used, stdout);
+void PRINT_STRING(LB_STRING **str) {
+    fwrite((*str)->data, 1, (*str)->len, stdout);
 }
 

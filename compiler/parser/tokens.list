@@ -367,7 +367,7 @@ function kill           none      string
 
 function lbound         integer64 any_array,integer?
 function lcase          string    string
-function left           string    string,integer64
+function left           string    string,long
 function len            integer64 string
 function len            integer64 @integer
 function len            integer64 @long
@@ -476,7 +476,7 @@ function _rgb32         long      integer
 function _rgb32         long      integer,integer
 function _rgb32         long      integer,integer,integer
 function _rgb32         long      integer,integer,integer,integer
-function right          string    string,integer64
+function right          string    string,long
 function rmdir          none      string
 function rnd            single    single?
 # rset
