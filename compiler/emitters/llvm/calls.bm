@@ -23,11 +23,13 @@ function ll_cg_call%&(node)
 
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
+        arg_node = ast_get_child(node, i)
         if type_sig_argflags(sig, i) AND TYPE_BYVAL then
-            args(i) = ll_cg_expr(ast_get_child(node, i))
+            args(i) = ll_cg_expr(arg_node)
         else
-            args(i) = ll_cg_shadow_expr(ast_get_child(node, i))
+            args(i) = ll_cg_shadow_expr(arg_node)
         end if
+        if type_of_expr(arg_node) = TYPE_STRING then ll_cg_str_queue_transient args(i)
     next i
     ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
 end function

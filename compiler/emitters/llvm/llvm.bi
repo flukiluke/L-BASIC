@@ -12,3 +12,6 @@ type llvm_cg_state_t
 end type
 
 dim shared ll_cg_state as llvm_cg_state_t
+
+dim shared ll_cg_str_queued_transients(1) as _offset
+dim shared ll_cg_str_last_queued_transient as long

@@ -8,6 +8,7 @@
 #define MAIN main$n
 
 #define STRING_ASSIGN LB$$STRING_ASSIGN
+#define STRING_MAYBE_FREE LB$$STRING_MAYBE_FREE
 
 #define END end$nI
 

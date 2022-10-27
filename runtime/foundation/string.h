@@ -18,4 +18,6 @@ struct lbstr_t {
 
 typedef struct lbstr_t LB_STRING;
 
+#define LB_STRING_TRANSIENT (1<<0)
+
 #endif

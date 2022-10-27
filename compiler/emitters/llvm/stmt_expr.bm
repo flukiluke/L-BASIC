@@ -59,6 +59,9 @@ sub ll_cg_block(block)
             case AST_BLOCK
                 ll_cg_block node
         end select
+        'We have completed a statement, so any transient strings
+        'can now be freed
+        ll_cg_str_free_transients
     next i
 end sub
 
