@@ -4,7 +4,11 @@
 
 sub ll_cg_assign(node)
     dim as _offset lvalue, rvalue, store
-    lvalue = ll_cg_var_lval(ast_get_child(node, 1))
     rvalue = ll_cg_expr(ast_get_child(node, 2))
-    store = llvm_build_store(ll_cg_state.builder, rvalue, lvalue)
+    lvalue = ll_cg_var_lval(ast_get_child(node, 1))
+    if type_of_expr(ast_get_child(node, 1)) = TYPE_STRING then
+        store = ll_cg_str_assign(rvalue, lvalue)
+    else
+        store = llvm_build_store(ll_cg_state.builder, rvalue, lvalue)
+    end if
 end sub

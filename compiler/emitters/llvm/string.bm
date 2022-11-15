@@ -22,12 +22,13 @@ end function
 function ll_cg_str_type%&
     static string_t as _offset
     if string_t = 0 then
-        dim as _offset elements(3)
-        elements(0) = llvm_int8_type%& 'flags
-        elements(1) = llvm_int32_type%& 'used
-        elements(2) = llvm_int32_type%& 'alloc
-        elements(3) = llvm_array_type%&(llvm_int8_type%&, 0) 'data
-        string_t = llvm_struct_type%&(elements(), 4, FALSE)
+        dim as _offset elements(1 to 5)
+        elements(1) = llvm_int8_type%& 'flags
+        elements(2) = llvm_int8_type%& 'refcount
+        elements(3) = llvm_int32_type%& 'used
+        elements(4) = llvm_int32_type%& 'alloc
+        elements(5) = llvm_array_type%&(llvm_int8_type%&, 0) 'data
+        string_t = llvm_struct_type%&(elements(), ubound(elements), FALSE)
     end if
     ll_cg_str_type%& = string_t
 end function
@@ -36,27 +37,23 @@ function ll_cg_str_header$(s$)
     dim as _offset string_t
     string_t = ll_cg_str_type
     flags_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 0)
-    used_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 1)
-    alloc_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 2)
+    'no need for refcount
+    used_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 2)
+    alloc_offset = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 3)
     'header size including padding is given by offset of start of data
-    header_size = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 3)
+    header_size = llvm_offset_of_element(llvm_get_module_data_layout(ll_cg_state.module), string_t, 4)
     header$ = string$(header_size, chr$(0))
-    mid$(header$, flags_offset + 1, 1) = chr$(0)
+    mid$(header$, flags_offset + 1, 1) = chr$(1) 'LB_STRING_READONLY
     mid$(header$, used_offset + 1, 4) = mkl$(len(s$))
     mid$(header$, alloc_offset + 1, 4) = mkl$(len(s$))
     ll_cg_str_header$ = header$
 end function
 
 sub ll_cg_str_free_transients
-    func = TOK_STRING_MAYBE_FREE
-    candidate$ = type_sigt_create$(TYPE_NONE)
-    candidate$ = type_sigt_add_arg$(candidate$, TYPE_STRING, 0)
-    sig = type_find_sig_match(func, candidate$)
-    if sig->sig_lp = 0 then ll_declare_func_sig func, sig
     dim args(1 to 1) as _offset
     for i = 1 to ll_cg_str_last_queued_transient
         args(1) = ll_cg_str_queued_transients(i)
-        dummy%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), 1)
+        dummy%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1)
     next i
     ll_cg_str_last_queued_transient = 0
 end sub
@@ -69,3 +66,10 @@ sub ll_cg_str_queue_transient(s as _offset)
     ll_cg_str_last_queued_transient = ll_cg_str_last_queued_transient + 1
     ll_cg_str_queued_transients(ll_cg_str_last_queued_transient) = s
 end sub
+
+function ll_cg_str_assign%&(rvalue as _offset, lvalue as _offset)
+    dim args(1 to 2) as _offset
+    args(1) = lvalue
+    args(2) = rvalue
+    ll_cg_str_assign%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_assign, args(), 2)
+end function

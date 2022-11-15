@@ -59,6 +59,7 @@
 'ARGS is a comma-separated string specifying the type and nature of arguments passed to a function.
 'Each comma-separated element is a type name, with the following optional prefixes and suffixes:
 ' @ prefix: The argument must be passed BYREF and its type must match exactly
+' ^ prefix: The argument is passed BYVAL
 ' % prefix: The argument is a file handle and may appear with a leading #
 ' ? suffix: The argument is optional
 ' " prefix: The argument is a token name, and will be represented with an AST_FLAGS
@@ -275,6 +276,7 @@ sub process_arg_list(arglist$)
     split_args arglist$
     const TYPE_OPTIONAL = 1
     const TYPE_BYREF = 2
+    const TYPE_BYVAL = 4
     const TYPE_FILEHANDLE = 8
     const TYPE_TOKEN = 16
     const TYPE_SYNTAX_ONLY = 32
@@ -289,6 +291,10 @@ sub process_arg_list(arglist$)
         if left$(args$(i), 1) = "@" then
             args$(i) = mid$(args$(i), 2)
             flags = flags OR TYPE_BYREF
+        end if
+        if left$(args$(i), 1) = "^" then
+            args$(i) = mid$(args$(i), 2)
+            flags = flags OR TYPE_BYVAL
         end if
         if left$(args$(i), 1) = "%" then
             args$(i) = mid$(args$(i), 2)

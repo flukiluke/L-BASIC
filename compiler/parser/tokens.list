@@ -239,8 +239,8 @@ generic byval
 generic call
 
 # String helpers
-function string_assign      string  string  string_assign     ; internal
-function string_maybe_free  none    string  string_maybe_free ; internal
+function string_assign      none  string,^string  string_assign     ; internal
+function string_maybe_free  none  string          string_maybe_free ; internal
 
 
 # functions with return type none are subs

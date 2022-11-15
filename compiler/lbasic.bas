@@ -145,7 +145,6 @@ $include: 'type.bi'
 $include: 'symtab.bi'
 $include: 'ast.bi'
 $include: 'parser/parser.bi'
-$include: 'transforms/transform.bi'
 ''$include: 'emitters/immediate/immediate.bi'
 $include: 'emitters/llvm/llvm.bi'
 
@@ -357,7 +356,6 @@ sub build_mode
         end if
     end if
     ingest_initial_file
-    tf_apply_all
     if options.build_stages = BUILD_PARSE then
         dump_file_handle = freefile
         open_file options.outputfile, dump_file_handle, TRUE
@@ -557,7 +555,6 @@ $include: 'type.bm'
 $include: 'ast.bm'
 $include: 'symtab.bm'
 $include: 'parser/parser.bm'
-$include: 'transforms/transform.bm'
 $include: 'emitters/dump/dump.bm'
 ''$include: 'emitters/immediate/immediate.bm'
 $include: 'emitters/llvm/llvm.bm'

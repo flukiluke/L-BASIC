@@ -3,6 +3,7 @@
 # Makefile for compiler binary
 
 OUTPUT_BINARY := $(OUT_DIR)/lbasic
+OUTPUT_SOURCE := $(OUT_DIR)/lbasic.bas
 
 .PHONY: all
 all: $(OUTPUT_BINARY)
@@ -16,13 +17,14 @@ $(TS_FILES): parser/ts.rules $(TOOLS_DIR)/tsgen.tool
 $(TOKEN_FILES): parser/tokens.list $(TOOLS_DIR)/tokgen.tool
 	$(TOOLS_DIR)/tokgen.tool parser/tokens.list $(TOKEN_FILES)
 
-$(OUTPUT_BINARY): lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find . -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.py
-	$(eval temp1 := $(shell mktemp))
-	$(eval temp2 := $(shell mktemp))
-	$(TOOLS_DIR)/incmerge.tool lbasic.bas $(temp1)
-	$(TOOLS_DIR)/prep.py $(temp1) $(temp2)
-	$(QB64) $(QBFLAGS) -x $(temp2) -o $@
-	rm $(temp1) $(temp2)
+$(OUTPUT_SOURCE): lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find . -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.py
+	$(eval temp := $(shell mktemp))
+	$(TOOLS_DIR)/incmerge.tool lbasic.bas $(temp)
+	$(TOOLS_DIR)/prep.py $(temp) $@
+	rm $(temp)
+
+$(OUTPUT_BINARY): $(OUTPUT_SOURCE)
+	$(QB64) $(QBFLAGS) -x $^ -o $@
 
 .PHONY: clean
 clean:

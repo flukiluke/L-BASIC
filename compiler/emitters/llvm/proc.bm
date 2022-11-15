@@ -23,22 +23,27 @@ sub ll_cg_procedure_entry(proc_node)
 end sub
 
 sub ll_cg_procedure(proc_node)
-    dim as _offset entryBB, startBB, dummy
+    dim as _offset entryBB, startBB, cleanupBB, dummy
     proc = proc_node->ref
     sig = proc_node->ref2
     ll_cg_state.builder = llvm_create_builder
     entryBB = llvm_append_basic_block(sig->sig_lp, "entry")
+    cleanupBB = llvm_create_basic_block("cleanup")
+    ll_cg_locals proc_node, entryBB, cleanupBB
     llvm_position_builder_at_end ll_cg_state.builder, entryBB
-    ll_cg_locals proc_node
     ret_type = type_sig_return(sig)
     if ret_type <> TYPE_NONE then
-        ll_cg_state.retvar = ll_cg_local_var(ret_type, "retval")
+        'Do not clean up return value because it must persist beyond the scope
+        ll_cg_state.retvar = ll_cg_local_var(ret_type, "retval", entryBB, 0)
     end if
     'Keep the entryBB for allocas so we can more easily add to it later for shadow copies
     startBB = llvm_append_basic_block(sig->sig_lp, "start")
     dummy = llvm_build_br(ll_cg_state.builder, startBB)
     llvm_position_builder_at_end ll_cg_state.builder, startBB
     ll_cg_block ast_get_child(proc_node, 1)
+    llvm_append_existing_basic_block sig->sig_lp, cleanupBB
+    dummy = llvm_build_br(ll_cg_state.builder, cleanupBB)
+    llvm_position_builder_at_end ll_cg_state.builder, cleanupBB
     if ret_type = TYPE_NONE then
         dummy = llvm_build_ret_void(ll_cg_state.builder)
     else

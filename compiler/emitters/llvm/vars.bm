@@ -2,10 +2,12 @@
 'SPDX-License-Identifier: Apache-2.0
 'vars.bm - Code generation for variables
 
-sub ll_cg_locals(proc_node)
+sub ll_cg_locals(proc_node, entryBB as _offset, cleanupBB as _offset)
     'Copy any byval arguments to allocas so they may be treated identically
+    'TODO: byval string support
     dim as _offset ptr, store
     numargs = ast_num_children(proc_node) - 1
+    llvm_position_builder_at_end ll_cg_state.builder, entryBB
     for i = 1 to numargs
         arg = ast_get_child(proc_node, i + 1)
         var = arg->ref
@@ -19,18 +21,25 @@ sub ll_cg_locals(proc_node)
     sig = proc_node->ref2
     var = sig->last_var
     while var
-        var->lp = ll_cg_local_var(var->type, var->identifier)
+        var->lp = ll_cg_local_var(var->type, var->identifier, entryBB, cleanupBB)
         var = var->prev_var
     wend
 end sub
 
-function ll_cg_local_var%&(typ, var_name$)
-    dim as _offset lp, dummy, constant_zero
+function ll_cg_local_var%&(typ, var_name$, entryBB as _offset, cleanupBB as _offset)
+    dim as _offset lp, constant_zero, dummy
+    llvm_position_builder_at_end ll_cg_state.builder, entryBB
     lp = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), var_name$)
     if type_is_int(typ) then
         constant_zero = llvm_const_int(ll_type(typ), 0, 0)
     elseif typ = TYPE_STRING then
-        'TODO
+        'TODO: Initialise to blank string
+        if cleanupBB then
+            llvm_position_builder_at_end ll_cg_state.builder, cleanupBB
+            dim args(1 to 1) as _offset
+            args(1) = lp
+            dummy = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1)
+        end if
     elseif type_is_fp(typ) then
         constant_zero = llvm_const_real(ll_type(typ), 0)
     else

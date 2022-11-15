@@ -29,7 +29,9 @@ function ll_cg_call%&(node)
         else
             args(i) = ll_cg_shadow_expr(arg_node)
         end if
-        if type_of_expr(arg_node) = TYPE_STRING then ll_cg_str_queue_transient args(i)
+        if type_of_expr(arg_node) = TYPE_STRING and _
+            (not type_is_lvalue(arg_node)) and _
+            (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient args(i)
     next i
     ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
 end function
