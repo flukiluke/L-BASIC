@@ -91,7 +91,7 @@ void STRING_ASSIGN(LB_STRING **dest_p, LB_STRING *src) {
     if (dest) {
         release(dest);
     }
-    dest = acquire(src);
+    *dest_p = acquire(src);
 }
 
 /**
