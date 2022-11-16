@@ -50,6 +50,7 @@ const AST_TRUE = 2
 const AST_ONE = 3
 const AST_NEWLINE_STRING = 4
 const AST_TAB_STRING = 5
+const AST_EMPTY_STRING = 6
 
 'The types of node.
 'Note: an "expression"/"expr" is a CALL, CONSTANT, CAST, SELECT_VALUE, any of the lvalue

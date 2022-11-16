@@ -21,7 +21,9 @@ sub ast_init
     ast_constant_types(AST_NEWLINE_STRING) = TYPE_STRING
     ast_constants(AST_TAB_STRING) = chr$(9)
     ast_constant_types(AST_TAB_STRING) = TYPE_STRING
-    ast_last_constant = 5
+    ast_constants(AST_EMPTY_STRING) = ""
+    ast_constant_types(AST_EMPTY_STRING) = TYPE_STRING
+    ast_last_constant = 6
     ast_commit
 end sub
 
