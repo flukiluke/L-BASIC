@@ -53,11 +53,11 @@ static void release(LB_STRING *s) {
         // Cannot modify readonly string
         return;
     }
-    if (s->refcount == 0) {
-        // TODO: Consider whether a fatal error should be thrown here
-        return;
+    // Do not decrement if already at 0. A string may already have a 0
+    // refcount if, e.g., it is the return value of a function.
+    if (s->refcount > 0) {
+        s->refcount--;
     }
-    s->refcount--;
     if (s->refcount == 0) {
         free(s);
     }
@@ -99,10 +99,8 @@ void STRING_ASSIGN(LB_STRING **dest_p, LB_STRING *src) {
  * are emitted periodically to free strings that are thought
  * to be temporary, or when a variable goes out of scope.
  */
-void STRING_MAYBE_FREE(LB_STRING **src_p) {
-    LB_STRING *src = *src_p;
+void STRING_MAYBE_FREE(LB_STRING *src) {
     release(src);
-    *src_p = NULL; // Help catch use-after-free errors
 }
 
 LB_STRING *LEFT(LB_STRING **src_p, LB_LONG *length) {

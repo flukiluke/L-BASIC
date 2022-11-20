@@ -17,19 +17,6 @@ function ll_cg_expr%&(node)
     end select
 end function
 
-function ll_cg_shadow_expr%&(expr)
-    dim as _offset currentBB, entryBB, alloca, value, dummy
-    typ = type_of_expr(expr)
-    currentBB = llvm_get_insert_block(ll_cg_state.builder)
-    entryBB = llvm_get_entry_basic_block(llvm_get_basic_block_parent(currentBB))
-    llvm_position_builder_before ll_cg_state.builder, llvm_get_basic_block_terminator(entryBB)
-    alloca = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), "shadow")
-    llvm_position_builder_at_end ll_cg_state.builder, currentBB
-    value = ll_cg_expr(expr)
-    dummy = llvm_build_store(ll_cg_state.builder, value, alloca)
-    ll_cg_shadow_expr%& = alloca
-end function
-
 sub ll_cg_block(block)
     for i = 1 to ast_num_children(block)
         node = ast_get_child(block, i)

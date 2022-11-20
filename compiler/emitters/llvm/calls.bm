@@ -3,7 +3,7 @@
 'calls.bm - Code generation for calls to functions
 
 function ll_cg_call%&(node)
-    dim as _offset dedicated
+    dim as _offset dedicated, expr
     numargs = ast_num_children(node)
     target = node->ref
     sig = node->ref2
@@ -24,14 +24,15 @@ function ll_cg_call%&(node)
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
         arg_node = ast_get_child(node, i)
+        expr = ll_cg_expr(arg_node)
+        typ = type_of_expr(arg_node)
         if type_sig_argflags(sig, i) AND TYPE_BYVAL then
-            args(i) = ll_cg_expr(arg_node)
+            args(i) = expr
         else
-            args(i) = ll_cg_shadow_expr(arg_node)
+            args(i) = ll_cg_shadow_expr(typ, expr)
         end if
-        if type_of_expr(arg_node) = TYPE_STRING and _
-            (not type_is_lvalue(arg_node)) and _
-            (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient args(i)
+        if typ = TYPE_STRING and (not type_is_lvalue(arg_node)) and _
+            (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient expr
     next i
     ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
 end function
@@ -89,6 +90,17 @@ sub ll_declare_func_sig(func, sig)
     end if
     sig->sig_lp = llvm_add_function(ll_cg_state.module, mangled$, prototype)
 end sub
+
+function ll_cg_shadow_expr%&(typ, expr as _offset)
+    dim as _offset currentBB, entryBB, alloca, dummy
+    currentBB = llvm_get_insert_block(ll_cg_state.builder)
+    entryBB = llvm_get_entry_basic_block(llvm_get_basic_block_parent(currentBB))
+    llvm_position_builder_before ll_cg_state.builder, llvm_get_basic_block_terminator(entryBB)
+    alloca = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), "shadow")
+    llvm_position_builder_at_end ll_cg_state.builder, currentBB
+    dummy = llvm_build_store(ll_cg_state.builder, expr, alloca)
+    ll_cg_shadow_expr%& = alloca
+end function
 
 sub ll_cg_set_return(node)
     dim as _offset value, dummy
