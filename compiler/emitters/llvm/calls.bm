@@ -24,15 +24,21 @@ function ll_cg_call%&(node)
     dim args(1 to numargs) as _offset
     for i = 1 to numargs
         arg_node = ast_get_child(node, i)
-        expr = ll_cg_expr(arg_node)
-        typ = type_of_expr(arg_node)
-        if type_sig_argflags(sig, i) AND TYPE_BYVAL then
-            args(i) = expr
+        if arg_node->atype = AST_NONE then
+            'Omitted optional arguments are passed as null pointers
+            args(i) = llvm_const_pointer_null(llvm_pointer_type(ll_type(type_sig_argtype(sig, i)), 0))
         else
-            args(i) = ll_cg_shadow_expr(typ, expr)
+            expr = ll_cg_expr(arg_node)
+            typ = type_of_expr(arg_node)
+            if type_sig_argflags(sig, i) AND TYPE_BYVAL then
+                args(i) = expr
+            else
+                args(i) = ll_cg_shadow_expr(typ, expr)
+            end if
+            if typ = TYPE_STRING and _
+                (not type_is_lvalue(arg_node)) and _
+                (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient expr
         end if
-        if typ = TYPE_STRING and (not type_is_lvalue(arg_node)) and _
-            (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient expr
     next i
     ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
 end function

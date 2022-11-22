@@ -13,7 +13,7 @@ function ll_cg_expr%&(node)
         case AST_VAR
             ll_cg_expr%& = ll_cg_var(node)
         case else
-            ll_error "Bad expr type"
+            ll_error "Bad expr type" + str$(node->atype)
     end select
 end function
 
@@ -51,5 +51,3 @@ sub ll_cg_block(block)
         ll_cg_str_free_transients
     next i
 end sub
-
-

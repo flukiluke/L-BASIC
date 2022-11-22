@@ -369,7 +369,7 @@ function kill           none      string
 function lbound         integer64 any_array,integer?
 function lcase          string    string
 function left           string    string,long
-function len            integer64 string
+function len            long      ^string
 function len            integer64 @integer
 function len            integer64 @long
 function len            integer64 @integer64
@@ -396,7 +396,7 @@ function log            quad      quad
 function ltrim          string    string
 
 
-function mid            string    string,integer64,integer64?
+function mid            string    ^string,^long,long?
 # mkd
 # mkdir
 # mkdmbf

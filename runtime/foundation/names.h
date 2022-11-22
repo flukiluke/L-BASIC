@@ -13,6 +13,9 @@
 #define END end$nI
 
 #define LEFT left$tTL
+#define LEN_STRING len$lt
+
+#define MID mid$ttlL
 
 #define PRINT_INTEGER print$ni
 #define PRINT_LONG print$nl

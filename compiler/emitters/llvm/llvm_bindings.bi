@@ -17,6 +17,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_pointer_type%& alias LLVMPointerType(byval ElementType%&, byval AddressSpace~&)
     function llvm_array_type%& alias LLVMArrayType(byval ElementType%&, byval ElementCount~&)
     function llvm_void_type%& alias LLVMVoidType
+    function llvm_const_pointer_null%& alias LLVMConstPointerNull(byval Ty%&)
     function LLVMFunctionType%&(byval ReturnType%&, byval ParamTypes%&, byval ParamCount~&, byval IsVarArg&)
     function LLVMAddFunction%&(byval M%&, Name$, byval FunctionTy%&)
     function LLVMAppendBasicBlock%&(byval Fn%&, Name$)

@@ -103,22 +103,28 @@ void STRING_MAYBE_FREE(LB_STRING *src) {
     release(src);
 }
 
-LB_STRING *LEFT(LB_STRING **src_p, LB_LONG *length) {
-    LB_STRING *src = *src_p;
-    LB_STRING *dest;
-    LB_STRING_SIZE_T dest_length = *length <= src->len ? *length : src->len;
-    dest = alloc_new(dest_length);
-    dest->len = dest_length;
-    memmove(dest->data, src->data, dest_length);
+LB_STRING *MID(LB_STRING *src, LB_LONG start, LB_LONG *length_p) {
+    LB_LONG length;
+    if (start > src->len) {
+        return alloc_new(0);
+    }
+
+    if (length_p) {
+        length = *length_p - max(1 - start, 0);
+        start = max(1, start);
+        length = min(src->len - start + 1, length);
+    }
+    else {
+        start = min(1, start);
+        length = src->len - start + 1;
+    }
+
+    LB_STRING *dest = alloc_new(length);
+    dest->len = length;
+    memmove(dest->data, src->data + start - 1, length);
     return dest;
 }
-
-LB_STRING *RIGHT(LB_STRING **src_p, LB_LONG *length) {
-    LB_STRING *src = *src_p;
-    LB_STRING *dest;
-    LB_STRING_SIZE_T dest_length = *length <= src->len ? *length : src->len;
-    dest = alloc_new(dest_length);
-    dest->len = dest_length;
-    memmove(dest->data, src->data + (src->len - dest_length), dest_length);
-    return dest;
+    
+LB_LONG LEN_STRING(LB_STRING *s) {
+    return s->len;
 }
