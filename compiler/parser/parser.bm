@@ -104,18 +104,6 @@ sub ps_queue_entry(node)
     ps_queued_entry_nodes$ = ps_queued_entry_nodes$ + mkl$(node)
 end sub
 
-sub ps_check_function_instantiations
-    for i = 1 to symtab_last_entry
-        if i->stype = SYM_FUNCTION and i->func_kind = SYM_FUNCTION_USER then
-            sig = i->sig
-            while sig
-                if sig->proc_node = 0 then ps_error i->identifier + " AS " + type_human_sig$(sig->sig_str) + " does not have implementation"
-                sig = sig->succ
-            wend
-        end if
-    next i
-end sub
-
 sub ps_error(msg$)
     Error_message$ = msg$
     error 101
@@ -153,7 +141,6 @@ function ps_main
     sym-stype = SYM_FUNCTION
     sig = type_add_sig(0, type_sigt_create$(TYPE_NONE))
     sym-sig = sig
-    sym-func_kind = SYM_FUNCTION_USER
     symtab_add_entry sym
     proc_id = symtab_last_entry
     root = ast_add_node(AST_PROCEDURE)
@@ -167,7 +154,9 @@ function ps_main
     root->attach(block)
     sig->last_var = ps_scoped_last_var
     ps_finish_labels block
-    ps_check_function_instantiations
+    if ps_is_module = FALSE then
+        proc_id->func_flags = SYM_FUNCTION_PUBLIC
+    end if
     ps_main = block
     $if DEBUG_PARSE_TRACE then
     debuginfo "End main"
@@ -225,6 +214,7 @@ end sub
 $include: 'array.bm'
 $include: 'assignment.bm'
 $include: 'const.bm'
+$include: 'common.bm'
 $include: 'default_type.bm'
 $include: 'drawing.bm'
 $include: 'exit.bm'

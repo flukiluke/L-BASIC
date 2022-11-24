@@ -108,6 +108,21 @@ sub ps_meta_option
     $end if
 end sub
 
+'Expects: META_MODULE
+'Results: TOK_NEWLINE
+sub ps_meta_module
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start $module"
+    $end if
+
+    ps_consume META_MODULE
+    ps_is_module = TRUE
+
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed $module"
+    $end if
+end sub
+
 'Expects: unknown metacommand
 'Results: TOK_NEWLINE
 sub ps_meta_unknown

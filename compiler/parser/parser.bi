@@ -24,6 +24,9 @@ dim shared ps_default_type as long
 'can be overridden with user-supplied ones.
 dim shared ps_is_preload as long
 
+'Whether we are compiling a module, so no public main function.
+dim shared ps_is_module as long
+
 'mkl$ list of symtab labels that are not attached to an AST node.
 'This occurs if you have labels on empty or non-executable lines.
 dim shared ps_unattached_labels$

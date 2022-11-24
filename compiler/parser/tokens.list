@@ -20,6 +20,7 @@ meta list
 meta debug
 meta include
 meta option
+meta module
 # Represent an unknown metacommand so we can ignore it
 meta unknown            ; internal
 
@@ -237,6 +238,7 @@ generic _explicitarray
 generic byref
 generic byval
 generic call
+generic common
 
 # String helpers
 function string_assign      none  string,^string  string_assign     ; internal
@@ -280,7 +282,6 @@ function cls            none      integer?,long?
 function color          none      long?,long?
 function command        string    integer?
 function _commandcount  long
-# common
 function cos            single    single
 function cos            double    double
 function cos            quad      quad
@@ -368,7 +369,7 @@ function kill           none      string
 
 function lbound         integer64 any_array,integer?
 function lcase          string    string
-function left           string    string,long
+#function left           string    string,long
 function len            long      ^string
 function len            integer64 @integer
 function len            integer64 @long
@@ -477,7 +478,7 @@ function _rgb32         long      integer
 function _rgb32         long      integer,integer
 function _rgb32         long      integer,integer,integer
 function _rgb32         long      integer,integer,integer,integer
-function right          string    string,long
+# function right          string    string,long
 function rmdir          none      string
 function rnd            single    single?
 # rset

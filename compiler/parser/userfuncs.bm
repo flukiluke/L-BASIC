@@ -29,7 +29,7 @@ function ps_declare_p(is_sub, root)
         sym-stype = SYM_FUNCTION
         tok_advance
         sym-sig = type_add_sig(0, ps_func_sigt$(is_sub, 0))
-        sym-func_kind = SYM_FUNCTION_USER
+        sym-func_flags = 0
         symtab_add_entry sym
         ps_declare_p = sym-sig
     elseif tok_token->stype = SYM_FUNCTION then

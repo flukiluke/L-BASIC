@@ -1,0 +1,9 @@
+common left, right
+
+function left$(src$, length&)
+    left$ = mid$(src$, 1, length&)
+end function
+
+function right$(src$, length&)
+    right$ = mid$(src$, len(src$) - length& + 1, length&)
+end function

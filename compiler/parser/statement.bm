@@ -27,6 +27,8 @@ function ps_stmt
             ps_meta_debug
         case META_INCLUDE
             ps_meta_include
+        case META_MODULE
+            ps_meta_module
         case META_OPTION
             ps_meta_option
         case META_UNKNOWN
@@ -35,6 +37,8 @@ function ps_stmt
             stmt = ps_call
         case TOK_CONST
             stmt = ps_const
+        case TOK_COMMON
+            ps_common
         case TOK_DECLARE
             stmt = ps_declare
         case TOK__DEFINE

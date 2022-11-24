@@ -16,8 +16,7 @@ sub ll_cg_procedure_entry(proc_node)
         llvm_set_value_name param, var->identifier
         var->lp = param
     next i
-    'Make all functions except _MAIN private for better optimisiation
-    if proc->identifier <> "_MAIN" then
+    if (proc->func_flags AND SYM_FUNCTION_PUBLIC) = 0 then
         llvm_set_linkage sig->sig_lp, LLVMInternalLinkage
     end if
 end sub

@@ -12,18 +12,21 @@ set -e
 : ${QBFLAGS:="-w -q"}
 : ${OUT_DIR:=out}
 : ${CFLAGS:=-O2 -Wall -std=c17 -g -no-pie}
+: ${LBASIC_CORE_COMPILER:=${OUT_DIR}/lbasic}
 
 # Subdirectories to build
-components="tools compiler runtime/foundation"
+components="tools compiler runtime/foundation runtime/core"
 
 OUT_DIR=$(realpath "${OUT_DIR}")
+LBASIC_CORE_COMPILER=$(realpath "${LBASIC_CORE_COMPILER}")
 TOOLS_DIR=$(realpath tools)
-export QB64 QBFLAGS OUT_DIR TOOLS_DIR CFLAGS
+export QB64 QBFLAGS OUT_DIR TOOLS_DIR CFLAGS LBASIC_CORE_COMPILER
 echo "QB64=${QB64}"
 echo "QBFLAGS=${QBFLAGS}"
 echo "CFLAGS=${CFLAGS}"
 echo "OUT_DIR=${OUT_DIR}"
 echo "TOOLS_DIR=${TOOLS_DIR}"
+echo "LBASIC_CORE_COMPILER=${LBASIC_CORE_COMPILER}"
 
 if [[ $1 = clean ]]; then
     set +e

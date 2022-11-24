@@ -33,8 +33,8 @@ $macro: @@->prev_var | symtab(@1).v2
 $macro: @@-prev_var | @1.v2
 $macro: @@->vflags | symtab(@1).v3
 $macro: @@-vflags | @1.v3
-$macro: @@->func_kind | symtab(@1).v2
-$macro: @@-func_kind | @1.v2
+$macro: @@->func_flags | symtab(@1).v2
+$macro: @@-func_flags | @1.v2
 $macro: @@->label_node | symtab(@1).v1
 $macro: @@-label_node | @1.v1
 $macro: @@->label_found | symtab(@1).v2
@@ -69,7 +69,7 @@ const SYM_PREFIX = 3
 const SYM_VARIABLE = 4
 'A function (subs too!)
 'v1 ->sig | reference to the type signature
-'v2 ->func_kind | One of SYM_FUNCTION_*, see below
+'v2 ->func_flags | Combination of SYM_FUNCTION_*, see below
 const SYM_FUNCTION = 5
 'A line number or label. Labels have the : removed.
 'v1 ->label_node | AST node that is labelled.
@@ -105,10 +105,11 @@ const SYM_VARIABLE_DEREF = 2
 const SYM_VARIABLE_MAINFRAME = 4
 
 'Further categorisation of SYM_FUNCTION
-'Functions that are handled directly based on their name
+'This function is handled directly when generating code, and does not have a normal
+'instantiation.
 const SYM_FUNCTION_INTRINSIC = 1
-'SUBs and FUNCTIONs defined by the processed source code
-const SYM_FUNCTION_USER = 2
+'This function should have public linkage, instead of the default private.
+const SYM_FUNCTION_PUBLIC = 2
 
 dim shared symtab(1000) as symtab_entry_t
 dim shared symtab_last_entry

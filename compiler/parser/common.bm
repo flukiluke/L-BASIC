@@ -1,0 +1,28 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'const.bm - Parse rules for COMMON
+
+'Expects: TOK_COMMON
+'Results: token after list
+sub ps_common
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Start common"
+    $end if
+
+    ps_consume TOK_COMMON
+    do
+        
+        if tok_token->stype <> SYM_FUNCTION then ps_error "Only functions may be COMMON"
+        if tok_token->func_flags AND SYM_FUNCTION_INTRINSIC then
+            ps_error "Cannot make intrinsic function COMMON"
+        end if
+        tok_token->func_flags = tok_token->func_flags OR SYM_FUNCTION_PUBLIC
+        tok_advance
+    loop while ps_consumed(TOK_COMMA) 
+    ps_is_module = TRUE
+
+    $if DEBUG_PARSE_TRACE then
+    debuginfo "Completed common"
+    $end if
+end sub
+
