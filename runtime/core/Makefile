@@ -8,13 +8,19 @@ OUTPUT_LIBRARY := $(OUT_DIR)/runtime/core.a
 all: $(OUTPUT_LIBRARY)
 
 OBJ := $(addsuffix .o, $(basename $(wildcard *.bm)))
+HEADERS := $(addsuffix .bh, $(basename $(wildcard *.bm)))
 
-%.o: %.bm
-	$(LBASIC_CORE_COMPILER) -t -e obj -o $@ $<
+%.o %.bh: %.bm
+	$(LBASIC_CORE_COMPILER) -t --no-core -e obj -o $@ $<
 
-$(OUTPUT_LIBRARY): $(OBJ)
-	$(AR) rcs $@ $(OBJ)
+LBINDEX: $(HEADERS)
+	cat *.bh > LBINDEX
+
+$(OUTPUT_LIBRARY): $(OBJ) LBINDEX
+	$(AR) rcs $@ $(OBJ) LBINDEX
 
 .PHONY: clean
 clean:
 	rm *.o 2> /dev/null
+	rm *.bh 2> /dev/null
+	rm LBINDEX 2> /dev/null

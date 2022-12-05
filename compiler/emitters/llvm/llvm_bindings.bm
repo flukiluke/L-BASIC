@@ -142,3 +142,14 @@ end function
 function llvm_struct_type%&(ElementTypes%&(), ElementCount~&, Packed&)
     llvm_struct_type%& = LLVMStructType(_offset(ElementTypes%&()), ElementCount~&, Packed&)
 end function
+
+'Name changed to avoid 40 character limit
+function llvm_create_buf_from_file&(Path$, OutMemBuf%&, OutMessage$)
+    llvm_create_buf_from_file& = LLVMCreateMemoryBufferWithContentsOfFile&(Path$ + chr$(0), OutMemBuf%&, msgp%&)
+    OutMessage$ = llvm_recv_string$(msgp%&)
+end function
+
+function llvm_create_binary%&(MemBuf%&, Context%&, ErrorMessage$)
+    llvm_create_binary%& = LLVMCreateBinary%&(MemBuf%&, Context%&, msgp%&)
+    ErrorMessage$ = llvm_recv_string$(msgp%&)
+end function

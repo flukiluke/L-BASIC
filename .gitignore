@@ -2,6 +2,8 @@
 /out
 *.o
 *.a
+*.bh
+LBINDEX
 compiler/parser/token_data.bi
 compiler/parser/token_registrations.bm
 compiler/parser/ts_data.bi

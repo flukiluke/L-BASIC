@@ -2,7 +2,30 @@
 'SPDX-License-Identifier: Apache-2.0
 'llvm_bindings.bi - Bindings for LLVM C API functions, declarations
 
-declare dynamic library "/usr/local/lib/LLVM"
+declare library "./archive"
+    function ll_get_archive_lbindex%& alias LLGetArchiveLBIndex(byval BR%&)
+end declare
+
+declare library "/usr/local/lib/LLVM"
+    sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
+    sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
+    sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC
+    sub      llvm_initialize_x86_target_info alias LLVMInitializeX86TargetInfo
+    function LLVMGetDefaultTargetTriple%&
+    function LLVMGetTargetFromTriple&(Triple$, Target%&, ErrorMessage%&)
+    function LLVMCreateTargetMachine%&(byval T%&, Triple$, CPU$, Features$, byval Level&, byval Reloc&, byval CodeModel&)
+    function llvm_create_target_data_layout%& alias LLVMCreateTargetDataLayout(byval T%&)
+    sub      llvm_module_set_data_layout alias LLVMSetModuleDataLayout(byval M%&, byval DL%&)
+    function llvm_get_module_data_layout%& alias LLVMGetModuleDataLayout(byval M%&)
+    function LLVMTargetMachineEmitToFile&(byval T%&, byval M%&, Filename$, byval codegen&, ErrorMessage%&)
+    function LLVMTargetMachineEmitToMemoryBuffer&(byval T%&, byval M%&, byval codegen&, ErrorMessage%&, OutMemBuf%&)
+    function llvm_offset_of_element& alias LLVMOffsetOfElement(byval TD%&, byval StructTy%&, byval Element~&)
+    function LLVMWriteBitcodeToFile&(byval M%&, Path$)
+    function LLVMVerifyModule&(byval M%&, byval Action&, OutMessage%&)
+    function llvm_verify_function& alias LLVMVerifyFunction(byval Fn%&, byval Action&)
+    function LLVMCreateBinary%&(byval MemBuf%&, byval Context%&, ErrorMessage%&)
+    function llvm_binary_get_type& alias LLVMBinaryGetType(byval BR%&)
+    sub      llvm_dispose_binary alias LLVMDisposeBinary(byval BR%&)
     function LLVMModuleCreateWithName%&(ModuleID$)
     sub      llvm_dispose_module alias LLVMDisposeModule(byval M%&)
     sub      LLVMSetTarget(byval M%&, Triple$)
@@ -28,10 +51,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_build_ret%& alias LLVMBuildRet(byval B%&, byval V%&)
     function llvm_build_ret_void%& alias LLVMBuildRetVoid(byval B%&)
     function llvm_get_param%& alias LLVMGetParam(byval Fn%&, byval index~&)
-    function LLVMVerifyModule&(byval M%&, byval Action&, OutMessage%&)
-    function llvm_verify_function& alias LLVMVerifyFunction(byval Fn%&, byval Action&)
     sub      LLVMDisposeMessage(byval Message%&)
-    function LLVMWriteBitcodeToFile&(byval M%&, Path$)
     sub      LLVMSetValueName2(byval Value%&, Name$, byval NameLen&)
     sub      llvm_dispose_builder alias LLVMDisposeBuilder(byval Builder%&)
     function LLVMBuildAlloca%&(byval B%&, byval Ty%&, Name$)
@@ -58,18 +78,6 @@ declare dynamic library "/usr/local/lib/LLVM"
     function llvm_build_br%& alias LLVMBuildBr(byval B%&, byval Dest%&)
     sub      llvm_append_existing_basic_block alias LLVMAppendExistingBasicBlock(byval Fn%&, byval BB%&)
     sub      llvm_set_linkage alias LLVMSetLinkage(byval Global%&, byval Linkage&)
-    function LLVMGetDefaultTargetTriple%&
-    function LLVMGetTargetFromTriple&(Triple$, Target%&, ErrorMessage%&)
-    sub      llvm_initialize_x86_target_info alias LLVMInitializeX86TargetInfo
-    sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
-    sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC
-    sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
-    function LLVMCreateTargetMachine%&(byval T%&, Triple$, CPU$, Features$, byval Level&, byval Reloc&, byval CodeModel&)
-    function llvm_create_target_data_layout%& alias LLVMCreateTargetDataLayout(byval T%&)
-    sub      llvm_module_set_data_layout alias LLVMSetModuleDataLayout(byval M%&, byval DL%&)
-    function llvm_get_module_data_layout%& alias LLVMGetModuleDataLayout(byval M%&)
-    function LLVMTargetMachineEmitToFile&(byval T%&, byval M%&, Filename$, byval codegen&, ErrorMessage%&)
-    function LLVMTargetMachineEmitToMemoryBuffer&(byval T%&, byval M%&, byval codegen&, ErrorMessage%&, OutMemBuf%&)
     function llvm_get_buffer_start%& alias LLVMGetBufferStart(byval MemBuf%&)
     function llvm_get_buffer_size&& alias LLVMGetBufferSize(byval MemBuf%&)
     sub      llvm_dispose_memory_buffer alias LLVMDisposeMemoryBuffer(byval MemBuf%&)
@@ -81,7 +89,7 @@ declare dynamic library "/usr/local/lib/LLVM"
     sub      llvm_set_global_constant alias LLVMSetGlobalConstant(byval GlobalVar%&, byval IsConstant&)
     sub      llvm_set_unnamed_address alias LLVMSetUnnamedAddress(byval Global%&, byval UnnamedAddr&)
     function LLVMStructType%&(byval ElementTypes%&, byval ElementCount~&, byval Packed&)
-    function llvm_offset_of_element& alias LLVMOffsetOfElement(byval TD%&, byval StructTy%&, byval Element~&)
+    function LLVMCreateMemoryBufferWithContentsOfFile&(Path$, OutMemBuf%&, OutMessage%&)
 end declare
 
 const LLVMAbortProcessAction = 0
@@ -177,3 +185,20 @@ const LLVMObjectFile = 1
 const LLVMNoUnnamedAddr = 0 'Address of the GV is significant.
 const LLVMLocalUnnamedAddr = 1 'Address of the GV is locally insignificant.
 const LLVMGlobalUnnamedAddr = 2 'Address of the GV is globally insignificant.
+
+const LLVMBinaryTypeArchive = 0 'Archive file.
+const LLVMBinaryTypeMachOUniversalBinary = 1 'Mach-O Universal Binary file.
+const LLVMBinaryTypeCOFFImportFile = 2 'COFF Import file.
+const LLVMBinaryTypeIR = 3 'LLVM IR.
+const LLVMBinaryTypeWinRes = 4 'Windows resource (.res) file.
+const LLVMBinaryTypeCOFF = 5 'COFF Object file.
+const LLVMBinaryTypeELF32L = 6 'ELF 32-bit, little endian.
+const LLVMBinaryTypeELF32B = 7 'ELF 32-bit, big endian.
+const LLVMBinaryTypeELF64L = 8 'ELF 64-bit, little endian.
+const LLVMBinaryTypeELF64B = 9 'ELF 64-bit, big endian.
+const LLVMBinaryTypeMachO32L = 10 'MachO 32-bit, little endian.
+const LLVMBinaryTypeMachO32B = 11 'MachO 32-bit, big endian.
+const LLVMBinaryTypeMachO64L = 12 'MachO 64-bit, little endian.
+const LLVMBinaryTypeMachO64B = 13 'MachO 64-bit, big endian.
+const LLVMBinaryTypeWasm = 14 'Web Assembly.
+

@@ -96,6 +96,15 @@ function ps_get_scope$(token)
     end if
 end function
 
+function ps_remove_scope$(n$)
+    s = _instrrev(n$, "/")
+    if s = 0 then
+        ps_remove_scope$ = n$
+    else
+        ps_remove_scope$ = mid$(n$, s + 1)
+    end if
+end function
+
 sub ps_queue_cleanup(node)
     ps_queued_cleanup_nodes$ = ps_queued_cleanup_nodes$ + mkl$(node)
 end sub

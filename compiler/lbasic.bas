@@ -44,6 +44,7 @@ const ERR_CTX_DUMP = 3 'Dump code
 const ERR_CTX_FILE = 4 'Trying to open a file
 const ERR_CTX_RUN = 5 'Immediate runtime (non-interactive)
 const ERR_CTX_LLVM = 6 'LLVM processing
+const ERR_CTX_AR = 7 'Archive and library manager
 
 dim shared Error_context
 'Because we can only throw a numeric error code, this holds a more
@@ -95,8 +96,20 @@ target_platform_settings = runtime_platform_settings
 'Note that unlike other arrays, we never remove entries from this one. This allows
 'us to use the index as a reference to the file for generating diagnostics later on.
 'input_files(1) is used to represent user input.
+const INPUT_SRC_INTERACTIVE = 1
+const INPUT_SRC_FILE = 2
+const INPUT_SRC_MEM = 3
 type input_file_t
+    'One of INPUT_SRC_* to indicate how to read this file
+    source as long
+
+    'Valid for INPUT_SRC_FILE
     handle as long
+
+    'Valid for INPUT_SRC_MEM
+    mem as _mem
+    cur_pos as _offset
+
     'Directory containing the file, further includes are relative to this
     dirname as string
     'To be used only for diagnostic messages
@@ -106,9 +119,10 @@ type input_file_t
     'The index of the file that triggered the inclusion of this one
     included_by as long
 end type
-redim shared input_files(1) as input_file_t
-input_files(1).filename = "[interactive]"
+redim shared input_files(0) as input_file_t
 dim shared input_files_current
+$macro: Infile | input_files(input_files_current)
+
 'The logging output is used for debugging output
 dim shared logging_file_handle
 dim shared dump_file_handle
@@ -134,6 +148,7 @@ type options_t
     oper_mode as integer
     build_stages as long
     debug as integer
+    no_core as long
 end type
 dim shared options as options_t
 
@@ -219,6 +234,10 @@ error_handler:
         print "codegen: ";
         if err <> 101 then goto internal_error
         print Error_message$
+    case ERR_CTX_LLVM
+        print "archiver: ";
+        if err <> 101 then goto internal_error
+        print Error_message$
     case else
         internal_error:
         if _inclerrorline then
@@ -252,37 +271,55 @@ end sub
 'This function and the next are called from tokeng.
 'They provide a uniform way of loading the next line.
 function general_next_line$
-    if input_files_current = 1 then
-        old_dest = _dest
-        if not options.terminal_mode then
-            _dest 0
-        else
-            _dest _console
-        end if
-        print "> ";
-        line input s$
-        _dest old_dest
-    else
-        line input #input_files(input_files_current).handle, s$
-    end if
-    general_next_line$ = s$
+    select case Infile.source
+        case INPUT_SRC_INTERACTIVE
+            old_dest = _dest
+            if not options.terminal_mode then
+                _dest 0
+            else
+                _dest _console
+            end if
+            print "> ";
+            line input s$
+            _dest old_dest
+        case INPUT_SRC_FILE
+            line input #Infile.handle, s$
+        case INPUT_SRC_MEM
+            dim nl_pos as _offset, b as _byte
+            nl_pos = Infile.cur_pos
+            do
+                b = _memget(Infile.mem, Infile.mem.offset + nl_pos, _byte)
+                if b = 10 then exit do
+                nl_pos = nl_pos + 1
+            loop while nl_pos < Infile.mem.size
+            'Line of interest has start & end at Infile.cur_pos and nl_pos - 1
+            s$ = space$(nl_pos - Infile.cur_pos)
+            _memget Infile.mem, Infile.mem.offset + Infile.cur_pos, s$
+            Infile.cur_pos = nl_pos + 1
+    end select
+    general_next_line$ = s$ + chr$(10)
 end function
 
 function general_eof
     if input_files_current = 0 then
         'nothing is open
         general_eof = TRUE
-    elseif input_files_current = 1 then
-        'reading from console
+    elseif Infile.source = INPUT_SRC_INTERACTIVE then
         general_eof = FALSE
     else
         do
-            finished = eof(input_files(input_files_current).handle)
-            if finished then
-                close #input_files(input_files_current).handle
-                input_files_current = input_files(input_files_current).included_by
+            if Infile.source = INPUT_SRC_FILE then
+                finished = eof(Infile.handle)
+                if finished then close #Infile.handle
+            elseif Infile.source = INPUT_SRC_MEM then
+                finished = Infile.cur_pos >= Infile.mem.size
+            else
+                finished = FALSE
             end if
-        loop while input_files(input_files_current).finished and input_files_current
+            if finished then
+                input_files_current = Infile.included_by
+            end if
+        loop while Infile.finished and input_files_current
         general_eof = input_files_current = 0
     end if
 end function
@@ -290,6 +327,7 @@ end function
 sub add_input_file(filename$, as_include)
     redim _preserve input_files(ubound(input_files) + 1) as input_file_t
     u = ubound(input_files)
+    input_files(u).source = INPUT_SRC_FILE
     input_files(u).handle = freefile
     input_files(u).filename = filename$
     if as_include then
@@ -301,6 +339,37 @@ sub add_input_file(filename$, as_include)
     input_files(u).dirname = dirname$(filename$)
     open_file filename$, input_files(u).handle, FALSE
     input_files_current = u
+end sub
+
+sub add_input_mem(mem as _mem, filename$, as_include)
+    redim _preserve input_files(ubound(input_files) + 1) as input_file_t
+    u = ubound(input_files)
+    input_files(u).source = INPUT_SRC_MEM
+    input_files(u).mem = mem
+    input_files(u).cur_pos = 0
+    input_files(u).filename = filename$
+    if as_include then
+        input_files(u).included_by = input_files_current
+    else
+        input_files(u).included_by = 0
+    end if
+    input_files(u).finished = FALSE
+    input_files(u).dirname = dirname$(filename$)
+    input_files_current = u
+end sub
+
+sub restart_all_input
+    for i = 1 to ubound(input_files)
+        input_files(i).finished = FALSE
+        select case input_files(i).source
+            case INPUT_SRC_FILE
+                input_files(i).handle = freefile
+                open_file input_files(i).filename, input_files(i).handle, FALSE
+            case INPUT_SRC_MEM
+                input_files(i).cur_pos = 0
+        end select
+    next i
+    input_files_current = 1
 end sub
 
 sub preload_file
@@ -326,20 +395,6 @@ sub open_file(filename$, handle, is_output)
     Error_context = old_ctx
 end sub
 
-'This extracts a common prologue from the modes below
-sub ingest_initial_file
-    add_input_file options.mainarg, FALSE
-    tok_init
-    Error_context = ERR_CTX_PARSING
-    ps_prepass
-    add_input_file options.mainarg, FALSE
-    tok_reinit
-    ps_init
-    ast_rollback
-    AST_ENTRYPOINT = ps_main
-    Error_context = ERR_CTX_UNKNOWN
-end sub
-
 sub build_mode
     if options.outputfile = "" then
         basename$ = remove_ext$(options.mainarg)
@@ -355,23 +410,48 @@ sub build_mode
             options.outputfile = basename$ + ".parse"
         end if
     end if
-    ingest_initial_file
+    add_input_file options.mainarg, FALSE
+    if options.no_core = 0 then
+        ar_add_dependency runtime_platform_settings.rtlib_dir + "/core.a"
+    end if
+    tok_init
+    Error_context = ERR_CTX_PARSING
+    ps_prepass
+    restart_all_input
+    tok_reinit
+    ps_init
+    ast_rollback
+    AST_ENTRYPOINT = ps_main
+    Error_context = ERR_CTX_UNKNOWN
     if options.build_stages = BUILD_PARSE then
         dump_file_handle = freefile
         open_file options.outputfile, dump_file_handle, TRUE
         Error_context = ERR_CTX_DUMP
         dump_program
         close #1
-    else
-        Error_context = ERR_CTX_LLVM
-        ll_build
+        exit sub
+    end if
+    Error_context = ERR_CTX_LLVM
+    ll_build
+    if ps_is_module then
+        Error_context = ERR_CTX_AR
+        options.outputfile = remove_ext$(options.outputfile) + ".bh"
+        ar_emit_header
     end if
 end sub
 
-'Strip the .bas extension if present
+sub interactive_mode
+    input_files(1).source = INPUT_SRC_INTERACTIVE
+    input_files(1).dirname = "."
+    input_files(1).filename = "[interactive]"
+    input_files(1).finished = FALSE
+    input_files(1).included_by = 0
+end sub
+
+'Strip the file extension extension if present
 function remove_ext$(fullname$)
     dot = _instrrev(fullname$, ".")
-    if mid$(fullname$, dot + 1) = "bas" then
+    if dot > 1 then
         remove_ext$ = left$(fullname$, dot - 1)
     else
         remove_ext$ = fullname$
@@ -463,6 +543,7 @@ sub show_help
     print "  -o, --output                     Compilation output"
     print "  -t, --terminal                   Do not open a graphical window"
     print "  --preload FILE                   Load FILE before parsing main program"
+    print "  --no-core                        Do not implicitly link against core library"
     if Debug_features$ <> "" then
         print "  -d, --debug                      Output internal debugging info"
     end if
@@ -517,6 +598,8 @@ sub parse_cmd_line_args()
                 end if
                 options.preload = locate_path$(command$(i + 1), _startdir$)
                 i = i + 1
+            case "--no-core"
+                options.no_core = TRUE
             case "-e", "--emit"
                 if i = _commandcount then
                     options.terminal_mode = TRUE
@@ -558,3 +641,4 @@ $include: 'parser/parser.bm'
 $include: 'emitters/dump/dump.bm'
 ''$include: 'emitters/immediate/immediate.bm'
 $include: 'emitters/llvm/llvm.bm'
+$include: 'emitters/archiver/archiver.bm'

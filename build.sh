@@ -11,19 +11,22 @@ set -e
 : ${QB64:=qb64}
 : ${QBFLAGS:="-w -q"}
 : ${OUT_DIR:=out}
-: ${CFLAGS:=-O2 -Wall -std=c17 -g -no-pie}
+OUT_DIR=$(realpath "${OUT_DIR}")
+: ${CC:=clang}
+: ${CFLAGS:=-O2 -Wall -std=c17 -g}
+: ${CXXFLAGS:=-O2 -Wall -std=c++17 -g}
 : ${LBASIC_CORE_COMPILER:=${OUT_DIR}/lbasic}
+TOOLS_DIR=$(realpath tools)
 
 # Subdirectories to build
 components="tools compiler runtime/foundation runtime/core"
 
-OUT_DIR=$(realpath "${OUT_DIR}")
-LBASIC_CORE_COMPILER=$(realpath "${LBASIC_CORE_COMPILER}")
-TOOLS_DIR=$(realpath tools)
-export QB64 QBFLAGS OUT_DIR TOOLS_DIR CFLAGS LBASIC_CORE_COMPILER
+export QB64 QBFLAGS OUT_DIR TOOLS_DIR CC CFLAGS CXXFLAGS LBASIC_CORE_COMPILER
 echo "QB64=${QB64}"
 echo "QBFLAGS=${QBFLAGS}"
+echo "CC=${CC}"
 echo "CFLAGS=${CFLAGS}"
+echo "CXXFLAGS=${CXXFLAGS}"
 echo "OUT_DIR=${OUT_DIR}"
 echo "TOOLS_DIR=${TOOLS_DIR}"
 echo "LBASIC_CORE_COMPILER=${LBASIC_CORE_COMPILER}"

@@ -1,0 +1,85 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'archiver.bm - Archive and library manager
+
+sub ar_emit_header
+    out_file = freefile
+    open_file options.outputfile, out_file, TRUE
+
+    for i = 1 to ast_last_procedure
+        root = ast_procedures(i)
+        func = root->ref
+        if func->func_flags AND SYM_FUNCTION_PUBLIC then
+            print #out_file, ar_make_func_declaration$(root)
+        end if
+    next i
+
+    close #out_file
+end sub
+
+function ar_make_func_declaration$(root)
+    func = root->ref
+    sig = root->ref2
+    o$ = "DECLARE "
+    if type_sig_return(sig) = TYPE_NONE then
+        o$ = o$ + "SUB " + func->identifier
+    else
+        o$ = o$ + "FUNCTION " + func->identifier + " AS " + type_human_readable$(type_sig_return(sig))
+    end if
+    numargs = type_sig_numargs(sig)
+    if numargs > 0 then
+        o$ = o$ + "("
+        for i = 1 to numargs
+            flags = type_sig_argflags(sig, i)
+            if flags and TYPE_BYVAL then o$ = o$ + "BYVAL "
+            if flags and TYPE_BYREF then o$ = o$ + "BYREF "
+            if flags and TYPE_OPTIONAL then o$ = o$ + "OPTION "
+            var = ast_get_child(root, i + 1)
+            var = var->ref
+            o$ = o$ + ps_remove_scope$(var->identifier) + " AS "
+            o$ = o$ + type_human_readable$(type_sig_argtype(sig, i))
+            if i < numargs then
+                o$ = o$ + ", "
+            end if
+        next i
+        o$ = o$ + ")"
+    end if
+    ar_make_func_declaration$ = o$
+end function
+
+sub ar_add_dependency(given$)
+    dim as _offset filebuf, binfile
+    if _fileexists(given$) then
+        path$ = given$
+    elseif _fileexists(given$ + ".a") then
+        path$ = given$ + ".a"
+    elseif _fileexists(given$ + ".o") then
+        path$ = given$ + ".o"
+    else
+        fatalerror "Cannot locate dependency " + given$
+    end if
+    if llvm_create_buf_from_file(path$, filebuf, errmsg$) then
+        fatalerror "Cannot load dependency " + given$ + ": " + errmsg$
+    end if
+    binfile = llvm_create_binary(filebuf, llvm_get_global_context, errmsg$)
+    if binfile = 0 then
+        fatalerror "Cannot read dependency " + given$ + ": " + errmsg$
+    end if
+    file_type = llvm_binary_get_type(binfile)
+    select case file_type
+        case LLVMBinaryTypeArchive
+            ar_add_dep_archive path$, binfile
+        case else
+            fatalerror "Cannot use dependency " + given$ + ": Not an archive"
+    end select
+end sub
+
+sub ar_add_dep_archive(filename$, binfile as _offset)
+    dim as _offset index_buf, addr
+    dim as _mem mem
+    index_buf = ll_get_archive_lbindex(binfile)
+    addr = llvm_get_buffer_start(index_buf)
+    size&& = llvm_get_buffer_size(index_buf)
+    mem = _mem(addr, size&&)
+    add_input_mem mem, filename$, TRUE
+end sub

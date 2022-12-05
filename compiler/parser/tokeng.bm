@@ -98,7 +98,7 @@ sub tok_read_next_token
         tokeng_state.has_data = TRUE
     end if
 
-    tok_next_content$ = tok_next_ts$(tokeng_state.raw_line_in + chr$(10), ts_type)
+    tok_next_content$ = tok_next_ts$(tokeng_state.raw_line_in, ts_type)
 
     select case ts_type
         case 0 'Out of data (an error)
@@ -154,6 +154,8 @@ function tok_next_ts$(text$, ts_type)
         c = asc(text$, i)
         'No utf-8 support for now
         if c > 127 then ps_error "Character outside character set (" + ltrim$(str$(c)) + ")"
+        'Ignore CR as an artifact on windows line endings
+        if c = 13 then _continue
         command = t_states~%(c, tokeng_state.curstate)
         'Rules of the form "A: B ~ Error" encode to 0
         if command = 0 then
