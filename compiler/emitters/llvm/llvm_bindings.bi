@@ -69,6 +69,10 @@ declare library "/usr/local/lib/LLVM"
     function LLVMBuildFSub%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
     function LLVMBuildICmp%&(byval B%&, byval Op&, byval LHS%&, byval RHS%&, Name$)
     function LLVMBuildFCmp%&(byval B%&, byval Op&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildMul%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildFMul%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildSDiv%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
+    function LLVMBuildFDiv%&(byval B%&, byval LHS%&, byval RHS%&, Name$)
     function llvm_get_insert_block%& alias LLVMGetInsertBlock(byval B%&)
     function llvm_get_basic_block_parent%& alias LLVMGetBasicBlockParent(byval BB%&)
     function llvm_get_global_context%& alias LLVMGetGlobalContext

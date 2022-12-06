@@ -61,7 +61,7 @@ sub dump_subprocedures
         next j
         print #dump_file_handle, ")"
         dump_ast ast_get_child(root, 1), 1
-        if is_sub then print #dump_file_handle, "END SUB" else print #logging_file_handle, "END FUNCTION"
+        if is_sub then print #dump_file_handle, "END SUB" else print #dump_file_handle, "END FUNCTION"
     next i
 end sub
 
@@ -166,7 +166,7 @@ sub dump_ast(root, indent_level)
         dump_ast ast_get_child(root, 2), 0
     case AST_IF
         for clause = 1 to ast_num_children(root) \ 2
-            if clause = 1 then print #dump_file_handle, indent$; "IF "; else print #logging_file_handle, indent$; "ELSEIF ";
+            if clause = 1 then print #dump_file_handle, indent$; "IF "; else print #dump_file_handle, indent$; "ELSEIF ";
             dump_ast ast_get_child(root, clause * 2 - 1), 0
             print #dump_file_handle, " THEN "
             dump_ast ast_get_child(root, clause * 2), indent_level + 1

@@ -73,6 +73,24 @@ function ll_cg_call_builtin%&(node)
             elseif type_is_fp(type_of_expr(c1)) then
                 ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, v1, v2, "fpeq")
             end if
+        case TOK_STAR
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(c1)
+            v2 = ll_cg_expr(ast_get_child(node, 2))
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_mul(ll_cg_state.builder, v1, v2, "mul")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fmul(ll_cg_state.builder, v1, v2, "fmul")
+            end if
+        case TOK_SLASH
+            c1 = ast_get_child(node, 1)
+            v1 = ll_cg_expr(c1)
+            v2 = ll_cg_expr(ast_get_child(node, 2))
+            if type_is_int(type_of_expr(c1)) then
+                ret = llvm_build_sdiv(ll_cg_state.builder, v1, v2, "sdiv")
+            elseif type_is_fp(type_of_expr(c1)) then
+                ret = llvm_build_fdiv(ll_cg_state.builder, v1, v2, "fdiv")
+            end if
     end select
     ll_cg_call_builtin%& = ret            
 end function
