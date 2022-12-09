@@ -57,8 +57,8 @@ function llvm_build_alloca%&(B%&, Ty%&, Name$)
     llvm_build_alloca%& = LLVMBuildAlloca(B%&, Ty%&, Name$ + chr$(0))
 end function
 
-function llvm_build_call%&(B%&, Fn%&, Args%&(), NumArgs~&)
-    llvm_build_call = LLVMBuildCall(B%&, Fn%&, _offset(Args%&()), NumArgs~&, chr$(0))
+function llvm_build_call%&(B%&, Fn%&, Args%&(), NumArgs~&, Name$)
+    llvm_build_call = LLVMBuildCall(B%&, Fn%&, _offset(Args%&()), NumArgs~&, Name$ + chr$(0))
 end function
 
 function llvm_const_int_of_string%&(Ty%&, Text$, Radix~%%)

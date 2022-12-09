@@ -191,7 +191,12 @@ sub ps_prepass
         case META_INCLUDE
             ps_meta_include
         case TOK_SUB, TOK_FUNCTION
-            if ps_consumed(TOK_SUB) then is_sub = TRUE else ps_consume(TOK_FUNCTION)
+            if ps_consumed(TOK_SUB) then
+                is_sub = TRUE
+            else
+                ps_consume(TOK_FUNCTION)
+                is_sub = FALSE
+            end if
             dummy = ps_declare_p(is_sub, 0)
         case TOK_EXIT, TOK_END
             'These could be followed by SUB or FUNCTION which would cause confusion

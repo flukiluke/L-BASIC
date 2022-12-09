@@ -237,7 +237,7 @@ function ps_func_return
     u$ = ucase$(tok_content$)
     if u$ <> ucase$(ps_scope_name$) then
         $if DEBUG_PARSE_TRACE then
-        debuginfo "Completed func return"
+        debuginfo "Completed func return (not matching name)"
         $end if
         exit function
     end if
@@ -246,7 +246,7 @@ function ps_func_return
     return_type = type_sig_return(proc_id->sig)
     if return_type = TYPE_NONE then
         $if DEBUG_PARSE_TRACE then
-        debuginfo "Completed func return"
+        debuginfo "Completed func return (is a SUB)"
         $end if
         exit function
     end if

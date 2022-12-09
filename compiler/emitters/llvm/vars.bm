@@ -32,16 +32,17 @@ function ll_cg_local_var%&(typ, var_name$, entryBB as _offset, cleanupBB as _off
     lp = llvm_build_alloca(ll_cg_state.builder, ll_type(typ), var_name$)
     if type_is_int(typ) then
         constant_zero = llvm_const_int(ll_type(typ), 0, 0)
+    elseif type_is_fp(typ) then
+        constant_zero = llvm_const_real(ll_type(typ), 0)
     elseif typ = TYPE_STRING then
         constant_zero = ll_cg_str_constant(AST_EMPTY_STRING)
         if cleanupBB then
+            'cleanup code executed at end of function
             llvm_position_builder_at_end ll_cg_state.builder, cleanupBB
             dim args(1 to 1) as _offset
             args(1) = lp
-            dummy = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1)
+            dummy = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1, "string_maybe_free")
         end if
-    elseif type_is_fp(typ) then
-        constant_zero = llvm_const_real(ll_type(typ), 0)
     else
         ll_error "Cannot create local var for type"
     end if

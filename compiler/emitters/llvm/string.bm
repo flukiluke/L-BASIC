@@ -53,7 +53,7 @@ sub ll_cg_str_free_transients
     dim args(1 to 1) as _offset
     for i = 1 to ll_cg_str_last_queued_transient
         args(1) = ll_cg_str_queued_transients(i)
-        dummy%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1)
+        dummy%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1, "string_maybe_free")
     next i
     ll_cg_str_last_queued_transient = 0
 end sub
@@ -71,5 +71,5 @@ function ll_cg_str_assign%&(rvalue as _offset, lvalue as _offset)
     dim args(1 to 2) as _offset
     args(1) = lvalue
     args(2) = rvalue
-    ll_cg_str_assign%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_assign, args(), 2)
+    ll_cg_str_assign%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_assign, args(), 2, "string_assign")
 end function

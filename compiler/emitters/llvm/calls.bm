@@ -40,7 +40,7 @@ function ll_cg_call%&(node)
                 (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient expr
         end if
     next i
-    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs)
+    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs, target->identifier)
 end function
 
 function ll_cg_call_builtin%&(node)

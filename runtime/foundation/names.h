@@ -9,10 +9,10 @@
 
 #define STRING_ASSIGN LB$$STRING_ASSIGN
 #define STRING_MAYBE_FREE LB$$STRING_MAYBE_FREE
+#define STRING_ADD LB$$STRING_ADD
 
 #define END end$nI
 
-#define LEFT left$tTL
 #define LEN_STRING len$lt
 
 #define MID mid$ttlL
@@ -23,8 +23,6 @@
 #define PRINT_SINGLE print$ns
 #define PRINT_DOUBLE print$nd
 #define PRINT_STRING print$nt
-
-#define RIGHT right$tTL
 
 #define SYSTEM system$nI
 

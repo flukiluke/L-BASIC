@@ -45,10 +45,9 @@
 'a safe name may be given in parentheses, e.g "+(plus)". If the token is a special character (see below), it
 'should be represented as \xx where xx is the ASCII code. There must be no spaces anywhere in this field.
 '
-'LINKNAME is an optional field. If given, calls to this function or operator will use
-'LINKNAME directly, and the linker will expect it to exist as-is. If left blank, the name
-'will be mangled with type information. A blank may also indicate the operation is encoded
-'directly at the codegen stage.
+'LINKNAME is an optional field. If given, calls to this function or operator will use LB$$LINKNAME (uppercased,
+'with an LB$$ prefix), and the linker will expect it to exist. If left blank, the name will be mangled with type
+'information. A blank may also indicate the operation is encoded directly at the codegen stage.
 '
 'PRECEDENCE is an integer for parsing precedence. Larger values are higher precedence.
 
@@ -79,7 +78,7 @@
 '
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
-'  INTERNAL: Prefix the token with a pipe "|" character in the symtab, preventing it from clashing with other tokens. Also causes the linkname, if given, to be mangled with a LB$$ prefix.
+'  INTERNAL: Prefix the token with a pipe "|" character in the symtab, preventing it from clashing with other tokens.
 
 'Blank lines are ignored. Comments may be given with # on their own line. Special characters are (); and must
 'not appear outside of their described syntactic function.
@@ -109,6 +108,8 @@ redim shared previous$(0)
 redim shared args$(0)
 dim shared linenum
 
+linkname_prefix$ = "LB$$"
+
 print #3, "dim sym as symtab_entry_t"
 do while not eof(1)
     linenum = linenum + 1
@@ -130,9 +131,6 @@ do while not eof(1)
     if parts$(0) = "META" then toksym$ = "$" + toksym$
     if instr(parts$(-1), "INTERNAL") then
         toksym$ = "|" + toksym$
-        linkname_prefix$ = "LB$$"
-    else
-        linkname_prefix$ = ""
     end if
 
     select case parts$(0)

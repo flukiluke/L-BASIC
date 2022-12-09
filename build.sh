@@ -13,8 +13,8 @@ set -e
 : ${OUT_DIR:=out}
 OUT_DIR=$(realpath "${OUT_DIR}")
 : ${CC:=clang}
-: ${CFLAGS:=-O2 -Wall -std=c17 -g}
-: ${CXXFLAGS:=-O2 -Wall -std=c++17 -g}
+: ${CFLAGS:=-O2 -Wall -std=c17}
+: ${CXXFLAGS:=-O2 -Wall -std=c++17}
 : ${LBASIC_CORE_COMPILER:=${OUT_DIR}/lbasic}
 TOOLS_DIR=$(realpath tools)
 
