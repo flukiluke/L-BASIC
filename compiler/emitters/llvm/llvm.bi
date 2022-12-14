@@ -13,14 +13,11 @@ end type
 
 dim shared ll_cg_state as ll_cg_state_t
 
-'Pure convenience so we don't have to look up these functions
-'every time we want to emit a call to them.
-type ll_cg_funcs_t
-    string_maybe_free as _offset
-    string_assign as _offset
+type ll_arg_t
+    lp as _offset 'LLVM value
+    is_byval as long 'false if this is a reference
+    omitted as long 'true if this value is an optional omitted argument
 end type
 
-dim shared ll_cg_funcs as ll_cg_funcs_t
-
-dim shared ll_cg_str_queued_transients(1) as _offset
+dim shared ll_cg_str_queued_transients(1) as ll_arg_t
 dim shared ll_cg_str_last_queued_transient as long

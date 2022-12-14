@@ -76,4 +76,3 @@ function ll_type%&(typ)
             ll_error "bad ll type: " + type_human_readable$(typ)
     end select
 end function
-

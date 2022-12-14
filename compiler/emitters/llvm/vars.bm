@@ -39,9 +39,10 @@ function ll_cg_local_var%&(typ, var_name$, entryBB as _offset, cleanupBB as _off
         if cleanupBB then
             'cleanup code executed at end of function
             llvm_position_builder_at_end ll_cg_state.builder, cleanupBB
-            dim args(1 to 1) as _offset
-            args(1) = lp
-            dummy = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1, "string_maybe_free")
+            dim args(1 to 1) as ll_arg_t
+            args(1).lp = lp
+            args(1).is_byval = FALSE
+            dummy = ll_cg_call(TOK_STRING_MAYBE_FREE, -1, args())
         end if
     else
         ll_error "Cannot create local var for type"

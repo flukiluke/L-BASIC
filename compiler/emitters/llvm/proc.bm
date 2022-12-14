@@ -26,22 +26,32 @@ sub ll_cg_procedure(proc_node)
     proc = proc_node->ref
     sig = proc_node->ref2
     ll_cg_state.builder = llvm_create_builder
+    'entryBB: Setup things. Will also be used when generating user code for allocas
+    'when a shadow is needed.
     entryBB = llvm_append_basic_block(sig->sig_lp, "entry")
-    cleanupBB = llvm_create_basic_block("cleanup")
+    'startBB: Beginning of user code
+    startBB = llvm_append_basic_block(sig->sig_lp, "start")
+    'cleanupBB: Free any values going out of scope
+    cleanupBB = llvm_append_basic_block(sig->sig_lp, "cleanup")
+
+    'Setup locals and corresponding frees
     ll_cg_locals proc_node, entryBB, cleanupBB
+
+    'Handle return value storage and jump from entryBB to startBB
     llvm_position_builder_at_end ll_cg_state.builder, entryBB
     ret_type = type_sig_return(sig)
     if ret_type <> TYPE_NONE then
         'Do not clean up return value because it must persist beyond the scope
         ll_cg_state.retvar = ll_cg_local_var(ret_type, "retval", entryBB, 0)
     end if
-    'Keep the entryBB for allocas so we can more easily add to it later for shadow copies
-    startBB = llvm_append_basic_block(sig->sig_lp, "start")
     dummy = llvm_build_br(ll_cg_state.builder, startBB)
+
+    'Generate user code, then jump to cleanupBB
     llvm_position_builder_at_end ll_cg_state.builder, startBB
     ll_cg_block ast_get_child(proc_node, 1)
-    llvm_append_existing_basic_block sig->sig_lp, cleanupBB
     dummy = llvm_build_br(ll_cg_state.builder, cleanupBB)
+
+    'Generate return
     llvm_position_builder_at_end ll_cg_state.builder, cleanupBB
     if ret_type = TYPE_NONE then
         dummy = llvm_build_ret_void(ll_cg_state.builder)
@@ -49,6 +59,7 @@ sub ll_cg_procedure(proc_node)
         ll_cg_state.retvar = llvm_build_load(ll_cg_state.builder, ll_cg_state.retvar, "retval")
         dummy = llvm_build_ret(ll_cg_state.builder, ll_cg_state.retvar)
     end if
+
     function_ok = llvm_verify_function(sig->sig_lp, LLVMAbortProcessAction)
     llvm_dispose_builder ll_cg_state.builder
 end sub

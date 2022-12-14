@@ -94,6 +94,7 @@ declare library "/usr/local/lib/LLVM"
     sub      llvm_set_unnamed_address alias LLVMSetUnnamedAddress(byval Global%&, byval UnnamedAddr&)
     function LLVMStructType%&(byval ElementTypes%&, byval ElementCount~&, byval Packed&)
     function LLVMCreateMemoryBufferWithContentsOfFile&(Path$, OutMemBuf%&, OutMessage%&)
+    function llvm_get_type_kind& alias LLVMGetTypeKind(byval Ty%&)
 end declare
 
 const LLVMAbortProcessAction = 0
@@ -205,4 +206,25 @@ const LLVMBinaryTypeMachO32B = 11 'MachO 32-bit, big endian.
 const LLVMBinaryTypeMachO64L = 12 'MachO 64-bit, little endian.
 const LLVMBinaryTypeMachO64B = 13 'MachO 64-bit, big endian.
 const LLVMBinaryTypeWasm = 14 'Web Assembly.
+
+const LLVMVoidTypeKind = 0 'type with no size
+const LLVMHalfTypeKind = 1 '16 bit floating point type
+const LLVMFloatTypeKind = 2 '32 bit floating point type
+const LLVMDoubleTypeKind = 3 '64 bit floating point type
+const LLVMX86_FP80TypeKind = 4 '80 bit floating point type (X87)
+const LLVMFP128TypeKind = 5 '128 bit floating point type (112-bit mantissa)
+const LLVMPPC_FP128TypeKind = 6'128 bit floating point type (two 64-bits)
+const LLVMLabelTypeKind = 7 'Labels
+const LLVMIntegerTypeKind = 8 'Arbitrary bit width integers
+const LLVMFunctionTypeKind = 9 'Functions
+const LLVMStructTypeKind = 10 'Structures
+const LLVMArrayTypeKind = 11 'Arrays
+const LLVMPointerTypeKind = 12 'Pointers
+const LLVMVectorTypeKind = 13 'Fixed width SIMD vector type
+const LLVMMetadataTypeKind = 14 'Metadata
+const LLVMX86_MMXTypeKind = 15 'X86 MMX
+const LLVMTokenTypeKind = 16 'Tokens
+const LLVMScalableVectorTypeKind = 17 'Scalable SIMD vector type
+const LLVMBFloatTypeKind = 18 '16 bit brain floating point type
+const LLVMX86_AMXTypeKind = 19 'X86 AMX
 

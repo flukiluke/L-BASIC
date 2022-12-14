@@ -5,7 +5,7 @@
 function ll_cg_expr%&(node)
     select case node->atype
         case AST_CALL
-            ll_cg_expr%& = ll_cg_call(node)
+            ll_cg_expr%& = ll_cg_call_node(node)
         case AST_CONSTANT
             ll_cg_expr%& = ll_cg_constant(node)
         case AST_CAST
@@ -36,7 +36,7 @@ sub ll_cg_block(block)
             case AST_SELECT
                 'll_cg_select node
             case AST_CALL
-                none%& = ll_cg_call(node)
+                none%& = ll_cg_call_node(node)
             case AST_GOTO
                 'll_cg_goto node
             case AST_EXIT

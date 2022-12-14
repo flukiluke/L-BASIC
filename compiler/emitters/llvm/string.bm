@@ -4,7 +4,6 @@
 
 function ll_cg_str_constant%&(constant)
     dim as _offset value, global, indices(1)
-    indices(0) = llvm_const_int(llvm_int32_type, 0, false)
     s$ = ll_cg_str_header$(ast_constants(constant)) + ast_constants(constant)
     value = llvm_const_string(s$, len(s$), TRUE)
     global = llvm_add_global(ll_cg_state.module, llvm_type_of(value), "")
@@ -50,26 +49,29 @@ function ll_cg_str_header$(s$)
 end function
 
 sub ll_cg_str_free_transients
-    dim args(1 to 1) as _offset
+    dim as _offset dummy
+    dim as ll_arg_t args(1 to 1)
     for i = 1 to ll_cg_str_last_queued_transient
         args(1) = ll_cg_str_queued_transients(i)
-        dummy%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_maybe_free, args(), 1, "string_maybe_free")
+        dummy = ll_cg_call(TOK_STRING_MAYBE_FREE, -1, args())
     next i
     ll_cg_str_last_queued_transient = 0
 end sub
 
-sub ll_cg_str_queue_transient(s as _offset)
+sub ll_cg_str_queue_transient(s as ll_arg_t)
     u = ubound(ll_cg_str_queued_transients)
     if ll_cg_str_last_queued_transient = u then
-        redim _preserve ll_cg_str_queued_transients(u * 2) as _offset
+        redim _preserve ll_cg_str_queued_transients(u * 2) as ll_arg_t
     end if
     ll_cg_str_last_queued_transient = ll_cg_str_last_queued_transient + 1
     ll_cg_str_queued_transients(ll_cg_str_last_queued_transient) = s
 end sub
 
 function ll_cg_str_assign%&(rvalue as _offset, lvalue as _offset)
-    dim args(1 to 2) as _offset
-    args(1) = lvalue
-    args(2) = rvalue
-    ll_cg_str_assign%& = llvm_build_call(ll_cg_state.builder, ll_cg_funcs.string_assign, args(), 2, "string_assign")
+    dim as ll_arg_t args(1 to 2)
+    args(1).lp = lvalue
+    args(1).is_byval = FALSE
+    args(2).lp = rvalue
+    args(2).is_byval = TRUE
+    ll_cg_str_assign%& = ll_cg_call(TOK_STRING_ASSIGN, -1, args())
 end function

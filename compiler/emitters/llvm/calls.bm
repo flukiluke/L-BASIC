@@ -2,94 +2,119 @@
 'SPDX-License-Identifier: Apache-2.0
 'calls.bm - Code generation for calls to functions
 
-function ll_cg_call%&(node)
-    dim as _offset dedicated, expr
-    numargs = ast_num_children(node)
-    target = node->ref
-    sig = node->ref2
-
+function ll_cg_call%&(func, sig, args() as ll_arg_t)
+    dim as _offset builtin
+    if sig = -1 then
+        sig = func->sig
+    end if
     if sig->sig_lp = 0 then
-        'Maybe a builtin instruction
-        dedicated = ll_cg_call_builtin(node)
-        if dedicated then
-            ll_cg_call%& = dedicated
+        'A builtin instruction?
+        builtin = ll_cg_call_builtin(func, sig, args())
+        if builtin then
+            ll_cg_call%& = builtin
             exit function
         end if
-        'Must be first use of an external function
-        ll_declare_func_sig target, sig
-        'Still nothing, throw an error (should never happen)
-        if sig->sig_lp = 0 then ll_error "Call to " + target->identifier + " has no target pointer"
+        'First use of a non-builtin?
+        ll_declare_func_sig func, sig
+        if sig->sig_lp = 0 then
+            'Still nothing, throw an error (should never happen)
+            ll_error "Call to " + func->identifier + " has no target pointer"
+        end if
     end if
 
-    dim args(1 to numargs) as _offset
+    numargs = ubound(args)
+    dim lps(1 to numargs) as _offset
+    for i = 1 to numargs
+        typ = type_sig_argtype(sig, i)
+        typflags = type_sig_argflags(sig, i)
+        if args(i).omitted then
+            if typflags AND TYPE_OPTIONAL = 0 then
+                ll_error "Attempt to use omitted argument for non-optional parameter"
+            else
+                'Omitted optional argument
+                lps(i) = llvm_const_pointer_null(llvm_pointer_type(ll_type(typ), 0))
+            end if
+        elseif args(i).is_byval and ((typflags AND TYPE_BYVAL) = 0) then
+            'Have a value but need a reference, create a shadow variable
+            lps(i) = ll_cg_shadow_expr(typ, args(i).lp)
+        elseif not args(i).is_byval and (typflags AND TYPE_BYVAL) then
+            'Have a reference but need a value, dereference
+            lps(i) = ll_cg_deref_expr(args(i).lp)
+        else
+            lps(i) = args(i).lp
+        end if
+    next i
+
+    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, _
+                                   lps(), numargs, "")
+end function
+
+function ll_cg_call_node%&(node)
+    numargs = ast_num_children(node)
+    func = node->ref
+    sig = node->ref2
+
+    dim args(1 to numargs) as ll_arg_t
     for i = 1 to numargs
         arg_node = ast_get_child(node, i)
         if arg_node->atype = AST_NONE then
-            'Omitted optional arguments are passed as null pointers
-            args(i) = llvm_const_pointer_null(llvm_pointer_type(ll_type(type_sig_argtype(sig, i)), 0))
+            args(i).omitted = TRUE
         else
-            expr = ll_cg_expr(arg_node)
+            args(i).lp = ll_cg_expr(arg_node)
+            'll_cg_expr should always evaluate down to a value
+            args(i).is_byval = TRUE
             typ = type_of_expr(arg_node)
-            if type_sig_argflags(sig, i) AND TYPE_BYVAL then
-                args(i) = expr
-            else
-                args(i) = ll_cg_shadow_expr(typ, expr)
-            end if
             if typ = TYPE_STRING and _
                 (not type_is_lvalue(arg_node)) and _
-                (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient expr
+                (arg_node->atype <> AST_CONSTANT) then ll_cg_str_queue_transient args(i)
         end if
     next i
-    ll_cg_call%& = llvm_build_call(ll_cg_state.builder, sig->sig_lp, args(), numargs, target->identifier)
+    ll_cg_call_node%& = ll_cg_call(func, sig, args())
 end function
 
-function ll_cg_call_builtin%&(node)
-    dim as _offset v1, v2, ret
-    select case node->ref
+function ll_cg_call_builtin%&(func, sig, args() as ll_arg_t)
+    dim as _offset ret
+    dim as _offset lps(1 to 2)
+    select case func
         case TOK_PLUS
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_add(ll_cg_state.builder, v1, v2, "add")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fadd(ll_cg_state.builder, v1, v2, "fadd")
+            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
+            if type_is_int(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_add(ll_cg_state.builder, lps(1), lps(2), "add")
+            elseif type_is_fp(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_fadd(ll_cg_state.builder, lps(1), lps(2), "fadd")
             end if
         case TOK_DASH
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_sub(ll_cg_state.builder, v1, v2, "sub")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fsub(ll_cg_state.builder, v1, v2, "fsub")
+            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
+            if type_is_int(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_sub(ll_cg_state.builder, lps(1), lps(2), "sub")
+            elseif type_is_fp(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_fsub(ll_cg_state.builder, lps(1), lps(2), "fsub")
             end if
         case TOK_EQUALS
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntEq, v1, v2, "inteq")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, v1, v2, "fpeq")
+            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
+            if type_is_int(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntEq, lps(1), lps(2), "inteq")
+            elseif type_is_fp(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, lps(1), lps(2), "fpeq")
             end if
         case TOK_STAR
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_mul(ll_cg_state.builder, v1, v2, "mul")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fmul(ll_cg_state.builder, v1, v2, "fmul")
+            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
+            if type_is_int(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_mul(ll_cg_state.builder, lps(1), lps(2), "mul")
+            elseif type_is_fp(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_fmul(ll_cg_state.builder, lps(1), lps(2), "fmul")
             end if
         case TOK_SLASH
-            c1 = ast_get_child(node, 1)
-            v1 = ll_cg_expr(c1)
-            v2 = ll_cg_expr(ast_get_child(node, 2))
-            if type_is_int(type_of_expr(c1)) then
-                ret = llvm_build_sdiv(ll_cg_state.builder, v1, v2, "sdiv")
-            elseif type_is_fp(type_of_expr(c1)) then
-                ret = llvm_build_fdiv(ll_cg_state.builder, v1, v2, "fdiv")
+            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
+            if type_is_int(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_sdiv(ll_cg_state.builder, lps(1), lps(2), "sdiv")
+            elseif type_is_fp(type_sig_argtype(sig, 1)) then
+                ret = llvm_build_fdiv(ll_cg_state.builder, lps(1), lps(2), "fdiv")
             end if
     end select
     ll_cg_call_builtin%& = ret            
@@ -126,9 +151,17 @@ function ll_cg_shadow_expr%&(typ, expr as _offset)
     ll_cg_shadow_expr%& = alloca
 end function
 
+function ll_cg_deref_expr%&(lp as _offset)
+    ll_cg_deref_expr%& = llvm_build_load(ll_cg_state.builder, lp, "deref")
+end function
+
 sub ll_cg_set_return(node)
     dim as _offset value, dummy
     value = ll_cg_expr(ast_get_child(node, 1))
-    dummy = llvm_build_store(ll_cg_state.builder, value, ll_cg_state.retvar)
+    if type_of_expr(ast_get_child(node, 1)) = TYPE_STRING then
+        dummy = ll_cg_str_assign(value, ll_cg_state.retvar)
+    else
+        dummy = llvm_build_store(ll_cg_state.builder, value, ll_cg_state.retvar)
+    end if
 end sub
 

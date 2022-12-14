@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // String routines
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -110,7 +109,6 @@ LB_STRING *STRING_ADD(LB_STRING *left, LB_STRING *right) {
         fatal_error(ERR_STRING_TOO_BIG);
     }
     LB_STRING *result = alloc_new(new_len);
-    printf("STRING_ADD result %p\n", result);
     result->len = new_len;
     memmove(result->data, left->data, left->len);
     memmove(result->data + left->len, right->data, right->len);
@@ -123,7 +121,6 @@ LB_STRING *STRING_ADD(LB_STRING *left, LB_STRING *right) {
  * to be temporary, or when a variable goes out of scope.
  */
 void STRING_MAYBE_FREE(LB_STRING *src) {
-    printf("maybe_free %p refcount %d flags %d\n", src, src->refcount, src->flags);
     release(src);
 }
 
