@@ -6,7 +6,7 @@
 all: tsgen.tool tokgen.tool incmerge.tool
 
 %.tool: %.bas
-	$(QB64) $(QBFLAGS) -x $(realpath $<) -o $@.tool
+	$(QB64) $(QBFLAGS) -x "$(realpath $<)" -o "$(realpath .)/$@.tool"
 
 .PHONY: clean
 clean:

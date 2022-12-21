@@ -1,5 +1,6 @@
 /*.bas
 /out
+*.exe
 *.o
 *.a
 *.bh
@@ -11,3 +12,4 @@ compiler/parser/ts_data.bm
 /tools/*.tool
 *.swp
 *.testresult
+/llvm

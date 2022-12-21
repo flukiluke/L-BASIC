@@ -6,7 +6,7 @@ declare library "./archive"
     function ll_get_archive_lbindex%& alias LLGetArchiveLBIndex(byval BR%&)
 end declare
 
-declare library "/usr/local/lib/LLVM"
+declare library "c:/comp/msys64/home/luke/L-BASIC/llvm/lib/libLLVM-14.dll"
     sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
     sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
     sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC

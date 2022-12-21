@@ -2,6 +2,33 @@
 'SPDX-License-Identifier: Apache-2.0
 'tempfile.bm - Manage temporary files
 
+$if WINDOWS then
+declare customtype library
+    function tempnam%& alias _tempnam (byval dir%&, prefix$)
+    function strlen& (byval s%&)
+    sub libc_free alias free (byval p%&)
+end declare
+
+function ll_write_tempfile$ (extension$, buf as _offset, buflen&&)
+    dim mem as _mem
+    namep%& = tempnam%&(0, "lbtemp" + chr$(0))
+    namelen = strlen(namep%&)
+    filename$ = space$(namelen)
+    mem = _mem(namep%&, namelen)
+    _memget mem, mem.offset, filename$
+    libc_free namep%&
+    fh = freefile
+    open filename$ for binary as #fh
+    mem = _mem(buf, buflen&&)
+    content$ = space$(buflen&&)
+    _memget mem, mem.offset, content$
+    put #fh, , content$
+    close #fh
+    ll_write_tempfile$ = filename$
+end function
+
+$else
+
 declare customtype library
     function mkstemps&(template$, byval suffixlen&)
     function c_write&& alias write(byval fd&, byval buf%&, byval count&&)
@@ -22,3 +49,4 @@ function ll_write_tempfile$(extension$, buf as _offset, buflen&&)
     if ret2 = -1 then error 57
     ll_write_tempfile$ = filename$
 end function
+$end if
