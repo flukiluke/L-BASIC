@@ -2,11 +2,7 @@
 'SPDX-License-Identifier: Apache-2.0
 'llvm_bindings.bi - Bindings for LLVM C API functions, declarations
 
-declare library "./archive"
-    function ll_get_archive_lbindex%& alias LLGetArchiveLBIndex(byval BR%&)
-end declare
-
-declare library "c:/comp/msys64/home/luke/L-BASIC/llvm/lib/libLLVM-14.dll"
+declare dynamic library "c:/comp/msys64/home/luke/L-BASIC/llvm/lib/libLLVM-14"
     sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
     sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
     sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC
@@ -93,7 +89,6 @@ declare library "c:/comp/msys64/home/luke/L-BASIC/llvm/lib/libLLVM-14.dll"
     sub      llvm_set_global_constant alias LLVMSetGlobalConstant(byval GlobalVar%&, byval IsConstant&)
     sub      llvm_set_unnamed_address alias LLVMSetUnnamedAddress(byval Global%&, byval UnnamedAddr&)
     function LLVMStructType%&(byval ElementTypes%&, byval ElementCount~&, byval Packed&)
-    function LLVMCreateMemoryBufferWithContentsOfFile&(Path$, OutMemBuf%&, OutMessage%&)
     function llvm_get_type_kind& alias LLVMGetTypeKind(byval Ty%&)
 end declare
 
@@ -190,22 +185,6 @@ const LLVMObjectFile = 1
 const LLVMNoUnnamedAddr = 0 'Address of the GV is significant.
 const LLVMLocalUnnamedAddr = 1 'Address of the GV is locally insignificant.
 const LLVMGlobalUnnamedAddr = 2 'Address of the GV is globally insignificant.
-
-const LLVMBinaryTypeArchive = 0 'Archive file.
-const LLVMBinaryTypeMachOUniversalBinary = 1 'Mach-O Universal Binary file.
-const LLVMBinaryTypeCOFFImportFile = 2 'COFF Import file.
-const LLVMBinaryTypeIR = 3 'LLVM IR.
-const LLVMBinaryTypeWinRes = 4 'Windows resource (.res) file.
-const LLVMBinaryTypeCOFF = 5 'COFF Object file.
-const LLVMBinaryTypeELF32L = 6 'ELF 32-bit, little endian.
-const LLVMBinaryTypeELF32B = 7 'ELF 32-bit, big endian.
-const LLVMBinaryTypeELF64L = 8 'ELF 64-bit, little endian.
-const LLVMBinaryTypeELF64B = 9 'ELF 64-bit, big endian.
-const LLVMBinaryTypeMachO32L = 10 'MachO 32-bit, little endian.
-const LLVMBinaryTypeMachO32B = 11 'MachO 32-bit, big endian.
-const LLVMBinaryTypeMachO64L = 12 'MachO 64-bit, little endian.
-const LLVMBinaryTypeMachO64B = 13 'MachO 64-bit, big endian.
-const LLVMBinaryTypeWasm = 14 'Web Assembly.
 
 const LLVMVoidTypeKind = 0 'type with no size
 const LLVMHalfTypeKind = 1 '16 bit floating point type

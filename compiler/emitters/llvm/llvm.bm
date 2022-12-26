@@ -48,23 +48,16 @@ sub ll_do_link
     if e then ll_error message$
     module_obj$ = ll_write_tempfile$(".o", llvm_get_buffer_start(obj_buf), llvm_get_buffer_size(obj_buf))
 
-    'Locate our foundation library
-    foundation_lib$ = runtime_platform_settings.rtlib_dir + "/foundation.a"
-
-    'Core library
-    core_lib$ = runtime_platform_settings.rtlib_dir + "/core.a"
-
-    'Locate our linker
-    linker$ = runtime_platform_settings.linker
-    link_opts$ = runtime_platform_settings.link_opts
+    'List all our dependencies, including builtin ones
+    for i = 1 to dep_last_file
+        dependencies$ = dependencies$ + shell_protect$(dep_files(i)) + " "
+    next i
 
     'Do it!
-    cmd$ = shell_protect$(linker$) _
-            + " " + link_opts$ _
+    cmd$ = shell_protect$(runtime_platform_settings.linker) _
+            + " " + runtime_platform_settings.link_opts _
             + " " + shell_protect$(module_obj$) _
-            + " " + shell_protect$(core_lib$) _
-            + " " + shell_protect$(foundation_lib$) _
-            + " -g -no-pie" _
+            + " " + dependencies$ _
             + " -o " + shell_protect$(options.outputfile)
     shell cmd$
 
