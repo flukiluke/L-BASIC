@@ -70,21 +70,21 @@ if instr(_os$, "[WINDOWS]") then
     runtime_platform_settings.executable_extension = ".exe"
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = "clang"
-    runtime_platform_settings.link_opts = ""
+    runtime_platform_settings.link_opts = "-g"
 elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.id = "MacOS"
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = "clang"
-    runtime_platform_settings.link_opts = ""
+    runtime_platform_settings.link_opts = "-g"
 elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.id = "Linux"
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = "clang"
-    runtime_platform_settings.link_opts = ""
+    runtime_platform_settings.link_opts = "-g"
 else
     fatalerror "Could not detect runtime platform"
 end if
@@ -159,6 +159,7 @@ $include: 'cmdflags.bi'
 $include: 'type.bi'
 $include: 'symtab.bi'
 $include: 'ast.bi'
+$include: 'dependency.bi'
 $include: 'parser/parser.bi'
 $include: 'emitters/llvm/llvm.bi'
 
@@ -409,10 +410,13 @@ sub build_mode
             options.outputfile = basename$ + ".parse"
         end if
     end if
+    'Note the ordering of dependencies. The last file added will be processed first,
+    'so later modules cannot depend on earlier ones.
     add_input_file options.mainarg, FALSE
     if options.no_core = 0 then
-        ar_add_dependency runtime_platform_settings.rtlib_dir + "/core.a"
+        dep_add_dependency runtime_platform_settings.rtlib_dir + "/core.a"
     end if
+    dep_add_dependency runtime_platform_settings.rtlib_dir + "/foundation.a"
     tok_init
     Error_context = ERR_CTX_PARSING
     ps_prepass
@@ -435,7 +439,7 @@ sub build_mode
     if ps_is_module then
         Error_context = ERR_CTX_AR
         options.outputfile = remove_ext$(options.outputfile) + ".bh"
-        ar_emit_header
+        dep_emit_header
     end if
 end sub
 
@@ -636,7 +640,7 @@ end sub
 $include: 'type.bm'
 $include: 'ast.bm'
 $include: 'symtab.bm'
+$include: 'dependency.bm'
 $include: 'parser/parser.bm'
 $include: 'emitters/dump/dump.bm'
 $include: 'emitters/llvm/llvm.bm'
-$include: 'emitters/archiver/archiver.bm'

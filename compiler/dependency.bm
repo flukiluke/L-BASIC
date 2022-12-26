@@ -1,8 +1,8 @@
 'Copyright Luke Ceddia
 'SPDX-License-Identifier: Apache-2.0
-'archiver.bm - Archive and library manager
+'dependency.bm - Dependency management and module generation
 
-sub ar_emit_header
+sub dep_emit_header
     out_file = freefile
     open_file options.outputfile, out_file, TRUE
 
@@ -10,14 +10,14 @@ sub ar_emit_header
         root = ast_procedures(i)
         func = root->ref
         if func->func_flags AND SYM_FUNCTION_PUBLIC then
-            print #out_file, ar_make_func_declaration$(root)
+            print #out_file, dep_make_func_declaration$(root)
         end if
     next i
 
     close #out_file
 end sub
 
-function ar_make_func_declaration$(root)
+function dep_make_func_declaration$(root)
     func = root->ref
     sig = root->ref2
     o$ = "DECLARE "
@@ -44,11 +44,11 @@ function ar_make_func_declaration$(root)
         next i
         o$ = o$ + ")"
     end if
-    ar_make_func_declaration$ = o$
+    dep_make_func_declaration$ = o$
 end function
 
-sub ar_add_dependency(given$)
-    dim as _offset filebuf, binfile
+sub dep_add_dependency(given$)
+    'Does the dependency itself exist?
     if _fileexists(given$) then
         path$ = given$
     elseif _fileexists(given$ + ".a") then
@@ -58,28 +58,17 @@ sub ar_add_dependency(given$)
     else
         fatalerror "Cannot locate dependency " + given$
     end if
-    if llvm_create_buf_from_file(path$, filebuf, errmsg$) then
-        fatalerror "Cannot load dependency " + given$ + ": " + errmsg$
+
+    if dep_last_file = ubound(dep_files) then
+        new_size = ubound(dep_files) * 2
+        redim _preserve dep_files(new_size) as string
     end if
-    binfile = llvm_create_binary(filebuf, llvm_get_global_context, errmsg$)
-    if binfile = 0 then
-        fatalerror "Cannot read dependency " + given$ + ": " + errmsg$
+    dep_last_file = dep_last_file + 1
+    dep_files(dep_last_file) = path$
+    
+    'Is there an accompanying declaration file?
+    if _fileexists(given$ + ".bh") then
+        add_input_file given$ + ".bh", TRUE
     end if
-    file_type = llvm_binary_get_type(binfile)
-    select case file_type
-        case LLVMBinaryTypeArchive
-            ar_add_dep_archive path$, binfile
-        case else
-            fatalerror "Cannot use dependency " + given$ + ": Not an archive"
-    end select
 end sub
 
-sub ar_add_dep_archive(filename$, binfile as _offset)
-    dim as _offset index_buf, addr
-    dim as _mem mem
-    index_buf = ll_get_archive_lbindex(binfile)
-    addr = llvm_get_buffer_start(index_buf)
-    size&& = llvm_get_buffer_size(index_buf)
-    mem = _mem(addr, size&&)
-    add_input_mem mem, filename$, TRUE
-end sub
