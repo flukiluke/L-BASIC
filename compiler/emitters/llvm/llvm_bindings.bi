@@ -2,7 +2,7 @@
 'SPDX-License-Identifier: Apache-2.0
 'llvm_bindings.bi - Bindings for LLVM C API functions, declarations
 
-declare dynamic library "c:/comp/msys64/home/luke/L-BASIC/llvm/lib/libLLVM-14"
+declare dynamic library "./llvm/bin/libLLVM-14"
     sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
     sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
     sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC

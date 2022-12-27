@@ -34,6 +34,7 @@ _dest _console
 deflng a-z
 const FALSE = 0, TRUE = not FALSE
 on error goto error_handler
+randomize timer
 
 'If an error occurs, we use this to know where we came from so we can
 'give a more meaningful error message.
@@ -44,7 +45,7 @@ const ERR_CTX_DUMP = 3 'Dump code
 const ERR_CTX_FILE = 4 'Trying to open a file
 const ERR_CTX_RUN = 5 'Immediate runtime (non-interactive)
 const ERR_CTX_LLVM = 6 'LLVM processing
-const ERR_CTX_AR = 7 'Archive and library manager
+const ERR_CTX_DEP = 7 'Dependency and module manager
 
 dim shared Error_context
 'Because we can only throw a numeric error code, this holds a more
@@ -64,12 +65,14 @@ type platform_t
     link_opts as string
 end type
 dim shared as platform_t runtime_platform_settings, target_platform_settings
+'A QB64 program implicitly changes to the directory of the executable image on startup,
+'so _cwd$ below is the directory containing the image.
 if instr(_os$, "[WINDOWS]") then
     runtime_platform_settings.id = "Windows"
     runtime_platform_settings.posix_paths = FALSE
     runtime_platform_settings.executable_extension = ".exe"
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    runtime_platform_settings.linker = "clang"
+    runtime_platform_settings.linker = _cwd$ + "/llvm/bin/clang.exe"
     runtime_platform_settings.link_opts = "-g"
 elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.id = "MacOS"
@@ -234,8 +237,8 @@ error_handler:
         print "codegen: ";
         if err <> 101 then goto internal_error
         print Error_message$
-    case ERR_CTX_LLVM
-        print "archiver: ";
+    case ERR_CTX_DEP
+        print "dependency manager: ";
         if err <> 101 then goto internal_error
         print Error_message$
     case else
@@ -437,7 +440,7 @@ sub build_mode
     Error_context = ERR_CTX_LLVM
     ll_build
     if ps_is_module then
-        Error_context = ERR_CTX_AR
+        Error_context = ERR_CTX_DEP
         options.outputfile = remove_ext$(options.outputfile) + ".bh"
         dep_emit_header
     end if
@@ -500,6 +503,17 @@ function dirname$(path$)
 end function
 
 function shell_protect$(s$)
+$if WINDOWS then
+    r$ = ""
+    for i = 1 to len(s$)
+        if mid$(s$, i, 1) = "/" then
+            r$ = r$ + "\"
+        else
+            r$ = r$ + mid$(s$, i, 1)
+        end if
+    next i
+    shell_protect$ = chr$(34) + r$ + chr$(34)
+$else
     r$ = ""
     for i = 1 to len(s$)
         c$ = mid$(s$, i, 1)
@@ -510,6 +524,7 @@ function shell_protect$(s$)
         end if
     next i
     shell_protect$ = "'" + r$ + "'"
+$endif
 end function
 
 'Split in$ into pieces, chopping at every occurrence of delimiter$. Multiple consecutive occurrences

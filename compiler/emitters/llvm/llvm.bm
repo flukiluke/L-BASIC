@@ -54,15 +54,16 @@ sub ll_do_link
     next i
 
     'Do it!
-    cmd$ = shell_protect$(runtime_platform_settings.linker) _
+    cmd$ = runtime_platform_settings.linker _
             + " " + runtime_platform_settings.link_opts _
             + " " + shell_protect$(module_obj$) _
             + " " + dependencies$ _
             + " -o " + shell_protect$(options.outputfile)
+    print cmd$
     shell cmd$
 
     'Clean up
-    kill module_obj$
+    'kill module_obj$
 end sub
 
 sub ll_set_target

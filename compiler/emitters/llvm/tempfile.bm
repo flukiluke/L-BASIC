@@ -4,27 +4,42 @@
 
 $if WINDOWS then
 declare customtype library
-    function tempnam%& alias _tempnam (byval dir%&, prefix$)
-    function strlen& (byval s%&)
-    sub libc_free alias free (byval p%&)
+    function GetTempPath&(byval s_len&, byval s%&)
 end declare
 
-function ll_write_tempfile$ (extension$, buf as _offset, buflen&&)
+'This function is incorrect because it separately tests for the non-existence
+'of the temp file, then opens it.
+function ll_write_tempfile$ (extension$, buf as _offset, buf_len&&)
+    chars$ = "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
     dim mem as _mem
-    namep%& = tempnam%&(0, "lbtemp" + chr$(0))
-    namelen = strlen(namep%&)
-    filename$ = space$(namelen)
-    mem = _mem(namep%&, namelen)
-    _memget mem, mem.offset, filename$
-    libc_free namep%&
-    fh = freefile
-    open filename$ for binary as #fh
-    mem = _mem(buf, buflen&&)
-    content$ = space$(buflen&&)
-    _memget mem, mem.offset, content$
-    put #fh, , content$
-    close #fh
-    ll_write_tempfile$ = filename$
+    dir_len = GetTempPath(0, 0)
+    if dir_len = 0 then fatalerror "Cannot determine temp directory"
+    mem = _memnew(dir_len + 1)
+    ret = GetTempPath(dir_len + 1, mem.offset)
+    if ret = 0 then fatalerror "Cannot determine temp directory"
+    dir$ = space$(dir_len)
+    _memget mem, mem.offset, dir$
+    _memfree mem
+    if asc(right$(dir$, 1)) = 0 then dir$ = left$(dir$, len(dir$) - 1)
+    for i = 1 to 1000
+        nam$ = ""
+        for j = 1 to 6
+            nam$ = nam$ + mid$(chars$, int(rnd * len(chars$)) + 1, 1)
+        next j
+        path$ = dir$ + nam$ + extension$
+        if not _fileexists(path$) then
+            fh = freefile
+            open path$ for binary as #fh
+            mem = _mem(buf, buf_len&&)
+            content$ = space$(buf_len&&)
+            _memget mem, mem.offset, content$
+            put #fh, , content$
+            close #fh
+            ll_write_tempfile$ = path$
+            exit function
+        end if
+    next i
+    fatalerror "Cannot create temp file"
 end function
 
 $else
