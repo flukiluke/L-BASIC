@@ -72,7 +72,11 @@ sub ll_set_target
     llvm_initialize_x86_target
     llvm_initialize_x86_target_mc
     llvm_initialize_x86_asm_printer
-    triple$ = llvm_get_default_target_triple$
+    if target_platform_settings.target_triple = "" then
+        triple$ = llvm_get_default_target_triple$
+    else
+        triple$ = target_platform_settings.target_triple
+    end if
     'Get target, i.e. one of `llc --version`
     target = llvm_get_target_from_triple(triple$, errmsg$)
     if target = 0 then ll_error "No target: " + errmsg$

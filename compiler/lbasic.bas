@@ -60,6 +60,7 @@ type platform_t
     id as string
     posix_paths as long 'TRUE for linux/mac style paths, false for Windows style paths
     executable_extension as string
+    target_triple as string
     rtlib_dir as string
     linker as string
     link_opts as string
@@ -74,6 +75,7 @@ if instr(_os$, "[WINDOWS]") then
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = _cwd$ + "/llvm/bin/clang.exe"
     runtime_platform_settings.link_opts = "-g"
+    runtime_platform_settings.target_triple = "x86_64-w64-windows-gnu"
 elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.id = "MacOS"
     runtime_platform_settings.posix_paths = TRUE
@@ -81,6 +83,7 @@ elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = "clang"
     runtime_platform_settings.link_opts = "-g"
+    runtime_platform_settings.target_triple = ""
 elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.id = "Linux"
     runtime_platform_settings.posix_paths = TRUE
@@ -88,6 +91,7 @@ elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = "clang"
     runtime_platform_settings.link_opts = "-g"
+    runtime_platform_settings.target_triple = "x86_64-pc-linux-gnu"
 else
     fatalerror "Could not detect runtime platform"
 end if
