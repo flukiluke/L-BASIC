@@ -506,31 +506,6 @@ function dirname$(path$)
     end if
 end function
 
-function shell_protect$(s$)
-$if WINDOWS then
-    r$ = ""
-    for i = 1 to len(s$)
-        if mid$(s$, i, 1) = "/" then
-            r$ = r$ + "\"
-        else
-            r$ = r$ + mid$(s$, i, 1)
-        end if
-    next i
-    shell_protect$ = chr$(34) + r$ + chr$(34)
-$else
-    r$ = ""
-    for i = 1 to len(s$)
-        c$ = mid$(s$, i, 1)
-        if c$ = "'" then
-            r$ = r$ + "'\''"
-        else
-            r$ = r$ + c$
-        end if
-    next i
-    shell_protect$ = "'" + r$ + "'"
-$endif
-end function
-
 'Split in$ into pieces, chopping at every occurrence of delimiter$. Multiple consecutive occurrences
 'of delimiter$ are treated as a single instance. The chopped pieces are stored in result$().
 '
@@ -656,6 +631,7 @@ sub parse_cmd_line_args()
     end if
 end sub
 
+$include: 'spawn.bm'
 $include: 'type.bm'
 $include: 'ast.bm'
 $include: 'symtab.bm'

@@ -1,0 +1,32 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'spawn.bm - Process spawning
+
+'These functions exist because using SHELL is an unpleasant experience, and on Windows
+'seems nigh impossible to get right with quoted paths.
+
+$if WINDOWS then
+
+Declare CustomType Library
+    Function spawnv& Alias _spawnv (ByVal mode&, cmdname$, Byval argv%&)
+End Declare
+
+'Warning: this function modifies its arguments
+Function spawn& (cmd$, args$())
+    Dim As _Offset argv(LBound(args$) - 1 To UBound(args$) + 1)
+    arg0$ = Chr$(34) + cmd$ + Chr$(34) + Chr$(0)
+    cmd$ = cmd$ + Chr$(0)
+    For i = LBound(args$) To UBound(args$)
+        args$(i) = Chr$(34) + args$(i) + Chr$(34) + Chr$(0)
+    Next i
+    argv(LBound(argv)) = _Offset(arg0$)
+    For i = LBound(args$) To UBound(args$)
+        argv(i) = _Offset(args$(i))
+    Next i
+    argv(UBound(argv)) = 0
+    spawn& = spawnv&(0, cmd$, _Offset(argv())) '_P_WAIT = 0
+End Function
+
+$else
+    'TODO: Implement unix version
+$end if

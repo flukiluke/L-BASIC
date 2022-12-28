@@ -42,28 +42,44 @@ sub ll_emit_obj
 end sub
 
 sub ll_do_link
-    'First, write our module to disk as an object file
+    'Write module to disk as an object file
     dim as _offset obj_buf
     e = llvm_target_machine_emit_to_memory_buf(ll_cg_state.target_machine, ll_cg_state.module, LLVMObjectFile, message$, obj_buf)
     if e then ll_error message$
     module_obj$ = ll_write_tempfile$(".o", llvm_get_buffer_start(obj_buf), llvm_get_buffer_size(obj_buf))
 
-    'List all our dependencies, including builtin ones
-    for i = 1 to dep_last_file
-        dependencies$ = dependencies$ + shell_protect$(dep_files(i)) + " "
+    dim linker_opts$(0)
+    split runtime_platform_settings.link_opts, " ", linker_opts$()
+    num_linker_opts = ubound(linker_opts$) + 1
+
+    'Build array of arguments. This assumes there are no quoted spaces in the linker options.
+    dim args$(1 to num_linker_opts + 1 + dep_last_file + 1 + 1) 'linker opts + module obj + dependencies + "-o" + output file
+    p = 1
+    for i = 1 to num_linker_opts
+        args$(p) = linker_opts$(i - 1)
+        p = p + 1
     next i
+    args$(p) = module_obj$
+    p = p + 1
+    for i = 1 to dep_last_file
+        args$(p) = dep_files(i)
+        p = p + 1
+    next i
+    args$(p) = "-o"
+    p = p + 1
+    args$(p) = options.outputfile
 
     'Do it!
-    cmd$ = runtime_platform_settings.linker _
-            + " " + runtime_platform_settings.link_opts _
-            + " " + shell_protect$(module_obj$) _
-            + " " + dependencies$ _
-            + " -o " + shell_protect$(options.outputfile)
-    print cmd$
-    shell cmd$
+    ret = spawn(runtime_platform_settings.linker, args$())
 
     'Clean up
-    'kill module_obj$
+    kill module_obj$
+
+    if ret = -1 then
+        fatalerror "Failed to invoke linker: " + runtime_platform_settings.linker
+    elseif ret <> 0 then
+        fatalerror "Linker returned error"
+    end if
 end sub
 
 sub ll_set_target

@@ -55,13 +55,13 @@ function ll_write_tempfile$(extension$, buf as _offset, buflen&&)
     if dir$ = "" then dir$ = "/tmp"
     template$ = dir$ + "/XXXXXX" + extension$ + chr$(0)
     fd = mkstemps&(template$, len(extension$))
-    if fd = -1 then error 58 '"File already exists"
+    if fd = -1 then fatalerror "Cannot create temp file"
     ' mkstemps modifies the XXXXXX to be the actual value
     filename$ = left$(template$, len(template$) - 1)
     ret1&& = c_write&&(fd, buf, buflen&&)
-    if ret1&& < buflen&& then error 57
+    if ret1&& < buflen&& then fatalerror "Cannot write temp file"
     ret2 = c_close&(fd)
-    if ret2 = -1 then error 57
+    if ret2 = -1 then fatalerror "Cannot write temp file"
     ll_write_tempfile$ = filename$
 end function
 $end if
