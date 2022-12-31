@@ -12,7 +12,7 @@ Declare CustomType Library
 End Declare
 
 'Warning: this function modifies its arguments
-Function spawn& (cmd$, args$())
+Function spawn(cmd$, args$())
     Dim As _Offset argv(LBound(args$) - 1 To UBound(args$) + 1)
     arg0$ = Chr$(34) + cmd$ + Chr$(34) + Chr$(0)
     cmd$ = cmd$ + Chr$(0)
@@ -28,5 +28,7 @@ Function spawn& (cmd$, args$())
 End Function
 
 $else
+function spawn(cmd$, args$())
+end function
     'TODO: Implement unix version
 $end if

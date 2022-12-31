@@ -1,8 +1,6 @@
-'Copyright Luke Ceddia
-'SPDX-License-Identifier: Apache-2.0
-'llvm_bindings.bi - Bindings for LLVM C API functions, declarations
+rootname llvm
 
-declare dynamic library "./llvm/bin/libLLVM-14"
+lib libLLVM-14
     sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
     sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
     sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC
@@ -90,120 +88,144 @@ declare dynamic library "./llvm/bin/libLLVM-14"
     sub      llvm_set_unnamed_address alias LLVMSetUnnamedAddress(byval Global%&, byval UnnamedAddr&)
     function LLVMStructType%&(byval ElementTypes%&, byval ElementCount~&, byval Packed&)
     function llvm_get_type_kind& alias LLVMGetTypeKind(byval Ty%&)
-end declare
+endlib
 
-const LLVMAbortProcessAction = 0
-const LLVMPrintMessageAction = 1
-const LLVMReturnStatusAction = 2
+enum
+LLVMAbortProcessAction
+LLVMPrintMessageAction
+LLVMReturnStatusAction
+endenum
 
-const LLVMTrunc = 30
-const LLVMZExt = 31
-const LLVMSExt = 32
-const LLVMFPToUI = 33
-const LLVMFPToSI = 34
-const LLVMUIToFP = 35
-const LLVMSIToFP = 36
-const LLVMFPTrunc = 37
-const LLVMFPExt = 38
-const LLVMPtrToInt = 39
-const LLVMIntToPtr = 40
-const LLVMBitCast = 41
-const LLVMAddrSpaceCast  = 60
+enum 30
+LLVMTrunc
+LLVMZExt
+LLVMSExt
+LLVMFPToUI
+LLVMFPToSI
+LLVMUIToFP
+LLVMSIToFP
+LLVMFPTrunc
+LLVMFPExt
+LLVMPtrToInt
+LLVMIntToPtr
+LLVMBitCast
+endenum
 
+enum 60
+LLVMAddrSpaceCast
+endenum
 
-'When upgrading LLVM, be sure to verify these enums are still correct
-const LLVMIntEQ = 32 'equal
-const LLVMIntNE = 33 'not equal
-const LLVMIntUGT = 34 'unsigned greater than
-const LLVMIntUGE = 35 'unsigned greater or equal
-const LLVMIntULT = 36 'unsigned less than
-const LLVMIntULE = 37 'unsigned less or equal
-const LLVMIntSGT = 38 'signed greater than
-const LLVMIntSGE = 39 'signed greater or equal
-const LLVMIntSLT = 40 'signed less than
-const LLVMIntSLE = 41 'signed less or equal
+enum 32
+LLVMIntEQ equal
+LLVMIntNE not equal
+LLVMIntUGT unsigned greater than
+LLVMIntUGE unsigned greater or equal
+LLVMIntULT unsigned less than
+LLVMIntULE unsigned less or equal
+LLVMIntSGT signed greater than
+LLVMIntSGE signed greater or equal
+LLVMIntSLT signed less than
+LLVMIntSLE signed less or equal
+endenum
 
-const LLVMRealPredicateFalse = 0 'Always false (always folded)
-const LLVMRealOEQ = 1 'True if ordered and equal
-const LLVMRealOGT = 2 'True if ordered and greater than
-const LLVMRealOGE = 3 'True if ordered and greater than or equal
-const LLVMRealOLT = 4 'True if ordered and less than
-const LLVMRealOLE = 5 'True if ordered and less than or equal
-const LLVMRealONE = 6 'True if ordered and operands are unequal
-const LLVMRealORD = 7 'True if ordered (no nans)
-const LLVMRealUNO = 8 'True if unordered: isnan(X) | isnan(Y)
-const LLVMRealUEQ = 9 'True if unordered or equal
-const LLVMRealUGT = 10 'True if unordered or greater than
-const LLVMRealUGE = 11 'True if unordered, greater than, or equal
-const LLVMRealULT = 12 'True if unordered or less than
-const LLVMRealULE = 13 'True if unordered, less than, or equal
-const LLVMRealUNE = 14 'True if unordered or not equal
-const LLVMRealPredicateTrue = 15 'Always true (always folded)
+enum
+LLVMRealPredicateFalse Always false (always folded)
+LLVMRealOEQ True if ordered and equal
+LLVMRealOGT True if ordered and greater than
+LLVMRealOGE True if ordered and greater than or equal
+LLVMRealOLT True if ordered and less than
+LLVMRealOLE True if ordered and less than or equal
+LLVMRealONE True if ordered and operands are unequal
+LLVMRealORD True if ordered (no nans)
+LLVMRealUNO True if unordered: isnan(X) | isnan(Y)
+LLVMRealUEQ True if unordered or equal
+LLVMRealUGT True if unordered or greater than
+LLVMRealUGE True if unordered, greater than, or equal
+LLVMRealULT True if unordered or less than
+LLVMRealULE True if unordered, less than, or equal
+LLVMRealUNE True if unordered or not equal
+LLVMRealPredicateTrue Always true (always folded)
+endenum
 
-const LLVMExternalLinkage = 0 'Externally visible function
-const LLVMAvailableExternallyLinkage = 1
-const LLVMLinkOnceAnyLinkage = 2 'Keep one copy of function when linking (inline)*/
-const LLVMLinkOnceODRLinkage = 3 'Same, but only replaced by something equivalent.
-const LLVMLinkOnceODRAutoHideLinkage = 4 'Obsolete
-const LLVMWeakAnyLinkage = 5 'Keep one copy of function when linking (weak)
-const LLVMWeakODRLinkage = 6 'Same, but only replaced by something equivalent.
-const LLVMAppendingLinkage = 7 'Special purpose, only applies to global arrays
-const LLVMInternalLinkage = 8 'Rename collisions when linking (static functions)
-const LLVMPrivateLinkage = 9 'Like Internal, but omit from symbol table
-const LLVMDLLImportLinkage = 10 'Obsolete
-const LLVMDLLExportLinkage = 11 'Obsolete
-const LLVMExternalWeakLinkage = 12 'ExternalWeak linkage description
-const LLVMGhostLinkage = 13 'Obsolete
-const LLVMCommonLinkage = 14 'Tentative definitions
-const LLVMLinkerPrivateLinkage = 15 'Like Private, but linker removes.
-const LLVMLinkerPrivateWeakLinkage = 16 'Like LinkerPrivate, but is weak.
+enum
+LLVMExternalLinkage Externally visible function
+LLVMAvailableExternallyLinkage
+LLVMLinkOnceAnyLinkage Keep one copy of function when linking (inline)*/
+LLVMLinkOnceODRLinkage Same, but only replaced by something equivalent.
+LLVMLinkOnceODRAutoHideLinkage Obsolete
+LLVMWeakAnyLinkage Keep one copy of function when linking (weak)
+LLVMWeakODRLinkage Same, but only replaced by something equivalent.
+LLVMAppendingLinkage Special purpose, only applies to global arrays
+LLVMInternalLinkage Rename collisions when linking (static functions)
+LLVMPrivateLinkage Like Internal, but omit from symbol table
+LLVMDLLImportLinkage Obsolete
+LLVMDLLExportLinkage Obsolete
+LLVMExternalWeakLinkage ExternalWeak linkage description
+LLVMGhostLinkage Obsolete
+LLVMCommonLinkage Tentative definitions
+LLVMLinkerPrivateLinkage Like Private, but linker removes.
+LLVMLinkerPrivateWeakLinkage Like LinkerPrivate, but is weak.
+endenum
 
-const LLVMCodeGenLevelNone = 0
-const LLVMCodeGenLevelLess = 1
-const LLVMCodeGenLevelDefault = 2
-const LLVMCodeGenLevelAggressive = 3
+enum
+LLVMCodeGenLevelNone
+LLVMCodeGenLevelLess
+LLVMCodeGenLevelDefault
+LLVMCodeGenLevelAggressive
+endenum
 
-const LLVMRelocDefault = 0
-const LLVMRelocStatic = 1
-const LLVMRelocPIC = 2
-const LLVMRelocDynamicNoPic = 3
-const LLVMRelocROPI = 4
-const LLVMRelocRWPI = 5
-const LLVMRelocROPI_RWPI = 6
+enum
+LLVMRelocDefault 
+LLVMRelocStatic 
+LLVMRelocPIC 
+LLVMRelocDynamicNoPic 
+LLVMRelocROPI 
+LLVMRelocRWPI 
+LLVMRelocROPI_RWPI 
+endenum
 
-const LLVMCodeModelDefault = 0
-const LLVMCodeModelJITDefault = 1
-const LLVMCodeModelTiny = 2
-const LLVMCodeModelSmall = 3
-const LLVMCodeModelKernel = 4
-const LLVMCodeModelMedium = 5
-const LLVMCodeModelLarge = 6
+enum
+LLVMCodeModelDefault 
+LLVMCodeModelJITDefault 
+LLVMCodeModelTiny 
+LLVMCodeModelSmall 
+LLVMCodeModelKernel 
+LLVMCodeModelMedium 
+LLVMCodeModelLarge 
+endenum
 
-const LLVMAssemblyFile = 0
-const LLVMObjectFile = 1
+enum
+LLVMAssemblyFile 
+LLVMObjectFile 
+endenum
 
-const LLVMNoUnnamedAddr = 0 'Address of the GV is significant.
-const LLVMLocalUnnamedAddr = 1 'Address of the GV is locally insignificant.
-const LLVMGlobalUnnamedAddr = 2 'Address of the GV is globally insignificant.
+enum
+LLVMNoUnnamedAddr Address of the GV is significant.
+LLVMLocalUnnamedAddr Address of the GV is locally insignificant.
+LLVMGlobalUnnamedAddr Address of the GV is globally insignificant.
+endenum
 
-const LLVMVoidTypeKind = 0 'type with no size
-const LLVMHalfTypeKind = 1 '16 bit floating point type
-const LLVMFloatTypeKind = 2 '32 bit floating point type
-const LLVMDoubleTypeKind = 3 '64 bit floating point type
-const LLVMX86_FP80TypeKind = 4 '80 bit floating point type (X87)
-const LLVMFP128TypeKind = 5 '128 bit floating point type (112-bit mantissa)
-const LLVMPPC_FP128TypeKind = 6'128 bit floating point type (two 64-bits)
-const LLVMLabelTypeKind = 7 'Labels
-const LLVMIntegerTypeKind = 8 'Arbitrary bit width integers
-const LLVMFunctionTypeKind = 9 'Functions
-const LLVMStructTypeKind = 10 'Structures
-const LLVMArrayTypeKind = 11 'Arrays
-const LLVMPointerTypeKind = 12 'Pointers
-const LLVMVectorTypeKind = 13 'Fixed width SIMD vector type
-const LLVMMetadataTypeKind = 14 'Metadata
-const LLVMX86_MMXTypeKind = 15 'X86 MMX
-const LLVMTokenTypeKind = 16 'Tokens
-const LLVMScalableVectorTypeKind = 17 'Scalable SIMD vector type
-const LLVMBFloatTypeKind = 18 '16 bit brain floating point type
-const LLVMX86_AMXTypeKind = 19 'X86 AMX
+enum
+LLVMVoidTypeKind type with no size
+LLVMHalfTypeKind 16 bit floating point type
+LLVMFloatTypeKind 32 bit floating point type
+LLVMDoubleTypeKind 64 bit floating point type
+LLVMX86_FP80TypeKind 80 bit floating point type (X87)
+LLVMFP128TypeKind 128 bit floating point type (112-bit mantissa)
+LLVMPPC_FP128TypeKind = 6'128 bit floating point type (two 64-bits)
+LLVMLabelTypeKind Labels
+LLVMIntegerTypeKind Arbitrary bit width integers
+LLVMFunctionTypeKind Functions
+LLVMStructTypeKind Structures
+LLVMArrayTypeKind Arrays
+LLVMPointerTypeKind Pointers
+LLVMVectorTypeKind Fixed width SIMD vector type
+LLVMMetadataTypeKind Metadata
+LLVMX86_MMXTypeKind X86 MMX
+LLVMTokenTypeKind Tokens
+LLVMScalableVectorTypeKind Scalable SIMD vector type
+LLVMBFloatTypeKind 16 bit brain floating point type
+LLVMX86_AMXTypeKind X86 AMX
+endenum
+
 

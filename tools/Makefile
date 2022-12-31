@@ -3,7 +3,7 @@
 # Makefile for helper tools
 
 .PHONY: all
-all: tsgen.tool tokgen.tool incmerge.tool
+all: tsgen.tool tokgen.tool incmerge.tool ffigen.tool
 
 %.tool: %.bas
 	$(QB64) $(QBFLAGS) -x "$(realpath $<)" -o "$(realpath .)/$@.tool"

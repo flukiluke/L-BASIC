@@ -3,6 +3,7 @@
 'llvm.bm - Entry point for LLVM based compilation
 
 sub ll_build
+    dynlib_llvm_init
     ll_cg_state.module = llvm_module_create_with_name(options.mainarg)
     ll_set_target
     for i = 1 to ast_last_procedure
