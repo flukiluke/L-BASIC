@@ -9,6 +9,7 @@ compiler/parser/token_data.bi
 compiler/parser/token_registrations.bm
 compiler/parser/ts_data.bi
 compiler/parser/ts_data.bm
+compiler/emitters/llvm/llvm_bindings.bi
 /tools/*.tool
 *.swp
 *.testresult

@@ -7,6 +7,9 @@
 # A macro is a text-based replacement that allows for more concise and self-describing code.
 # To define a macro, the $macro directive is used. The general syntax is
 # $macro: INPUTFORMAT | OUTPUTFORMAT
+# Alternatively, macros may be defined as command line arguments with the -D option:
+# -D 'INPUTFORMAT | OUTPUTFORMAT'
+#
 # Whenever a match is found for INPUTFORMAT, it is replaced by OUTPUTFORMAT. The double-at
 # operator @@ may appear multiple times in the INPUTFORMAT. These are matched with a word
 # (a word is a string matching [A-Za-z0-9_]+) and can be referred to in the OUTPUTFORMAT
@@ -16,6 +19,7 @@
 
 import sys
 import re
+import argparse
 
 RE_MACRO_DEF = re.compile(r'^[ \t]*\$macro[ \t]*:([^|]+)\|(.+)', flags=re.I)
 RE_COMMENT = re.compile(r"^[ \t]*(rem |')", flags=re.I)
@@ -64,11 +68,17 @@ def define_macro(pattern, result):
     macros[pattern] = result
 
 def main():
-    if len(sys.argv) != 3:
-        print('Bad format')
-        exit(1)
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-D', '--define', metavar="'INPUTFORMAT | OUTPUTFORMAT'", action='append')
+    argparser.add_argument('infile')
+    argparser.add_argument('outfile')
+    args = argparser.parse_args()
 
-    with open(sys.argv[1]) as inputfile, open(sys.argv[2], 'w') as outputfile:
+    if args.define is not None:
+        for pattern, result in map(lambda x: x.split('|'), args.define):
+            define_macro(pattern, result)
+
+    with open(args.infile) as inputfile, open(args.outfile, 'w') as outputfile:
         for line in inputfile.readlines():
             result = process_line(line)
             outputfile.write(result)

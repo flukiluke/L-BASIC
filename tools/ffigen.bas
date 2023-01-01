@@ -3,6 +3,11 @@
 'ffigen.bas - FFI Generator
 'Generate headers and functions for calling into dynamic libraries
 
+'This program exists primarily to work around deficiencies in how QB64
+'processes DECLARE DYNAMIC LIBRARY. Specifically, it avoids the library
+'needing to be found at compile time, and allows loading with an unqualified
+'(no path) name to pick up system libraries.
+
 $console:only
 _dest _console
 deflng a-z
@@ -34,6 +39,7 @@ do while not eof(1)
     line input #1, l$
     l$ = ltrim$(rtrim$(l$))
     if left$(l$, 1) = "#" or l$ = "" then _continue
+    l$ = expand_var$(l$)
     redim parts$(0)
     split l$, " ", parts$()
     select case ucase$(parts$(0))
@@ -41,12 +47,7 @@ do while not eof(1)
             declare_library parts$(1)
             rootname$ = parts$(1)
         case "LIB"
-            if instr(_os$, "WIN") then
-                suffix$ = ".dll"
-            else
-                suffix$ = ".so"
-            end if
-            load_library parts$(1) + suffix$
+            load_library parts$(1)
         case "FUNCTION"
             add_function ltrim$(mid$(l$, 9)), TRUE
         case "SUB"
@@ -74,6 +75,18 @@ system
 ehandler:
     print "Error"; err; _errorline
     system 1
+
+function expand_var$(text$)
+    s = instr(text$, "${")
+    if s = 0 then
+        expand_var$ = text$
+        exit function
+    end if
+    e = instr(d, text$, "}")
+    if e = 0 then fatalerror "Unmatched braces"
+    var$ = mid$(text$, s + 2, e - s - 2)
+    expand_var$ = left$(text$, s - 1) + environ$(var$) + expand_var$(mid$(text$, e + 1))
+end sub
 
 sub split(in$, delimiter$, result$())
     redim result$(-1)

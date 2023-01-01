@@ -1,6 +1,6 @@
 rootname llvm
 
-lib libLLVM-14
+lib ${LLVM_LIB} 
     sub      llvm_initialize_x86_target alias LLVMInitializeX86Target
     sub      llvm_initialize_x86_asm_printer alias LLVMInitializeX86AsmPrinter
     sub      llvm_initialize_x86_target_mc alias LLVMInitializeX86TargetMC

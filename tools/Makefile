@@ -10,4 +10,4 @@ all: tsgen.tool tokgen.tool incmerge.tool ffigen.tool
 
 .PHONY: clean
 clean:
-	rm *.tool
+	rm *.tool 2> /dev/null || true

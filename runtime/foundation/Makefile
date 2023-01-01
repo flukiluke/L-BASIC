@@ -17,4 +17,4 @@ $(OUTPUT_LIBRARY): $(OBJ)
 
 .PHONY: clean
 clean:
-	rm *.o 2> /dev/null
+	rm *.o 2> /dev/null || true

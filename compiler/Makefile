@@ -21,7 +21,7 @@ $(TOKEN_FILES): parser/tokens.list $(TOOLS_DIR)/tokgen.tool
 $(LLVM_BINDING_FILES): emitters/llvm/llvm.ffi $(TOOLS_DIR)/ffigen.tool
 	$(TOOLS_DIR)/ffigen.tool $< $(LLVM_BINDING_FILES)
 
-$(OUTPUT_SOURCE): lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(shell find . -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.py
+$(OUTPUT_SOURCE): lbasic.bas $(TS_FILES) $(TOKEN_FILES) $(LLVM_BINDING_FILES) $(shell find . -type f -name '*.bm' -o -name '*.bi') $(TOOLS_DIR)/incmerge.tool $(TOOLS_DIR)/prep.py
 	$(eval temp := $(shell mktemp))
 	$(TOOLS_DIR)/incmerge.tool lbasic.bas $(temp)
 	$(TOOLS_DIR)/prep.py -D '@LLVM_DYLIB@|$(LLVM_ROOT)/lib/LLVM-14' $(temp) $@
