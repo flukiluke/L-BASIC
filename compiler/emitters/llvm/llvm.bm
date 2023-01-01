@@ -79,7 +79,7 @@ sub ll_do_link
     if ret = -1 then
         fatalerror "Failed to invoke linker: " + runtime_platform_settings.linker
     elseif ret <> 0 then
-        fatalerror "Linker returned error"
+        fatalerror "Linker exited with error code " + ltrim$(str$(ret))
     end if
 end sub
 
@@ -100,7 +100,7 @@ sub ll_set_target
     'Specific processor & additional features from `llc -march=... -mattr=help`
     cpu$ = "generic"
     features$ = ""
-    ll_cg_state.target_machine = llvm_create_target_machine(target, triple$, cpu$, features$, LLVMCodeGenLevelNone, LLVMRelocDefault, LLVMCodeModelDefault)
+    ll_cg_state.target_machine = llvm_create_target_machine(target, triple$, cpu$, features$, LLVMCodeGenLevelNone, LLVMRelocPIC, LLVMCodeModelDefault)
     layout = llvm_create_target_data_layout(ll_cg_state.target_machine)
     llvm_module_set_data_layout ll_cg_state.module, layout
     llvm_set_target ll_cg_state.module, triple$

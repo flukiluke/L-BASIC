@@ -90,7 +90,7 @@ elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
     runtime_platform_settings.linker = "clang"
-    runtime_platform_settings.link_opts = "-g"
+    runtime_platform_settings.link_opts = "-g -no-pie"
     runtime_platform_settings.target_triple = "x86_64-pc-linux-gnu"
 else
     fatalerror "Could not detect runtime platform"

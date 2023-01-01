@@ -2,33 +2,53 @@
 'SPDX-License-Identifier: Apache-2.0
 'spawn.bm - Process spawning
 
-'These functions exist because using SHELL is an unpleasant experience, and on Windows
-'seems nigh impossible to get right with quoted paths.
+'This function exists because using SHELL on Windows seems nigh impossible
+'to get right with quoted paths. On Unix though it's easier to get the SHELL
+'quoting right than it is to wrangle fork/exec/wait or posix_spawn/wait.
 
 $if WINDOWS then
 
-Declare CustomType Library
-    Function spawnv& Alias _spawnv (ByVal mode&, cmdname$, Byval argv%&)
-End Declare
+declare customtype library
+    function spawnv& alias _spawnv(byval mode&, cmdname$, byval argv%&)
+end declare
 
 'Warning: this function modifies its arguments
-Function spawn(cmd$, args$())
-    Dim As _Offset argv(LBound(args$) - 1 To UBound(args$) + 1)
-    arg0$ = Chr$(34) + cmd$ + Chr$(34) + Chr$(0)
-    cmd$ = cmd$ + Chr$(0)
-    For i = LBound(args$) To UBound(args$)
-        args$(i) = Chr$(34) + args$(i) + Chr$(34) + Chr$(0)
-    Next i
-    argv(LBound(argv)) = _Offset(arg0$)
-    For i = LBound(args$) To UBound(args$)
-        argv(i) = _Offset(args$(i))
-    Next i
-    argv(UBound(argv)) = 0
-    spawn& = spawnv&(0, cmd$, _Offset(argv())) '_P_WAIT = 0
-End Function
+function spawn(cmd$, args$())
+    dim as _offset argv(lbound(args$) - 1 to ubound(args$) + 1)
+    arg0$ = chr$(34) + cmd$ + chr$(34) + chr$(0)
+    cmd$ = cmd$ + chr$(0)
+    for i = lbound(args$) to ubound(args$)
+        args$(i) = chr$(34) + args$(i) + chr$(34) + chr$(0)
+    next i
+    argv(lbound(argv)) = _offset(arg0$)
+    for i = lbound(args$) to ubound(args$)
+        argv(i) = _offset(args$(i))
+    next i
+    argv(ubound(argv)) = 0
+    spawn = spawnv&(0, cmd$, _offset(argv())) '_p_wait = 0
+end function
 
 $else
+
 function spawn(cmd$, args$())
+    l$ = shell_protect$(cmd$)
+    for i = lbound(args$) to ubound(args$)
+        l$ = l$ + " " + shell_protect$(args$(i))
+    next i
+    spawn = shell(l$)
 end function
-    'TODO: Implement unix version
+
+function shell_protect$(s$)
+    r$ = ""
+    for i = 1 to len(s$)
+        c$ = mid$(s$, i, 1)
+        if c$ = "'" then
+            r$ = r$ + "'\''"
+        else
+            r$ = r$ + c$
+        end if
+    next i
+    shell_protect$ = "'" + r$ + "'"
+end function
+
 $end if
