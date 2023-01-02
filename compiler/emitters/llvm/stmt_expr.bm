@@ -26,11 +26,11 @@ sub ll_cg_block(block)
             case AST_IF
                 ll_cg_if node
             case AST_WHILE
-                'll_cg_while node
+                ll_cg_while node
             case AST_DO_PRE
-                'll_cg_do_pre node
+                ll_cg_do_pre node
             case AST_DO_POST
-                'll_cg_do_post node
+                ll_cg_do_post node
             case AST_FOR
                 'll_cg_for node
             case AST_SELECT

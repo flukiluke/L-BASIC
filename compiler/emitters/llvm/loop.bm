@@ -1,0 +1,67 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'loop.bm - Code generation for DO and WHILE loops
+
+sub ll_cg_do_pre(node)
+    dim as _offset guard, func, cmp, headerBB, bodyBB, endBB, dummy
+    cond_node = ast_get_child(node, 1)
+    cond_type = type_of_expr(cond_node)
+
+    func = llvm_get_basic_block_parent(llvm_get_insert_block(ll_cg_state.builder))
+    headerBB = llvm_append_basic_block(func, "do_pre_head")
+    bodyBB = llvm_create_basic_block("do_pre_body")
+    endBB = llvm_create_basic_block("do_pre_end")
+
+    dummy = llvm_build_br(ll_cg_state.builder, headerBB)
+
+    llvm_position_builder_at_end ll_cg_state.builder, headerBB
+    guard = ll_cg_expr(cond_node)
+    if type_is_int(cond_type) then
+        cmp = llvm_build_icmp(ll_cg_state.builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "do_pre_cmp")
+    elseif type_is_fp(cond_type) then
+        cmp = llvm_build_fcmp(ll_cg_state.builder, LLVMRealONE, guard, llvm_const_real(ll_type(cond_type), 0), "do_pre_cmp")
+    end if
+    dummy = llvm_build_cond_br(ll_cg_state.builder, cmp, bodyBB, endBB)
+
+    llvm_append_existing_basic_block func, bodyBB
+    llvm_position_builder_at_end ll_cg_state.builder, bodyBB
+    ll_cg_block ast_get_child(node, 2)
+    dummy = llvm_build_br(ll_cg_state.builder, headerBB)
+
+    llvm_append_existing_basic_block func, endBB
+    llvm_position_builder_at_end ll_cg_state.builder, endBB
+end sub
+
+sub ll_cg_do_post(node)
+    dim as _offset guard, func, cmp, bodyBB, tailBB, endBB, dummy
+    cond_node = ast_get_child(node, 1)
+    cond_type = type_of_expr(cond_node)
+
+    func = llvm_get_basic_block_parent(llvm_get_insert_block(ll_cg_state.builder))
+    bodyBB = llvm_append_basic_block(func, "do_post_body")
+    tailBB = llvm_create_basic_block("do_post_tail")
+    endBB = llvm_create_basic_block("do_post_end")
+
+    dummy = llvm_build_br(ll_cg_state.builder, bodyBB)
+
+    llvm_position_builder_at_end ll_cg_state.builder, bodyBB
+    ll_cg_block ast_get_child(node, 2)
+    dummy = llvm_build_br(ll_cg_state.builder, tailBB)
+
+    llvm_append_existing_basic_block func, tailBB
+    llvm_position_builder_at_end ll_cg_state.builder, tailBB
+    guard = ll_cg_expr(cond_node)
+    if type_is_int(cond_type) then
+        cmp = llvm_build_icmp(ll_cg_state.builder, LLVMIntNE, guard, llvm_const_int(ll_type(cond_type), 0, 0), "do_post_cmp")
+    elseif type_is_fp(cond_type) then
+        cmp = llvm_build_fcmp(ll_cg_state.builder, LLVMRealONE, guard, llvm_const_real(ll_type(cond_type), 0), "do_post_cmp")
+    end if
+    dummy = llvm_build_cond_br(ll_cg_state.builder, cmp, bodyBB, endBB)
+
+    llvm_append_existing_basic_block func, endBB
+    llvm_position_builder_at_end ll_cg_state.builder, endBB
+end sub
+
+sub ll_cg_while(node)
+    ll_cg_do_pre node
+end sub

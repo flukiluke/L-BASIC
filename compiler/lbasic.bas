@@ -643,6 +643,7 @@ sub parse_cmd_line_args()
                 if options.mainarg = "" then options.mainarg = arg$
         end select
     next i
+    options.terminal_mode = TRUE 'Always use terminal mode for now
     options.oper_mode = MODE_BUILD
     if options.mainarg = "" then
         options.terminal_mode = TRUE
