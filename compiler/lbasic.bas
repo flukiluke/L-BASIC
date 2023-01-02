@@ -68,8 +68,6 @@ end type
 dim shared as platform_t runtime_platform_settings, target_platform_settings
 if environ$("LLVM_ROOT") <> "" then
     llvm_install$ = environ$("LLVM_ROOT")
-elseif @LLVM_INSTALL@ = "system" then
-    llvm_install$ = ""
 elseif @LLVM_INSTALL@ <> "" then
     llvm_install$ = @LLVM_INSTALL@
 else
@@ -82,7 +80,7 @@ if instr(_os$, "[WINDOWS]") then
     runtime_platform_settings.posix_paths = FALSE
     runtime_platform_settings.executable_extension = ".exe"
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    if llvm_install$ = "" then
+    if llvm_install$ = "system" then
         runtime_platform_settings.linker = "clang.exe"
     else
         runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
@@ -94,10 +92,10 @@ elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    if llvm_install$ = "" then
+    if llvm_install$ = "system" then
         runtime_platform_settings.linker = "clang"
     else
-        runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
+        runtime_platform_settings.linker = llvm_install$ + "/bin/clang"
     end if
     runtime_platform_settings.link_opts = "-g"
     runtime_platform_settings.target_triple = ""
@@ -106,10 +104,10 @@ elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    if llvm_install$ = "" then
+    if llvm_install$ = "system" then
         runtime_platform_settings.linker = "clang"
     else
-        runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
+        runtime_platform_settings.linker = llvm_install$ + "/bin/clang"
     end if
     runtime_platform_settings.link_opts = "-g -no-pie"
     runtime_platform_settings.target_triple = "x86_64-pc-linux-gnu"

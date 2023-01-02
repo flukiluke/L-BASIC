@@ -155,7 +155,12 @@ sub add_function(s$, has_return)
     else
         print #2, space$(4); "sub "; funcname$;
     end if
-    print #3, "typedef "; c_type$(ret$); " (CALLBACK *DYNT_"; symname$; ")(";
+    if instr(_os$, "WIN") then
+        print #3, "typedef "; c_type$(ret$); " (CALLBACK *DYNT_"; symname$; ")(";
+    else
+        print #3, "typedef "; c_type$(ret$); " (*DYNT_"; symname$; ")(";
+    end if
+
 
     redim args$(-1)
     if left$(s$, 1) = "(" then
