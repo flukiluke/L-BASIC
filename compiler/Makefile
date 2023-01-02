@@ -28,7 +28,7 @@ $(OUTPUT_SOURCE): lbasic.bas \
 					$(shell find . -type f -name '*.bm' -o -name '*.bi')
 	$(eval temp := $(shell mktemp))
 	$(TOOLS_DIR)/incmerge.tool lbasic.bas $(temp)
-	$(TOOLS_DIR)/prep.py -D '@LLVM_INSTALL@|"$(LLVM_INSTALL)"' $(temp) $@
+	$(PYTHON) $(TOOLS_DIR)/prep.py -D '@LLVM_INSTALL@|"$(LLVM_INSTALL)"' $(temp) $@
 	rm $(temp)
 
 $(OUTPUT_BINARY): $(OUTPUT_SOURCE)

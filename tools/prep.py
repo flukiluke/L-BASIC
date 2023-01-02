@@ -17,7 +17,6 @@
 # a newline in the final result.
 # Content in string literals is not modified.
 
-import sys
 import re
 import argparse
 

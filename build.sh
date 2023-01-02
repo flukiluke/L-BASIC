@@ -12,6 +12,7 @@ OUT_DIR=$(realpath "${OUT_DIR}")
 TOOLS_DIR=$(realpath tools)
 : "${LLVM_INSTALL:=system}"
 CFLAGS="-O2 -Wall -std=c17 ${CFLAGS}"
+: "${PYTHON:=python3}"
 
 llvm_ver=14
 case $(uname) in
@@ -19,18 +20,22 @@ case $(uname) in
         if [[ ${LLVM_INSTALL} = "system" ]]; then
             LLVM_LIB=libLLVM-${llvm_ver}.dll
             : "${CC:=clang.exe}"
+            : "${AR:=ar.exe}"
         else
             LLVM_LIB="$(cygpath -m "${LLVM_INSTALL}/bin/libunwind.dll") $(cygpath -m "${LLVM_INSTALL}/bin/libc++.dll") $(cygpath -m "${LLVM_INSTALL}/bin/libLLVM-${llvm_ver}.dll")"
             : "${CC:=$(realpath "${LLVM_INSTALL}/bin/clang.exe")}"
+            : "${AR:=$(realpath "${LLVM_INSTALL}/bin/ar.exe")}"
         fi
         ;;
     Linux)
         if [[ ${LLVM_INSTALL} = "system" ]]; then
             LLVM_LIB=libLLVM-${llvm_ver}.so
             : "${CC:=clang}"
+            : "${AR:=ar}"
         else
             LLVM_LIB=${LLVM_INSTALL}/lib/libLLVM-${llvm_ver}.so
             : "${CC:=$(realpath "${LLVM_INSTALL}/bin/clang")}"
+            : "${AR:=$(realpath "${LLVM_INSTALL}/bin/ar")}"
         fi
         ;;
     *)
@@ -42,7 +47,7 @@ esac
 # Subdirectories to build
 components="tools compiler runtime/foundation runtime/core"
 
-export QB64 QBFLAGS OUT_DIR TOOLS_DIR LBASIC_CORE_COMPILER LLVM_INSTALL LLVM_LIB CC CFLAGS
+export QB64 QBFLAGS OUT_DIR TOOLS_DIR LBASIC_CORE_COMPILER LLVM_INSTALL LLVM_LIB CC AR CFLAGS PYTHON
 echo "QB64=${QB64}"
 echo "QBFLAGS=${QBFLAGS}"
 echo "OUT_DIR=${OUT_DIR}"
@@ -51,7 +56,9 @@ echo "LBASIC_CORE_COMPILER=${LBASIC_CORE_COMPILER}"
 echo "LLVM_INSTALL=${LLVM_INSTALL}"
 echo "LLVM_LIB=${LLVM_LIB}"
 echo "CC=${CC}"
+echo "AR=${AR}"
 echo "CFLAGS=${CFLAGS}"
+echo "PYTHON=${PYTHON}"
 
 if [[ $1 = clean ]]; then
     set +e
