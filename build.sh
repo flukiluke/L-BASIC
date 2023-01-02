@@ -20,8 +20,8 @@ case $(uname) in
             LLVM_LIB=libLLVM-${llvm_ver}.dll
             : "${CC:=clang.exe}"
         else
-            LLVM_LIB=${LLVM_INSTALL}/bin/libLLVM-${llvm_ver}.dll
-            : "${CC:=${LLVM_INSTALL}/bin/clang.exe}"
+            LLVM_LIB="${LLVM_INSTALL}/bin/libunwind.dll ${LLVM_INSTALL}/bin/libc++.dll ${LLVM_INSTALL}/bin/libLLVM-${llvm_ver}.dll"
+            : "${CC:=$(realpath "${LLVM_INSTALL}/bin/clang.exe")}"
         fi
         ;;
     Linux)
@@ -30,7 +30,7 @@ case $(uname) in
             : "${CC:=clang}"
         else
             LLVM_LIB=${LLVM_INSTALL}/lib/libLLVM-${llvm_ver}.so
-            : "${CC:=${LLVM_INSTALL}/bin/clang}"
+            : "${CC:=$(realpath "${LLVM_INSTALL}/bin/clang")}"
         fi
         ;;
     *)

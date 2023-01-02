@@ -47,7 +47,11 @@ do while not eof(1)
             declare_library parts$(1)
             rootname$ = parts$(1)
         case "LIB"
-            load_library parts$(1)
+            start_library_init
+            for i = 1 to ubound(parts$)
+                load_library parts$(i)
+            next i
+            end_library_init
         case "FUNCTION"
             add_function ltrim$(mid$(l$, 9)), TRUE
         case "SUB"
@@ -108,18 +112,33 @@ sub declare_library(s$)
     dynlib$ = "DYNLIB_" + s$
     print #2, "declare library "; chr$(34); "./"; s$; chr$(34)
     print #2, space$(4); "sub dynlib_"; s$; "_init"
-    print #3, "void *"; dynlib$; " = NULL;"
+    if instr(_os$, "WIN") then
+        print #3, "HINSTANCE "; dynlib$; " = NULL;"
+    else
+        print #3, "void *"; dynlib$; " = NULL;"
+    end if
+end sub
+
+sub start_library_init
+    dynlib$ = "DYNLIB_" + rootname$
+    print #3, "void dynlib_"; rootname$; "_init() {"
+    print #3, space$(4); "if ("; dynlib$; ") return;"
 end sub
 
 sub load_library(s$)
     dynlib$ = "DYNLIB_" + rootname$
-    print #3, "void dynlib_"; rootname$; "_init() {"
-    print #3, space$(4); "if ("; dynlib$; ") return;"
-    print #3, space$(4); dynlib$; " = dlopen("; chr$(34); s$; chr$(34); ",RTLD_LAZY);"
+    if instr(_os$, "WIN") then
+        print #3, space$(4); dynlib$; " = LoadLibrary("; chr$(34); s$; chr$(34); ");"
+    else
+        print #3, space$(4); dynlib$; " = dlopen("; chr$(34); s$; chr$(34); ",RTLD_LAZY);"
+    end if
     print #3, space$(4); "if (!"; dynlib$; ") {"
     print #3, space$(8); "fprintf(stderr, "; chr$(34); "Error: cannot load "; s$; chr$(34); ");"
     print #3, space$(8); "exit(1);"
     print #3, space$(4); "}"
+end sub
+
+sub end_library_init
     print #3, "}"
 end sub
 
@@ -136,7 +155,7 @@ sub add_function(s$, has_return)
     else
         print #2, space$(4); "sub "; funcname$;
     end if
-    print #3, "typedef "; c_type$(ret$); " (*DYNT_"; symname$; ")(";
+    print #3, "typedef "; c_type$(ret$); " (CALLBACK *DYNT_"; symname$; ")(";
 
     redim args$(-1)
     if left$(s$, 1) = "(" then
@@ -177,7 +196,12 @@ sub add_function(s$, has_return)
 
     print #3, c_type$(ret$); " "; funcname$; "("; funcargs$; ") {"
     print #3, space$(4); "static DYNT_"; symname$; " DYNCALL_"; symname$; " = NULL;"
-    print #3, space$(4); "if (!DYNCALL_"; symname$; ") DYNCALL_"; symname$; " = (DYNT_"; symname$; ")dlsym(DYNLIB_"; rootname$; ","; chr$(34); symname$; chr$(34); ");"
+    print #3, space$(4); "if (!DYNCALL_"; symname$; ") ";
+    if instr(_os$, "WIN") then
+        print #3, "DYNCALL_"; symname$; " = (DYNT_"; symname$; ")GetProcAddress(DYNLIB_"; rootname$; ","; chr$(34); symname$; chr$(34); ");"
+    else
+        print #3, "DYNCALL_"; symname$; " = (DYNT_"; symname$; ")dlsym(DYNLIB_"; rootname$; ","; chr$(34); symname$; chr$(34); ");"
+    end if
     if has_return then
         print #3, space$(4); "return DYNCALL_"; symname$; "(";
     else
