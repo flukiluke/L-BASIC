@@ -133,7 +133,7 @@ sub load_library(s$)
         print #3, space$(4); dynlib$; " = dlopen("; chr$(34); s$; chr$(34); ",RTLD_LAZY);"
     end if
     print #3, space$(4); "if (!"; dynlib$; ") {"
-    print #3, space$(8); "fprintf(stderr, "; chr$(34); "Error: cannot load "; s$; chr$(34); ");"
+    print #3, space$(8); "fprintf(stderr, "; chr$(34); "Error: cannot load "; s$; "\n"; chr$(34); ");"
     print #3, space$(8); "exit(1);"
     print #3, space$(4); "}"
 end sub

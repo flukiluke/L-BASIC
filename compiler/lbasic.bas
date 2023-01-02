@@ -66,14 +66,27 @@ type platform_t
     link_opts as string
 end type
 dim shared as platform_t runtime_platform_settings, target_platform_settings
-'A QB64 program implicitly changes to the directory of the executable image on startup,
-'so _cwd$ below is the directory containing the image.
+if environ$("LLVM_INSTALL") <> "" then
+    llvm_install$ = environ$("LLVM_INSTALL")
+elseif @LLVM_INSTALL@ = "system" then
+    llvm_install$ = ""
+elseif @LLVM_INSTALL@ <> "" then
+    llvm_install$ = @LLVM_INSTALL@
+else
+    'A QB64 program implicitly changes to the directory of the executable image on startup,
+    'so _cwd$ below is the directory containing the image.
+    llvm_install$ = _cwd$ + "/llvm"
+end if
 if instr(_os$, "[WINDOWS]") then
     runtime_platform_settings.id = "Windows"
     runtime_platform_settings.posix_paths = FALSE
     runtime_platform_settings.executable_extension = ".exe"
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    runtime_platform_settings.linker = _cwd$ + "/llvm/bin/clang.exe"
+    if llvm_install$ = "" then
+        runtime_platform_settings.linker = "clang.exe"
+    else
+        runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
+    end if
     runtime_platform_settings.link_opts = "-g"
     runtime_platform_settings.target_triple = "x86_64-w64-windows-gnu"
 elseif instr(_os$, "[MACOSX]") then
@@ -81,7 +94,11 @@ elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    runtime_platform_settings.linker = "clang"
+    if llvm_install$ = "" then
+        runtime_platform_settings.linker = "clang"
+    else
+        runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
+    end if
     runtime_platform_settings.link_opts = "-g"
     runtime_platform_settings.target_triple = ""
 elseif instr(_os$, "[LINUX]") then
@@ -89,7 +106,11 @@ elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.posix_paths = TRUE
     runtime_platform_settings.executable_extension = ""
     runtime_platform_settings.rtlib_dir = _cwd$ + "/runtime"
-    runtime_platform_settings.linker = "clang"
+    if llvm_install$ = "" then
+        runtime_platform_settings.linker = "clang"
+    else
+        runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
+    end if
     runtime_platform_settings.link_opts = "-g -no-pie"
     runtime_platform_settings.target_triple = "x86_64-pc-linux-gnu"
 else

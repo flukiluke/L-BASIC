@@ -20,7 +20,7 @@ case $(uname) in
             LLVM_LIB=libLLVM-${llvm_ver}.dll
             : "${CC:=clang.exe}"
         else
-            LLVM_LIB="${LLVM_INSTALL}/bin/libunwind.dll ${LLVM_INSTALL}/bin/libc++.dll ${LLVM_INSTALL}/bin/libLLVM-${llvm_ver}.dll"
+            LLVM_LIB="$(cygpath -m "${LLVM_INSTALL}/bin/libunwind.dll") $(cygpath -m "${LLVM_INSTALL}/bin/libc++.dll") $(cygpath -m "${LLVM_INSTALL}/bin/libLLVM-${llvm_ver}.dll")"
             : "${CC:=$(realpath "${LLVM_INSTALL}/bin/clang.exe")}"
         fi
         ;;
@@ -52,8 +52,6 @@ echo "LLVM_INSTALL=${LLVM_INSTALL}"
 echo "LLVM_LIB=${LLVM_LIB}"
 echo "CC=${CC}"
 echo "CFLAGS=${CFLAGS}"
-
-qb64_dir=$(dirname "$(command -v "${QB64}")")
 
 if [[ $1 = clean ]]; then
     set +e
