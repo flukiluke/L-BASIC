@@ -10,7 +10,7 @@ Building L-BASIC is more complex than a regular QB64 program, particularly becau
 Install prerequisites:
  - QB64 (Phoenix edition), version 3.4.1: https://github.com/QB64-Phoenix-Edition/QB64pe/releases/download/v3.4.1/qb64pe_win-x64-3.4.1.7z [SHA-256: 41ba1d4da734c2c2ac309d923b48a9ccf3afbf936b1d23a3be9a885840a7f95d]
  - MSYS2: https://www.msys2.org/
- - LLVM-mingw (ucrt edition), version 20220323/14.0.0: https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip [SHA-256: https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip]
+ - LLVM-mingw (ucrt edition), version 20220323/14.0.0: https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip [SHA-256: 3014a95e4ec4d5c9d31f52fbd6ff43174a0d9c422c663de7f7be8c2fcc9d837a]
 
 Inside an MSYS environment:
  - Install git and make: `pacman -S git make`
