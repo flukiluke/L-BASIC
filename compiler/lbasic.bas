@@ -66,8 +66,8 @@ type platform_t
     link_opts as string
 end type
 dim shared as platform_t runtime_platform_settings, target_platform_settings
-if environ$("LLVM_INSTALL") <> "" then
-    llvm_install$ = environ$("LLVM_INSTALL")
+if environ$("LLVM_ROOT") <> "" then
+    llvm_install$ = environ$("LLVM_ROOT")
 elseif @LLVM_INSTALL@ = "system" then
     llvm_install$ = ""
 elseif @LLVM_INSTALL@ <> "" then
