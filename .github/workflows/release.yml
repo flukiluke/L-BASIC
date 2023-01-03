@@ -20,4 +20,6 @@ jobs:
           install: make
       - name: Install Dependencies
         run: .ci/windows/dependencies.sh
+      - name: Build
+        run: ./ci/windows/build.sh
 
