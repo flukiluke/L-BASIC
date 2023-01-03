@@ -17,7 +17,7 @@ EOT
 # Expected to extract directory 'qb64pe'
 7z x qb64.7z
 
-unzip llvm_mingw.zip
-mv $(basename "${MMV_MINGW_URL}" .zip) llvm-mingw
+unzip -q llvm_mingw.zip
+mv llvm-mingw-* llvm-mingw
 
 ls -l
