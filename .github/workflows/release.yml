@@ -3,11 +3,12 @@ on:
   push:
     branches:
       - ci
-    #tags:
-    #  - 'release/*'
+    tags:
+      - 'v*.*.*'
 
 jobs:
-  mingw-w64:
+  windows10-mingw-x86_64:
+    name: Windows 10, MinGW x86_64
     runs-on: windows-2022
     defaults:
       run:
@@ -18,8 +19,15 @@ jobs:
         with:
           msystem: UCRT64
           install: make p7zip unzip
-      - name: Install Dependencies
-        run: .ci/windows/dependencies.sh
       - name: Build
         run: .ci/windows/build.sh
+      - name: Package
+        if: startsWith(github.ref, 'refs/tags/')
+        run: .ci/windows/package.sh
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/lbasic-*
+          fail_on_unmatched_files: true
 
