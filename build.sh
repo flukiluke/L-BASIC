@@ -47,7 +47,16 @@ esac
 # Subdirectories to build
 components="tools compiler runtime/foundation runtime/core"
 
-export QB64 QBFLAGS OUT_DIR TOOLS_DIR LBASIC_CORE_COMPILER LLVM_INSTALL LLVM_LIB CC AR CFLAGS PYTHON
+# Try determine a version
+if [[ $GITHUB_REF_TYPE = "tag" ]]; then
+    VERSION=$GITHUB_REF_NAME
+elif [[ $CI != "true" ]]; then
+    VERSION=$(git describe --tags)
+else
+    VERSION=$(git rev-parse HEAD | head -c9)
+fi
+
+export QB64 QBFLAGS OUT_DIR TOOLS_DIR LBASIC_CORE_COMPILER LLVM_INSTALL LLVM_LIB CC AR CFLAGS PYTHON VERSION
 echo "QB64=${QB64}"
 echo "QBFLAGS=${QBFLAGS}"
 echo "OUT_DIR=${OUT_DIR}"
@@ -59,6 +68,7 @@ echo "CC=${CC}"
 echo "AR=${AR}"
 echo "CFLAGS=${CFLAGS}"
 echo "PYTHON=${PYTHON}"
+echo "VERSION=${VERSION}"
 
 if [[ $1 = clean ]]; then
     set +e

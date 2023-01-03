@@ -21,9 +21,6 @@ $end if
 
 $include: 'debugging_options.bm'
 
-dim shared VERSION$
-VERSION$ = "0.1.2"
-
 $dynamic
 'Setting the graphics window off by default allows running without a
 'graphics environment (and prevents an annoying popup).
@@ -546,7 +543,7 @@ sub split(in$, delimiter$, result$())
 end sub
 
 sub show_version
-    print "The L-BASIC compiler version " + VERSION$
+    print "The L-BASIC compiler version " + @VERSION@
     if Debug_features$ <> "" then print "Debug features enabled: " + Debug_features$
 end sub
 

@@ -14,14 +14,20 @@ ${QB64_SHA256} qb64.7z
 ${LLVM_MINGW_SHA256} llvm_mingw.zip
 EOT
 
+mkdir out
+
 # Expected to extract directory 'qb64pe'
 7z x qb64.7z
 
 unzip -q llvm_mingw.zip
-mv llvm-mingw-* llvm-mingw
+mv llvm-mingw-* llvm
+# This somewhat ugly copy is needed so the same relative path can be used to refer
+# to the llvm install from the pov of the build scripts _and_ the lbasic binary.
+# It would be better if the two could be configured separately.
+cp -r llvm out/llvm
 
 export QB64="$(pwd)/qb64pe/qb64pe.exe"
-export LLVM_INSTALL="$(pwd)/llvm-mingw"
+export LLVM_INSTALL="llvm"
 export PYTHON="${LLVM_INSTALL}/python/bin/python3.exe"
 
 ./build.sh
