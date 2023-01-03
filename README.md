@@ -33,7 +33,7 @@ Inside an MSYS environment:
 ### Linux
 Install prerequisites:
  - QB64 (Phoenix edition), version 3.4.1: https://github.com/QB64-Phoenix-Edition/QB64pe/releases/download/v3.4.1/qb64pe_lnx-3.4.1.tar.gz [SHA-256: a47213e0a2e6d01e2fdf0db53e20dfb86131511230cf242ea7b372c90aa8d553]
- - clang, version 14. On apt based systems: `sudo apt install clang-14`
+ - clang, version 14. On apt based systems: `sudo apt install clang-14`. If your distro doesn't have that version, the LLVM project provides a custom repository: https://apt.llvm.org/
  - Configure environment:
     ```
     export QB64=~/qb64pe/qb64pe
