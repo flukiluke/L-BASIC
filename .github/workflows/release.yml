@@ -18,7 +18,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
-          install: make p7zip unzip
+          install: git make p7zip unzip
       - name: Build
         run: .ci/windows/build.sh
       - name: Package
