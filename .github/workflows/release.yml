@@ -1,8 +1,6 @@
 name: Release
 on:
   push:
-    branches:
-      - ci
     tags:
       - 'v*.*.*'
 
@@ -15,6 +13,9 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v3
+        with:
+          # Allow git describe to do something useful
+          fetch-depth: 0
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -22,10 +23,8 @@ jobs:
       - name: Build
         run: .ci/windows/build.sh
       - name: Package
-        if: startsWith(github.ref, 'refs/tags/')
         run: .ci/windows/package.sh
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: release/lbasic-*
