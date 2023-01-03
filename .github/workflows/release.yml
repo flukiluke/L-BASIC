@@ -17,7 +17,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
-          install: make p7zip
+          install: make p7zip unzip
       - name: Install Dependencies
         run: .ci/windows/dependencies.sh
       - name: Build
