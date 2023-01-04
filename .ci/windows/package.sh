@@ -11,7 +11,6 @@ version=$GITHUB_REF_NAME
 
 rm -r llvm-mingw/{include,python,lib/libear,lib/libscanbuild}
 rm out/{lbasic.bas,llvm.h}
-mv llvm-mingw out/llvm
 mv out "lbasic-${version}"
 mkdir release
 7z a "release/lbasic-${version}-windows-x86_64.7z" "lbasic-${version}"

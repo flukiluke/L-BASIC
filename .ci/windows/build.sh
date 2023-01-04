@@ -28,6 +28,6 @@ cp -r llvm out/llvm
 
 export QB64="$(pwd)/qb64pe/qb64pe.exe"
 export LLVM_INSTALL="llvm"
-export PYTHON="${LLVM_INSTALL}/python/bin/python3.exe"
+export PYTHON="$(pwd)/${LLVM_INSTALL}/python/bin/python3.exe"
 
 ./build.sh
