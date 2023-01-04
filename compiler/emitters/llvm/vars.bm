@@ -75,6 +75,12 @@ function ll_cg_constant%&(node)
             ll_cg_constant%& = llvm_const_int_of_string(llvm_int32_type, ast_constants(constant), 10)
         case TYPE_INTEGER64
             ll_cg_constant%& = llvm_const_int_of_string(llvm_int64_type, ast_constants(constant), 10)
+        case TYPE_SINGLE
+            ll_cg_constant%& = llvm_const_real_of_string(llvm_float_type, ast_constants(constant))
+        case TYPE_DOUBLE
+            ll_cg_constant%& = llvm_const_real_of_string(llvm_double_type, ast_constants(constant))
+        case TYPE_QUAD
+            ll_cg_constant%& = llvm_const_real_of_string(llvm_fp128_type, ast_constants(constant))
         case TYPE_STRING
             ll_cg_constant%& = ll_cg_str_constant(constant)
         case else

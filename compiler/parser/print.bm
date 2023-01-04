@@ -52,6 +52,7 @@ function ps_print_call(expr)
     sig = type_find_sig_match(TOK_PRINT, candidate$)
     if sig = 0 then ps_error "Don't know to print values of type " + type_human_readable$(type_of_expr(expr))
     c->ref2 = sig
-    c->attach(expr)
+    cast = ast_add_cast(expr, type_sig_argtype(sig, 1))
+    c->attach(cast)
     ps_print_call = c
 end function

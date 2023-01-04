@@ -82,7 +82,7 @@ if instr(_os$, "[WINDOWS]") then
     else
         runtime_platform_settings.linker = llvm_install$ + "/bin/clang.exe"
     end if
-    runtime_platform_settings.link_opts = "-g"
+    runtime_platform_settings.link_opts = "-g -lm"
     runtime_platform_settings.target_triple = "x86_64-w64-windows-gnu"
 elseif instr(_os$, "[MACOSX]") then
     runtime_platform_settings.id = "MacOS"
@@ -94,7 +94,7 @@ elseif instr(_os$, "[MACOSX]") then
     else
         runtime_platform_settings.linker = llvm_install$ + "/bin/clang"
     end if
-    runtime_platform_settings.link_opts = "-g"
+    runtime_platform_settings.link_opts = "-g -lm"
     runtime_platform_settings.target_triple = ""
 elseif instr(_os$, "[LINUX]") then
     runtime_platform_settings.id = "Linux"
@@ -106,7 +106,7 @@ elseif instr(_os$, "[LINUX]") then
     else
         runtime_platform_settings.linker = llvm_install$ + "/bin/clang"
     end if
-    runtime_platform_settings.link_opts = "-g -no-pie"
+    runtime_platform_settings.link_opts = "-g -no-pie -lm"
     runtime_platform_settings.target_triple = "x86_64-pc-linux-gnu"
 else
     fatalerror "Could not detect runtime platform"

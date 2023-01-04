@@ -65,6 +65,10 @@ function llvm_const_int_of_string%&(Ty%&, Text$, Radix~%%)
     llvm_const_int_of_string%& = LLVMConstIntOfStringAndSize%&(Ty%&, Text$ + chr$(0), len(Text$), Radix~%%)
 end function
 
+function llvm_const_real_of_string%&(RealTy%&, Text$)
+    llvm_const_real_of_string%& = LLVMConstRealOfStringAndSize%&(RealTy%&, Text$ + chr$(0), len(Text$))
+end function
+
 function llvm_build_load%&(B%&, PointerVal%&, Name$)
     llvm_build_load%& = LLVMBuildLoad%&(B%&, PointerVal%&, Name$ + chr$(0))
 end function
@@ -103,6 +107,34 @@ end function
 
 function llvm_build_fdiv%&(B%&, LHS%&, RHS%&, Name$)
     llvm_build_fdiv%& = LLVMBuildFDiv%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_srem%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_srem%& = LLVMBuildSRem%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_and%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_and%& = LLVMBuildAnd%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_or%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_or%& = LLVMBuildOr%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_xor%&(B%&, LHS%&, RHS%&, Name$)
+    llvm_build_xor%& = LLVMBuildXor%&(B%&, LHS%&, RHS%&, Name$ + chr$(0))
+end function
+
+function llvm_build_not%&(B%&, V%&, Name$)
+    llvm_build_not%& = LLVMBuildNot%&(B%&, V%&, Name$ + chr$(0))
+end function
+
+function llvm_build_neg%&(B%&, V%&, Name$)
+    llvm_build_neg%& = LLVMBuildNeg%&(B%&, V%&, Name$ + chr$(0))
+end function
+
+function llvm_build_fneg%&(B%&, V%&, Name$)
+    llvm_build_fneg%& = LLVMBuildFNeg%&(B%&, V%&, Name$ + chr$(0))
 end function
 
 function llvm_build_icmp%&(B%&, Op&, LHS%&, RHS%&, Name$)

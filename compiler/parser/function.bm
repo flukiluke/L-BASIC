@@ -74,9 +74,9 @@ sub ps_funcargs(root, candidate$, is_statement)
         case else
             ps_funcarg root, candidate$, suppress_comma
         end select
-    $if DEBUG_PARSE_TRACE then
-    debuginfo "Candidate is now " + type_human_sig$(candidate$)
-    $end if
+        $if DEBUG_PARSE_TRACE then
+        debuginfo "Candidate is now " + type_human_sig$(candidate$)
+        $end if
     loop
     'candidate$ may match multiple sigs; decide which fits "best". See type.bm for
     'details on what "best" means. This may still fail because the candidate has only

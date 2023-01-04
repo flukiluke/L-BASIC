@@ -9,7 +9,7 @@ function ll_cg_call%&(func, sig, args() as ll_arg_t)
     end if
     if sig->sig_lp = 0 then
         'A builtin instruction?
-        builtin = ll_cg_call_builtin(func, sig, args())
+        builtin = ll_cg_builtin(func, sig, args())
         if builtin then
             ll_cg_call%& = builtin
             exit function
@@ -70,54 +70,6 @@ function ll_cg_call_node%&(node)
         end if
     next i
     ll_cg_call_node%& = ll_cg_call(func, sig, args())
-end function
-
-function ll_cg_call_builtin%&(func, sig, args() as ll_arg_t)
-    dim as _offset ret
-    dim as _offset lps(1 to 2)
-    select case func
-        case TOK_PLUS
-            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
-            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
-            if type_is_int(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_add(ll_cg_state.builder, lps(1), lps(2), "add")
-            elseif type_is_fp(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_fadd(ll_cg_state.builder, lps(1), lps(2), "fadd")
-            end if
-        case TOK_DASH
-            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
-            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
-            if type_is_int(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_sub(ll_cg_state.builder, lps(1), lps(2), "sub")
-            elseif type_is_fp(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_fsub(ll_cg_state.builder, lps(1), lps(2), "fsub")
-            end if
-        case TOK_EQUALS
-            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
-            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
-            if type_is_int(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntEq, lps(1), lps(2), "inteq")
-            elseif type_is_fp(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, lps(1), lps(2), "fpeq")
-            end if
-        case TOK_STAR
-            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
-            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
-            if type_is_int(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_mul(ll_cg_state.builder, lps(1), lps(2), "mul")
-            elseif type_is_fp(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_fmul(ll_cg_state.builder, lps(1), lps(2), "fmul")
-            end if
-        case TOK_SLASH
-            if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
-            if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
-            if type_is_int(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_sdiv(ll_cg_state.builder, lps(1), lps(2), "sdiv")
-            elseif type_is_fp(type_sig_argtype(sig, 1)) then
-                ret = llvm_build_fdiv(ll_cg_state.builder, lps(1), lps(2), "fdiv")
-            end if
-    end select
-    ll_cg_call_builtin%& = ret            
 end function
 
 sub ll_declare_func_sig(func, sig)

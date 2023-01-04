@@ -45,9 +45,10 @@
 'a safe name may be given in parentheses, e.g "+(plus)". If the token is a special character (see below), it
 'should be represented as \xx where xx is the ASCII code. There must be no spaces anywhere in this field.
 '
-'LINKNAME is an optional field. If given, calls to this function or operator will use LB$$LINKNAME (uppercased,
-'with an LB$$ prefix), and the linker will expect it to exist. If left blank, the name will be mangled with type
-'information. A blank may also indicate the operation is encoded directly at the codegen stage.
+'LINKNAME is an optional field. If given, calls to this function or operator will use LB$$LINKNAME (uppercased and
+'with an LB$$ prefix), and the linker will expect it to exist. The EXTLINK flag will instead cause the linkname to be
+'used as is. If left blank, the name will be mangled with type information. A blank may also indicate the operation
+'is encoded directly at the codegen stage.
 '
 'PRECEDENCE is an integer for parsing precedence. Larger values are higher precedence.
 
@@ -79,6 +80,7 @@
 'FLAGS is an optional list of modifiers. If present it must begin with a semi-colon. Valid flags:
 '  DIRECT: Assume that there is a TS_ of the same name as this token that maps to it.
 '  INTERNAL: Prefix the token with a pipe "|" character in the symtab, preventing it from clashing with other tokens.
+'  EXTLINK: Use the LINKNAME *exactly* as is, with no prefixing or case changing.
 
 'Blank lines are ignored. Comments may be given with # on their own line. Special characters are (); and must
 'not appear outside of their described syntactic function.
@@ -87,6 +89,7 @@ $console:only
 _dest _console
 on error goto ehandler
 deflng a-z
+const FALSE = 0, TRUE = not FALSE
 chdir _startdir$
 
 if _commandcount <> 3 then
@@ -131,6 +134,9 @@ do while not eof(1)
     if parts$(0) = "META" then toksym$ = "$" + toksym$
     if instr(parts$(-1), "INTERNAL") then
         toksym$ = "|" + toksym$
+    end if
+    if instr(parts$(-1), "EXTLINK") then
+        extlink = TRUE
     end if
 
     select case parts$(0)
@@ -190,10 +196,22 @@ do while not eof(1)
             process_arg_list parts$(3)
             print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
         elseif parts$(3) = "none" then
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(4) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34);
+            if extlink then
+                print #3, lcase$(parts$(4));
+            else
+                print #3, linkname_prefix$ + parts$(4);
+            end if
+            print #3, chr$(34)
         else
             process_arg_list parts$(3)
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(4) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34);
+            if extlink then
+                print #3, lcase$(parts$(4));
+            else
+                print #3, linkname_prefix$ + parts$(4);
+            end if
+            print #3, chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
@@ -213,7 +231,13 @@ do while not eof(1)
         if ubound(parts$) = 4 then
             print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
         else
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(5) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34);
+            if extlink then
+                print #3, lcase$(parts$(5));
+            else
+                print #3, linkname_prefix$ + parts$(5);
+            end if
+            print #3, chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)
@@ -236,7 +260,13 @@ do while not eof(1)
         if ubound(parts$) = 5 then
             print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + chr$(34)
         else
-            print #3, "type_signatures(sym.v1).link_name = " + chr$(34) + linkname_prefix$ + parts$(6) + chr$(34)
+            print #3, "type_signatures(sym.v1).link_name = " + chr$(34);
+            if extlink then
+                print #3, lcase$(parts$(6));
+            else
+                print #3, linkname_prefix$ + parts$(6);
+            end if
+            print #3, chr$(34)
         end if
         if previous$(1) <> parts$(1) then
             print #3, "sym.identifier = "; quote$(toksym$)

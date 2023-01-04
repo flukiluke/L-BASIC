@@ -113,6 +113,7 @@ end sub
 
 $include: 'llvm_bindings.bm'
 $include: 'assign.bm'
+$include: 'builtins.bm'
 $include: 'calls.bm'
 $include: 'cast.bm'
 $include: 'if.bm'

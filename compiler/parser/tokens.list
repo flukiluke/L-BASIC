@@ -192,9 +192,9 @@ prefix  negative        13          integer64 integer64                      ; i
 prefix  negative        13          single    single                         ; internal
 prefix  negative        13          double    double                         ; internal
 prefix  negative        13          quad      quad                           ; internal
-infix   ^(power)        14  left    single    single,single                  ; direct
-infix   ^(power)        14  left    double    double,double                  ; direct
-infix   ^(power)        14  left    quad      quad,quad                      ; direct
+infix   ^(power)        14  left    single    ^single,^single llvm.pow.f32   ; direct extlink
+infix   ^(power)        14  left    double    ^double,^double llvm.pow.f64   ; direct extlink
+infix   ^(power)        14  left    quad      ^quad,^quad     llvm.pow.f128  ; direct extlink
 
 # Basic language constructs
 generic as

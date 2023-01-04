@@ -1,0 +1,119 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'builtins.bm - Code generation for builtin functions
+
+function ll_cg_builtin%&(func, sig, args() as ll_arg_t)
+    select case func
+        case TOK_IMP, TOK_EQV, TOK_XOR, TOK_OR, TOK_AND, _
+             TOK_EQUALS, TOK_CMP_NEQ, TOK_CMP_LT, TOK_CMP_GT, TOK_CMP_LTEQ, TOK_CMP_GTEQ, _
+             TOK_PLUS, TOK_DASH, TOK_MOD, TOK_BACKSLASH, TOK_STAR, TOK_SLASH
+            ll_cg_builtin%& = ll_cg_builtin_binary(func, sig, args())
+        case TOK_NOT, TOK_NEGATIVE
+            ll_cg_builtin%& = ll_cg_builtin_unary(func, sig, args())
+    end select
+end function
+             
+function ll_cg_builtin_binary%&(func, sig, args() as ll_arg_t)
+    dim as _offset lps(1 to 2)
+    if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+    if args(2).is_byval then lps(2) = args(2).lp else lps(2) = ll_cg_deref_expr(args(2).lp)
+    if type_is_int(type_sig_argtype(sig, 1)) then
+        ll_cg_builtin_binary%& = ll_cg_builtin_binary_int(func, lps())
+    elseif type_is_fp(type_sig_argtype(sig, 1)) then
+        ll_cg_builtin_binary%& = ll_cg_builtin_binary_fp(func, lps())
+    end if
+end function
+
+function ll_cg_builtin_binary_int%&(func, lps() as _offset)
+    dim as _offset ret
+    select case func
+        case TOK_IMP
+        case TOK_EQV
+        case TOK_XOR
+            ret = llvm_build_xor(ll_cg_state.builder, lps(1), lps(2), "xor")
+        case TOK_OR
+            ret = llvm_build_or(ll_cg_state.builder, lps(1), lps(2), "or")
+        case TOK_AND
+            ret = llvm_build_and(ll_cg_state.builder, lps(1), lps(2), "and")
+        case TOK_EQUALS
+            ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntEQ, lps(1), lps(2), "inteq")
+        case TOK_CMP_NEQ
+            ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntNE, lps(1), lps(2), "intne")
+        case TOK_CMP_LT
+            ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntSLT, lps(1), lps(2), "intlt")
+        case TOK_CMP_GT
+            ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntSGT, lps(1), lps(2), "intgt")
+        case TOK_CMP_LTEQ
+            ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntSLE, lps(1), lps(2), "intle")
+        case TOK_CMP_GTEQ
+            ret = llvm_build_icmp(ll_cg_state.builder, LLVMIntSGE, lps(1), lps(2), "intge")
+        case TOK_PLUS
+            ret = llvm_build_add(ll_cg_state.builder, lps(1), lps(2), "add")
+        case TOK_DASH
+            ret = llvm_build_sub(ll_cg_state.builder, lps(1), lps(2), "sub")
+        case TOK_MOD
+            ret = llvm_build_srem(ll_cg_state.builder, lps(1), lps(2), "srem")
+        case TOK_BACKSLASH
+            ret = llvm_build_sdiv(ll_cg_state.builder, lps(1), lps(2), "sdiv")
+        case TOK_STAR
+            ret = llvm_build_mul(ll_cg_state.builder, lps(1), lps(2), "mul")
+    end select
+    ll_cg_builtin_binary_int%& = ret
+end function
+
+function ll_cg_builtin_binary_fp%&(func, lps() as _offset)
+    dim as _offset ret
+    select case func
+        case TOK_EQUALS
+            ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOEQ, lps(1), lps(2), "fpeq")
+        case TOK_CMP_NEQ
+            ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealONE, lps(1), lps(2), "fpne")
+        case TOK_CMP_LT
+            ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOLT, lps(1), lps(2), "fplt")
+        case TOK_CMP_GT
+            ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOGT, lps(1), lps(2), "fpgt")
+        case TOK_CMP_LTEQ
+            ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOLE, lps(1), lps(2), "fple")
+        case TOK_CMP_GTEQ
+            ret = llvm_build_fcmp(ll_cg_state.builder, LLVMRealOGE, lps(1), lps(2), "fpge")
+        case TOK_PLUS
+            ret = llvm_build_fadd(ll_cg_state.builder, lps(1), lps(2), "fadd")
+        case TOK_DASH
+            ret = llvm_build_fsub(ll_cg_state.builder, lps(1), lps(2), "fsub")
+        case TOK_STAR
+            ret = llvm_build_fmul(ll_cg_state.builder, lps(1), lps(2), "fmul")
+        case TOK_SLASH
+            ret = llvm_build_fdiv(ll_cg_state.builder, lps(1), lps(2), "fdiv")
+    end select
+    ll_cg_builtin_binary_fp%& = ret
+end function
+
+function ll_cg_builtin_unary%&(func, sig, args() as ll_arg_t)
+    dim as _offset lps(1 to 1)
+    if args(1).is_byval then lps(1) = args(1).lp else lps(1) = ll_cg_deref_expr(args(1).lp)
+    if type_is_int(type_sig_argtype(sig, 1)) then
+        ll_cg_builtin_unary%& = ll_cg_builtin_unary_int(func, lps())
+    elseif type_is_fp(type_sig_argtype(sig, 1)) then
+        ll_cg_builtin_unary%& = ll_cg_builtin_unary_fp(func, lps())
+    end if
+end function
+
+function ll_cg_builtin_unary_int%&(func, lps() as _offset)
+    dim as _offset ret
+    select case func
+        case TOK_NOT
+            ret = llvm_build_not(ll_cg_state.builder, lps(1), "not")
+        case TOK_NEGATIVE
+            ret = llvm_build_neg(ll_cg_state.builder, lps(1), "neg")
+    end select
+    ll_cg_builtin_unary_int%& = ret
+end function
+
+function ll_cg_builtin_unary_fp%&(func, lps() as _offset)
+    dim as _offset ret
+    select case func
+        case TOK_NEGATIVE
+            ret = llvm_build_fneg(ll_cg_state.builder, lps(1), "fneg")
+    end select
+    ll_cg_builtin_unary_fp%& = ret
+end function
