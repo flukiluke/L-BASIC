@@ -25,10 +25,14 @@ function ll_cg_builtin_binary%&(func, sig, args() as ll_arg_t)
 end function
 
 function ll_cg_builtin_binary_int%&(func, lps() as _offset)
-    dim as _offset ret
+    dim as _offset ret, tmp
     select case func
         case TOK_IMP
+            tmp = llvm_build_not(ll_cg_state.builder, lps(1), "imp_not")
+            ret = llvm_build_or(ll_cg_state.builder, tmp, lps(2), "imp_or")
         case TOK_EQV
+            tmp = llvm_build_xor(ll_cg_state.builder, lps(1), lps(2), "eqv_xor")
+            ret = llvm_build_not(ll_cg_state.builder, tmp, "eqv_not")
         case TOK_XOR
             ret = llvm_build_xor(ll_cg_state.builder, lps(1), lps(2), "xor")
         case TOK_OR
