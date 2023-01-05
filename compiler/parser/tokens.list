@@ -272,7 +272,7 @@ function _blue32        long      long
 function cdbl           double    double
 # chain
 function chdir          none      string
-function chr            string    integer
+function chr            string    ^integer64
 function cint           integer   integer
 function circle         none      "step?,'oparen,single,single,'cparen,single,long?,single?,single?,single?
 # clear

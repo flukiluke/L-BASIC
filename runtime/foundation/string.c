@@ -149,3 +149,13 @@ LB_STRING *MID(LB_STRING *src, LB_LONG start, LB_LONG *length_p) {
 LB_LONG LEN_STRING(LB_STRING *s) {
     return s->len;
 }
+
+LB_STRING *CHR(LB_INTEGER64 v) {
+    LB_STRING *result = alloc_new(1);
+    result->len = 1;
+    if (v < 0 || v > 255) {
+        fatal_error(ERR_ARG_RANGE);
+    }
+    result->data[0] = (char) v;
+    return result;
+}

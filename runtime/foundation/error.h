@@ -7,7 +7,8 @@
 
 enum error_code {
     ERR_STR_ALLOC_FAILED = 1,
-    ERR_STRING_TOO_BIG
+    ERR_STRING_TOO_BIG,
+    ERR_ARG_RANGE
 };
 
 void fatal_error(enum error_code code);

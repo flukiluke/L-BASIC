@@ -7,7 +7,7 @@
 #include "lbasic.h"
 
 void PRINT_INTEGER(LB_INTEGER num) {
-    printf("%" PRId16, num);
+    printf("%hd", num);
 }
 
 void PRINT_LONG(LB_LONG num) {

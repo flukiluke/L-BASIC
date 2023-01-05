@@ -137,6 +137,8 @@ do while not eof(1)
     end if
     if instr(parts$(-1), "EXTLINK") then
         extlink = TRUE
+    else
+        extlink = FALSE
     end if
 
     select case parts$(0)
