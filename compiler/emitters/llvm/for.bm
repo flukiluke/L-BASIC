@@ -1,0 +1,59 @@
+'Copyright Luke Ceddia
+'SPDX-License-Identifier: Apache-2.0
+'for.bm - Code generation for FOR loops
+
+sub ll_cg_for(node)
+    dim as _offset preheadBB, headBB, bodyBB, endBB, start_expr, end_expr, step_expr
+    dim as _offset func, var_lp, cmp, phi, nextval, dummy
+    dim args(1 to 2) as ll_arg_t
+
+    varnode = ast_get_child(node, 1)
+    var_type = type_of_lvalue(varnode)
+    var_lp = ll_cg_var_lval(varnode)
+    func = llvm_get_basic_block_parent(llvm_get_insert_block(ll_cg_state.builder))
+    preheadBB = llvm_get_insert_block(ll_cg_state.builder)
+    headBB = llvm_create_basic_block("for_head")
+    bodyBB = llvm_create_basic_block("for_body")
+    endBB = llvm_create_basic_block("for_end")
+
+    start_expr = ll_cg_expr(ast_get_child(node, 2))
+    end_expr = ll_cg_expr(ast_get_child(node, 3))
+    step_expr = ll_cg_expr(ast_get_child(node, 4))
+    dummy = llvm_build_br(ll_cg_state.builder, headBB)
+
+    llvm_append_existing_basic_block func, headBB
+    llvm_position_builder_at_end ll_cg_state.builder, headBB
+    phi = llvm_build_phi(ll_cg_state.builder, ll_type(var_type), "for_phi")
+    llvm_add_incoming phi, start_expr, preheadBB, 1
+    dummy = llvm_build_store(ll_cg_state.builder, phi, var_lp)
+    args(1).lp = var_lp
+    args(1).is_byval = FALSE
+    args(2).lp = end_expr
+    args(2).is_byval = TRUE
+    call_func = TOK_CMP_GT
+    candidate$ = type_sigt_create$(TYPE_BOOL)
+    candidate$ = type_sigt_add_arg$(candidate$, var_type, TYPE_BYVAL)
+    candidate$ = type_sigt_add_arg$(candidate$, var_type, TYPE_BYVAL)
+    sig = type_find_sig_match(call_func, candidate$)
+    cmp = ll_cg_call(call_func, sig, args())
+    dummy = llvm_build_cond_br(ll_cg_state.builder, cmp, endBB, bodyBB)
+
+    llvm_append_existing_basic_block func, bodyBB
+    llvm_position_builder_at_end ll_cg_state.builder, bodyBB
+    ll_cg_block ast_get_child(node, 5)
+    args(1).lp = var_lp
+    args(1).is_byval = FALSE
+    args(2).lp = step_expr
+    args(2).is_byval = TRUE
+    call_func = TOK_PLUS
+    candidate$ = type_sigt_create$(var_type)
+    candidate$ = type_sigt_add_arg$(candidate$, var_type, TYPE_BYVAL)
+    candidate$ = type_sigt_add_arg$(candidate$, var_type, TYPE_BYVAL)
+    sig = type_find_sig_match(call_func, candidate$)
+    nextval = ll_cg_call(call_func, sig, args())
+    llvm_add_incoming phi, nextval, llvm_get_insert_block(ll_cg_state.builder), 1
+    dummy = llvm_build_br(ll_cg_state.builder, headBB)
+
+    llvm_append_existing_basic_block func, endBB
+    llvm_position_builder_at_end ll_cg_state.builder, endBB
+end sub

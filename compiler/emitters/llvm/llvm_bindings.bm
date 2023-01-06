@@ -145,6 +145,10 @@ function llvm_build_fcmp%&(B%&, Op&, LHS%&, RHS%&, Name$)
     llvm_build_fcmp%& = LLVMBuildFCmp%&(B%&, Op&, LHS%&, RHS%&, Name$ + chr$(0))
 end function
 
+function llvm_build_phi%&(B%&, Ty%&, Name$)
+    llvm_build_phi%& = LLVMBuildPhi%&(B%&, Ty%&, Name$ + chr$(0))
+end function
+
 function llvm_create_basic_block%&(Name$)
     llvm_create_basic_block%& = LLVMCreateBasicBlockInContext%&(llvm_get_global_context%&, Name$ + chr$(0))
 end function

@@ -82,6 +82,8 @@ lib ${LLVM_LIB}
     function LLVMCreateBasicBlockInContext%&(byval C%&, Name$)
     function llvm_build_cond_br%& alias LLVMBuildCondBr(byval B%&, byval Cond%&, byval ThenBr%&, byval ElseBr%&)
     function llvm_build_br%& alias LLVMBuildBr(byval B%&, byval Dest%&)
+    function LLVMBuildPhi%&(byval B%&, byval Ty%&, Name$)
+    sub      llvm_add_incoming alias LLVMAddIncoming(byval PhiNode%&, Value%&, Block%&, byval Count~&)
     sub      llvm_append_existing_basic_block alias LLVMAppendExistingBasicBlock(byval Fn%&, byval BB%&)
     sub      llvm_set_linkage alias LLVMSetLinkage(byval Global%&, byval Linkage&)
     function llvm_get_buffer_start%& alias LLVMGetBufferStart(byval MemBuf%&)

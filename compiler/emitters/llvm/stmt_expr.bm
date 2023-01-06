@@ -32,7 +32,7 @@ sub ll_cg_block(block)
             case AST_DO_POST
                 ll_cg_do_post node
             case AST_FOR
-                'll_cg_for node
+                ll_cg_for node
             case AST_SELECT
                 'll_cg_select node
             case AST_CALL
