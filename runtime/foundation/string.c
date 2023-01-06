@@ -136,7 +136,7 @@ LB_STRING *MID(LB_STRING *src, LB_LONG start, LB_LONG *length_p) {
         length = min(src->len - start + 1, length);
     }
     else {
-        start = min(1, start);
+        start = max(1, start);
         length = src->len - start + 1;
     }
 

@@ -67,8 +67,9 @@ sub dep_add_dependency(given$)
     dep_files(dep_last_file) = path$
     
     'Is there an accompanying declaration file?
-    if _fileexists(given$ + ".bh") then
-        add_input_file given$ + ".bh", TRUE
+    header$ = remove_ext$(given$) + ".bh"
+    if _fileexists(header$) then
+        add_input_file header$, TRUE
     end if
 end sub
 

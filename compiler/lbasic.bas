@@ -437,9 +437,9 @@ sub build_mode
     'so later modules cannot depend on earlier ones.
     add_input_file options.mainarg, FALSE
     if options.no_core = 0 then
-        dep_add_dependency runtime_platform_settings.rtlib_dir + "/core.a"
+        dep_add_dependency runtime_platform_settings.rtlib_dir + "/core"
     end if
-    dep_add_dependency runtime_platform_settings.rtlib_dir + "/foundation.a"
+    dep_add_dependency runtime_platform_settings.rtlib_dir + "/foundation"
     tok_init
     Error_context = ERR_CTX_PARSING
     ps_prepass
