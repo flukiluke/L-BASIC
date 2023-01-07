@@ -6,6 +6,15 @@
 #include <inttypes.h>
 #include "lbasic.h"
 
+void PRINT_BOOL(LB_BOOL num) {
+    if (num) {
+        printf("-1");
+    }
+    else {
+        printf("0");
+    }
+}
+
 void PRINT_INTEGER(LB_INTEGER num) {
     printf("%hd", num);
 }

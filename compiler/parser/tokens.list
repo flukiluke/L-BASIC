@@ -116,42 +116,42 @@ infix   and             6   left    integer64 integer64,integer64
 prefix  not             7           integer   integer 
 prefix  not             7           long      long
 prefix  not             7           integer64 integer64
-infix   =(equals)       8   left    bool      string,string       string_eq  ; direct
+infix   =(equals)       8   left    bool      ^string,^string     string_eq  ; direct
 infix   =(equals)       8   left    bool      integer,integer                ; direct
 infix   =(equals)       8   left    bool      long,long                      ; direct
 infix   =(equals)       8   left    bool      integer64,integer64            ; direct
 infix   =(equals)       8   left    bool      single,single                  ; direct
 infix   =(equals)       8   left    bool      double,double                  ; direct
 infix   =(equals)       8   left    bool      quad,quad                      ; direct
-infix   <>(cmp_neq)     8   left    bool      string,string       string_ne  ; direct
+infix   <>(cmp_neq)     8   left    bool      ^string,^string     string_ne  ; direct
 infix   <>(cmp_neq)     8   left    bool      integer,integer                ; direct
 infix   <>(cmp_neq)     8   left    bool      long,long                      ; direct
 infix   <>(cmp_neq)     8   left    bool      integer64,integer64            ; direct
 infix   <>(cmp_neq)     8   left    bool      single,single                  ; direct
 infix   <>(cmp_neq)     8   left    bool      double,double                  ; direct
 infix   <>(cmp_neq)     8   left    bool      quad,quad                      ; direct
-infix   <(cmp_lt)       8   left    bool      string,string       string_lt  ; direct
+infix   <(cmp_lt)       8   left    bool      ^string,^string     string_lt  ; direct
 infix   <(cmp_lt)       8   left    bool      integer,integer                ; direct
 infix   <(cmp_lt)       8   left    bool      long,long                      ; direct
 infix   <(cmp_lt)       8   left    bool      integer64,integer64            ; direct
 infix   <(cmp_lt)       8   left    bool      single,single                  ; direct
 infix   <(cmp_lt)       8   left    bool      double,double                  ; direct
 infix   <(cmp_lt)       8   left    bool      quad,quad                      ; direct
-infix   >(cmp_gt)       8   left    bool      string,string       string_gt  ; direct
+infix   >(cmp_gt)       8   left    bool      ^string,^string     string_gt  ; direct
 infix   >(cmp_gt)       8   left    bool      integer,integer                ; direct
 infix   >(cmp_gt)       8   left    bool      long,long                      ; direct
 infix   >(cmp_gt)       8   left    bool      integer64,integer64            ; direct
 infix   >(cmp_gt)       8   left    bool      single,single                  ; direct
 infix   >(cmp_gt)       8   left    bool      double,double                  ; direct
 infix   >(cmp_gt)       8   left    bool      quad,quad                      ; direct
-infix   <=(cmp_lteq)    8   left    bool      string,string       string_le  ; direct
+infix   <=(cmp_lteq)    8   left    bool      ^string,^string     string_le  ; direct
 infix   <=(cmp_lteq)    8   left    bool      integer,integer                ; direct
 infix   <=(cmp_lteq)    8   left    bool      long,long                      ; direct
 infix   <=(cmp_lteq)    8   left    bool      integer64,integer64            ; direct
 infix   <=(cmp_lteq)    8   left    bool      single,single                  ; direct
 infix   <=(cmp_lteq)    8   left    bool      double,double                  ; direct
 infix   <=(cmp_lteq)    8   left    bool      quad,quad                      ; direct
-infix   >=(cmp_gteq)    8   left    bool      string,string       string_ge  ; direct
+infix   >=(cmp_gteq)    8   left    bool      ^string,^string     string_ge  ; direct
 infix   >=(cmp_gteq)    8   left    bool      integer,integer                ; direct
 infix   >=(cmp_gteq)    8   left    bool      long,long                      ; direct
 infix   >=(cmp_gteq)    8   left    bool      integer64,integer64            ; direct
@@ -241,8 +241,8 @@ generic call
 generic common
 
 # String helpers
-function string_assign      none  string,^string  string_assign     ; internal
-function string_maybe_free  none  ^string         string_maybe_free ; internal
+function string_assign      none    string,^string  string_assign     ; internal
+function string_maybe_free  none    ^string         string_maybe_free ; internal
 
 
 # functions with return type none are subs
@@ -442,6 +442,7 @@ function poke           none      long,string
 # pos
 # preset
 function print          none      ^string
+function print          none      ^bool
 function print          none      ^integer
 function print          none      ^long
 function print          none      ^integer64

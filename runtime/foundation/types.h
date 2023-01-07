@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+typedef _Bool LB_BOOL;
 typedef int8_t LB_INTEGER;
 typedef int16_t LB_LONG;
 typedef int64_t LB_INTEGER64;

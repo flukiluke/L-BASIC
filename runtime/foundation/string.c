@@ -168,3 +168,36 @@ LB_INTEGER ASC(LB_STRING *s, LB_LONG *index_p) {
     return s->data[index - 1];
 }
 
+LB_BOOL STRING_EQ(LB_STRING *a, LB_STRING *b) {
+    if (a->len != b->len) {
+        return 0;
+    }
+    return memcmp(a->data, b->data, a->len) == 0;
+}
+
+LB_BOOL STRING_NE(LB_STRING *a, LB_STRING *b) {
+    return !STRING_EQ(a, b);
+}
+
+LB_BOOL STRING_LT(LB_STRING *a, LB_STRING *b) {
+    LB_LONG length = min(a->len, b->len);
+    int cmp = memcmp(a->data, b->data, length);
+    return cmp < 0 ||
+        (cmp == 0 && a->len < b->len);
+}
+
+LB_BOOL STRING_LE(LB_STRING *a, LB_STRING *b) {
+    LB_LONG length = min(a->len, b->len);
+    int cmp = memcmp(a->data, b->data, length);
+    return cmp < 0 ||
+        (cmp == 0 && a->len <= b->len);
+}
+
+LB_BOOL STRING_GT(LB_STRING *a, LB_STRING *b) {
+    return STRING_LT(b, a);
+}
+
+LB_BOOL STRING_GE(LB_STRING *a, LB_STRING *b) {
+    return STRING_LE(b, a);
+}
+
