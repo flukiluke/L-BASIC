@@ -255,7 +255,7 @@ function abs            quad      quad
 # absolute
 # access
 # alias
-function asc            integer   string,integer64?
+function asc            integer   ^string,long?
 function _atan2         single    single,single
 function _atan2         double    double,double
 function _atan2         quad      quad,quad

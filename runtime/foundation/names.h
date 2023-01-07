@@ -11,6 +11,7 @@
 #define STRING_MAYBE_FREE LB$$STRING_MAYBE_FREE
 #define STRING_ADD LB$$STRING_ADD
 
+#define ASC asc$itL
 #define CHR chr$tk
 #define END end$nI
 #define LEN_STRING len$lt

@@ -159,3 +159,12 @@ LB_STRING *CHR(LB_INTEGER64 v) {
     result->data[0] = (char) v;
     return result;
 }
+
+LB_INTEGER ASC(LB_STRING *s, LB_LONG *index_p) {
+    LB_LONG index = index_p ? *index_p : 1;
+    if (s->len < index) {
+        fatal_error(ERR_ARG_RANGE);
+    }
+    return s->data[index - 1];
+}
+
